@@ -1,3 +1,64 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "avatar",
+      "description": "User avatar in sidebar and fireteam",
+      "imageUrl": "https://images.unsplash.com/photo-1633957897986-70e83293f3ff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmdXR1cmlzdGljJTIwYXZhdGFyfGVufDB8fHx8MTc2NDYxODczOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic avatar"
+    },
+    {
+      "id": "twinskie-physical",
+      "description": "Twinskie avatar for dominant physical skill",
+      "imageUrl": "https://images.unsplash.com/photo-1582439170934-d089aa10abda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtdXNjdWxhciUyMG1hbnxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "muscular man"
+    },
+    {
+      "id": "twinskie-practical",
+      "description": "Twinskie avatar for dominant practical skill",
+      "imageUrl": "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW4lMjBzdWl0fGVufDB8fHx8MTc2NDU1MTgyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man suit"
+    },
+    {
+      "id": "twinskie-creative",
+      "description": "Twinskie avatar for dominant creative skill",
+      "imageUrl": "https://images.unsplash.com/photo-1541753866388-0b3c701627d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnRpc3QlMjBwYWludGluZ3xlbnwwfHx8fDE3NjQ1NTU0MzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "artist painting"
+    },
+    {
+      "id": "twinskie-mental",
+      "description": "Twinskie avatar for dominant mental skill",
+      "imageUrl": "https://images.unsplash.com/photo-1677212004257-103cfa6b59d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnbG93aW5nJTIwaGVhZHxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "glowing head"
+    },
+    {
+      "id": "twinskie-social",
+      "description": "Twinskie avatar for dominant social skill",
+      "imageUrl": "https://images.unsplash.com/photo-1691052478632-a714a09eb354?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGFyaXNtYXRpYyUyMHBlcnNvbnxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "charismatic person"
+    },
+    {
+      "id": "twinskie-default",
+      "description": "Default Twinskie avatar",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1596913873199-64312fa091bf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaWxob3VldHRlJTIwcGVyc29ufGVufDB8fHx8MTc2NDU0MDEwMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "silhouette person"
+    },
+    {
+      "id": "fireteam-user1",
+      "description": "Fireteam member 1",
+      "imageUrl": "https://images.unsplash.com/photo-1669187737670-921c6137a033?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxmdXR1cmlzdGljJTIwYXZhdGFyfGVufDB8fHx8MTc2NDYxODczOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic avatar"
+    },
+    {
+      "id": "fireteam-user2",
+      "description": "Fireteam member 2",
+      "imageUrl": "https://images.unsplash.com/photo-1674544362969-a4269ef0ea69?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxmdXR1cmlzdGljJTIwYXZhdGFyfGVufDB8fHx8MTc2NDYxODczOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic avatar"
+    },
+    {
+      "id": "fireteam-user3",
+      "description": "Fireteam member 3",
+      "imageUrl": "https://images.unsplash.com/photo-1594938384824-022767a58e11?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxmdXR1cmlzdGljJTIwYXZhdGFyfGVufDB8fHx8MTc2NDYxODczOXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "futuristic avatar"
+    }
+  ]
 }
