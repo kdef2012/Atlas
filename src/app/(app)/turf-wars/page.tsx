@@ -6,7 +6,7 @@ export default function TurfWarsPage() {
       <CardHeader>
         <CardTitle className="font-headline">Turf Wars</CardTitle>
         <CardDescription>Coming soon. Claim real-world locations for your Fireteam.</CardDescription>
-      </CardHeader>
+      </Header>
     </Card>
   );
 }
