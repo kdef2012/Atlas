@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -21,10 +22,12 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useDoc } from "@/firebase";
+import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
+import { signOut } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -36,11 +39,19 @@ const navItems = [
 
 export function SideNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const auth = useAuth();
   const userAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
   const { user: authUser } = useUser();
   const firestore = useFirestore();
-  const userRef = authUser ? doc(firestore, 'users', authUser.uid) : null;
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user } = useDoc<User>(userRef);
+
+  const handleLogout = () => {
+    signOut(auth).then(() => {
+      router.push('/onboarding/archetype');
+    });
+  }
 
 
   return (
@@ -82,7 +93,7 @@ export function SideNav() {
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
             </div>
-            <button className="ml-auto group-data-[collapsible=icon]:hidden">
+            <button onClick={handleLogout} className="ml-auto group-data-[collapsible=icon]:hidden">
               <LogOut className="w-5 h-5 text-muted-foreground hover:text-foreground" />
             </button>
         </div>
