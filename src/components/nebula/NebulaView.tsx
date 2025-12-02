@@ -177,6 +177,7 @@ export function NebulaView() {
               <div>
                   <h3 className="text-lg font-bold font-headline">{node.name}</h3>
                   <p className="text-sm text-muted-foreground">{node.description || "A skill waiting to be mastered."}</p>
+                  {isPioneer && <p className="text-xs font-bold text-accent neon-text mt-1">YOU ARE THE PIONEER OF THIS SKILL</p>}
               </div>
           </div>
           <div className="mt-4 space-y-3">
@@ -280,7 +281,3 @@ export function NebulaView() {
     </div>
   );
 }
-
-    
-
-    

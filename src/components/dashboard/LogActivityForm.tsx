@@ -169,6 +169,9 @@ export function LogActivityForm() {
       } else {
          toastDescription += ` Awaiting verification for ${xpGained} XP.`;
       }
+      if (isNewSkill) {
+          toastDescription += `<br><strong>Pioneer Bonus!</strong> You discovered a new skill!`;
+      }
 
       toast({
         title: "Activity Logged!",
