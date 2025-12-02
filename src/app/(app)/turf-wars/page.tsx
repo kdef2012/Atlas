@@ -35,11 +35,12 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
   }
 
   // Filter out challenges that have ended
-  const activeTerritories = territories.filter(t => t.endsAt > Date.now());
-  const pastTerritories = territories.filter(t => t.endsAt <= Date.now());
+  const now = Date.now();
+  const activeTerritories = territories.filter(t => t.endsAt > now);
+  const pastTerritories = territories.filter(t => t.endsAt <= now).sort((a, b) => b.endsAt - a.endsAt);
 
 
-  if (activeTerritories.length === 0) {
+  if (activeTerritories.length === 0 && pastTerritories.length === 0) {
      return (
       <div className="flex items-center justify-center h-full text-muted-foreground p-6 text-center">
         <p>No active challenges at the moment. A new cycle will begin soon.</p>
@@ -49,14 +50,19 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
 
   return (
     <ScrollArea className="h-full">
-      <div className="space-y-2 p-6 pt-0">
-      {activeTerritories.map(t => (
-        <TerritoryRow key={t.id} territory={t} />
-      ))}
+      <div className="space-y-4 p-6 pt-0">
+      {activeTerritories.length > 0 && (
+        <div className="space-y-2">
+            {activeTerritories.map(t => (
+                <TerritoryRow key={t.id} territory={t} />
+            ))}
+        </div>
+      )}
+
        {pastTerritories.length > 0 && (
           <div className="pt-4">
-            <h3 className="px-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past Challenges</h3>
-            <div className="mt-2 space-y-2 opacity-50">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Past Challenges</h3>
+            <div className="space-y-2 opacity-70">
               {pastTerritories.map(t => (
                 <TerritoryRow key={t.id} territory={t} />
               ))}

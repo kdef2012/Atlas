@@ -10,6 +10,7 @@ import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { collection, doc, query, where, orderBy, limit } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 interface TerritoryRowProps {
     territory: Territory;
@@ -26,6 +27,7 @@ export function TerritoryRow({ territory }: TerritoryRowProps) {
     const firestore = useFirestore();
     const leadingTeamEntry = getLeadingFireteam(territory.scores || {});
     const leadingTeamId = leadingTeamEntry ? leadingTeamEntry[0] : null;
+    const isChallengeActive = territory.endsAt > Date.now();
 
     const fireteamRef = useMemoFirebase(() => 
         leadingTeamId ? doc(firestore, 'fireteams', leadingTeamId) : null, 
@@ -45,7 +47,7 @@ export function TerritoryRow({ territory }: TerritoryRowProps) {
     }
 
     return (
-        <Card className="p-4 bg-card/50">
+        <Card className={cn("p-4 bg-card/50", !isChallengeActive && "border-yellow-400/50")}>
             <div className="flex items-center gap-4">
                 <div className="p-3 rounded-lg" style={{ backgroundColor: `${factionColor.replace(')', ' / 0.1)')}`, color: factionColor }}>
                     <FactionIcon className="w-8 h-8"/>
@@ -54,23 +56,26 @@ export function TerritoryRow({ territory }: TerritoryRowProps) {
                 <div className="flex-1">
                     <p className="font-bold text-lg text-primary">{territory.faction} Faction Challenge</p>
                     <p className="text-sm text-muted-foreground">{territory.challengeDescription}</p>
-                    <p className="text-xs text-muted-foreground/80 mt-1">Ends on: {endsDate}</p>
+                    <p className="text-xs text-muted-foreground/80 mt-1">
+                        {isChallengeActive ? `Ends on: ${endsDate}`: `Ended on: ${endsDate}`}
+                    </p>
                 </div>
                 
-                <div className="flex flex-col items-center justify-center w-28">
+                <div className="flex flex-col items-center justify-center w-32 text-center">
                     {fireteam ? (
                         <>
-                            <Avatar>
+                             {!isChallengeActive && <p className="text-xs font-bold text-yellow-400 flex items-center gap-1"><Trophy className="w-3 h-3"/> WINNER</p>}
+                            <Avatar className="mt-1">
                                 <AvatarImage src={teamAvatar?.imageUrl} data-ai-hint={teamAvatar?.imageHint} />
                                 <AvatarFallback>{fireteam.name.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <p className="text-xs font-bold text-center mt-1">{fireteam.name}</p>
-                            <p className="text-xs text-amber-400 flex items-center gap-1"><Trophy className="w-3 h-3"/> {leadingTeamEntry?.[1]} pts</p>
+                            <p className="text-xs font-bold mt-1">{fireteam.name}</p>
+                            <p className="text-xs text-muted-foreground"> {leadingTeamEntry?.[1]} pts</p>
                         </>
                     ) : (
-                        <div className="text-center text-muted-foreground">
+                        <div className="text-muted-foreground">
                             <Shield className="w-6 h-6 mx-auto mb-1"/>
-                            <p className="text-xs italic">No clear leader</p>
+                            <p className="text-xs italic">{isChallengeActive ? 'No clear leader' : 'No scores logged'}</p>
                         </div>
                     )}
                 </div>
