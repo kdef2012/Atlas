@@ -4,21 +4,71 @@
 import Image from 'next/image';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, X } from 'lucide-react';
+import { Check, Loader2, X } from 'lucide-react';
 import type { Log, Skill, User } from '@/lib/types';
+import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { doc, increment } from 'firebase/firestore';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Submission {
-    log: Partial<Log>;
-    skill: Partial<Skill>;
-    user: Partial<User>;
+    log: Log;
+    skill: Skill;
+    user: User;
 }
 
 interface SubmissionCardProps {
     submission: Submission;
+    onVote: (logId: string) => void;
 }
 
-export function SubmissionCard({ submission }: SubmissionCardProps) {
+export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
     const { log, skill, user } = submission;
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const [isVoting, setIsVoting] = useState(false);
+
+    const handleVote = async (isPass: boolean) => {
+        setIsVoting(true);
+        const logRef = doc(firestore, 'users', log.userId, 'logs', log.id);
+
+        try {
+            if (isPass) {
+                // If pass, mark as verified and grant XP to the original user
+                const originalUserRef = doc(firestore, 'users', log.userId);
+                updateDocumentNonBlocking(originalUserRef, {
+                    xp: increment(log.xp)
+                });
+                 updateDocumentNonBlocking(logRef, { isVerified: true });
+                 toast({
+                    title: "Vote Cast: Pass",
+                    description: `Verified "${skill.name}" for ${user.userName}.`,
+                });
+            } else {
+                // If fail, just mark as verified to remove from queue, but don't grant XP
+                updateDocumentNonBlocking(logRef, { isVerified: true, xp: 0 }); // Nullify XP
+                toast({
+                    variant: 'destructive',
+                    title: "Vote Cast: Fail",
+                    description: `Rejected submission from ${user.userName}.`,
+                });
+            }
+
+            // Notify parent component to show the next submission
+            onVote(log.id);
+
+        } catch (error) {
+            console.error("Failed to cast vote:", error);
+            toast({
+                variant: 'destructive',
+                title: "Error",
+                description: "Could not cast your vote. Please try again.",
+            });
+        } finally {
+            // No need to set isVoting to false, as the component will be unmounted
+        }
+    };
 
     return (
         <Card>
@@ -46,12 +96,12 @@ export function SubmissionCard({ submission }: SubmissionCardProps) {
                 </p>
             </CardContent>
             <CardFooter className="grid grid-cols-2 gap-4">
-                <Button variant="destructive" size="lg">
-                    <X className="mr-2" />
+                <Button variant="destructive" size="lg" onClick={() => handleVote(false)} disabled={isVoting}>
+                    {isVoting ? <Loader2 className="mr-2 animate-spin" /> : <X className="mr-2" />}
                     Fail
                 </Button>
-                <Button variant="default" size="lg" className="bg-green-600 hover:bg-green-700">
-                    <Check className="mr-2" />
+                <Button onClick={() => handleVote(true)} disabled={isVoting} size="lg" className="bg-green-600 hover:bg-green-700">
+                    {isVoting ? <Loader2 className="mr-2 animate-spin" /> : <Check className="mr-2" />}
                     Pass
                 </Button>
             </CardFooter>

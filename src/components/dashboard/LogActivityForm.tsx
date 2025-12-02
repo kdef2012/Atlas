@@ -22,7 +22,7 @@ import type { Skill, SkillCategory, Territory, Fireteam } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment } from "firebase/firestore";
+import { collection, doc, increment, addDoc } from "firebase/firestore";
 import type { Log } from "@/lib/log";
 
 const formSchema = z.object({
@@ -71,27 +71,30 @@ export function LogActivityForm() {
       });
       
       let { skillId, isNewSkill, skillName, category } = result;
+      const hasProof = values.proof && values.proof.length > 0;
 
       // Step 2: If it's a new skill, create it in Firestore
       if (isNewSkill) {
-        const newSkillDoc = await addDocumentNonBlocking(skillsCollectionRef, {
+        // Since addDocumentNonBlocking is tricky with getting the new ID back, we'll use the blocking `addDoc` here
+        const newSkillDocRef = await addDoc(skillsCollectionRef, {
           name: skillName,
           category: category,
           pioneerUserId: user.uid,
-          xp: 10, // Initial XP for a new skill
+          xp: 10,
         });
-        if (newSkillDoc) {
-            skillId = newSkillDoc.id; // Get the actual ID of the newly created skill
-        } else {
-            throw new Error("Failed to create new skill document.");
-        }
+        skillId = newSkillDocRef.id;
       }
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
 
-      // Step 2.5: Apply Soul Link bonus if active
+      // Apply Soul Link bonus if active
       if (fireteamData?.streakActive) {
         xpGained = Math.round(xpGained * 1.2);
+      }
+      
+      // Apply Momentum Flame bonus if active
+      if (userData?.momentumFlameActive) {
+        xpGained = Math.round(xpGained * 1.5);
       }
 
       // Always increment the total XP on the skill itself
@@ -102,7 +105,7 @@ export function LogActivityForm() {
       
       // Step 3: Handle file upload if proof is provided
       let proofUrl = '';
-      if (values.proof && values.proof.length > 0) {
+      if (hasProof) {
         const file = values.proof[0];
         try {
           proofUrl = await uploadProofOfWork(user.uid, file);
@@ -125,17 +128,22 @@ export function LogActivityForm() {
         timestamp: Date.now(),
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
-        isVerified: false, // Default to not verified
+        isVerified: !hasProof, // Auto-verified if no proof is provided
       };
       addDocumentNonBlocking(userLogsCollection, newLog);
 
       // Step 5: Update user stats
       const statUpdate = {
-        xp: increment(xpGained),
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
-        momentumFlameActive: true, // Logging an activity keeps the flame alive
+        momentumFlameActive: true,
       };
+
+      // Only give XP now if there's no proof needed
+      if (!hasProof) {
+        (statUpdate as any).xp = increment(xpGained);
+      }
+
       updateDocumentNonBlocking(userRef, statUpdate);
       
       // Step 6: Update Faction Challenge score
@@ -154,12 +162,19 @@ export function LogActivityForm() {
 
       // Step 7: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
+      let toastDescription = `Your '${skillName}' activity was logged as <strong>${category}</strong>.`;
+      if (!hasProof) {
+         toastDescription += ` (+${xpGained} XP)`;
+      } else {
+         toastDescription += ` Awaiting verification for ${xpGained} XP.`;
+      }
+
       toast({
         title: "Activity Logged!",
         description: (
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category as SkillCategory] }}/>
-            <span>Your '{skillName}' activity was logged as <strong>{category}</strong>. {fireteamData?.streakActive && ' (Soul Link Bonus!)'} (+{xpGained} XP)</span>
+            <span dangerouslySetInnerHTML={{ __html: toastDescription }} />
           </div>
         )
       });
