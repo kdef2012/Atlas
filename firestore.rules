@@ -24,6 +24,8 @@
  *   needing to perform extra document reads.
  * - Log Ownership: Documents in `/users/{userId}/logs/{logId}` contain a `userId` field that must
  *   match the path, ensuring data integrity and simplifying ownership checks for collection group queries.
+ * - Fireteam Membership: The `members` map in `/fireteams/{fireteamId}` allows for checking if a
+ *   user is part of a team without a separate document read, crucial for the 'Soul Link' mechanic.
  *
  * Structural Segregation:
  * - The ruleset leverages a clear separation between private and public data. User-specific,
@@ -58,6 +60,13 @@ service cloud.firestore {
      */
     function isExistingOwner(userId) {
       return isOwner(userId) && resource != null;
+    }
+    
+    /**
+     * Checks if the requesting user is a member of the fireteam specified in the resource.
+     */
+    function isFireteamMember() {
+      return isSignedIn() && resource.data.members[request.auth.uid] == true;
     }
 
     /**
@@ -109,23 +118,19 @@ service cloud.firestore {
     }
 
     /**
-     * @description   Fireteams are public and can be read by anyone. Write access is
-     *                currently disabled pending schema updates.
+     * @description   Fireteams are public and can be read by anyone. Writes are restricted
+     *                to the owner.
      * @path          /fireteams/{fireteamId}
-     * @allow         (list) Any user (authenticated or not) listing all fireteams.
-     * @deny          (create) Any user attempting to create a fireteam.
-     * @principle     Public Read with Denied Writes. This is a secure default because the
-     *                'Fireteam' entity is missing an ownership or membership field for authorization.
+     * @allow         (create) Any authenticated user can create a fireteam, becoming its owner.
+     * @deny          (update) A user trying to modify a fireteam they do not own.
+     * @principle     Public Read with Owner-Only Writes, based on a denormalized 'ownerId' field.
      */
     match /fireteams/{fireteamId} {
       allow get: if true;
       allow list: if true;
-
-      // CRITICAL: Cannot implement owner-only or member-only writes. The 'Fireteam' entity
-      // is missing an 'ownerId' field or a `members` map for authorization checks.
-      allow create: if false; // TODO: Add owner/member validation once the schema is updated.
-      allow update: if false; // TODO: Add owner/member validation once the schema is updated.
-      allow delete: if false; // TODO: Add owner/member validation once the schema is updated.
+      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.ownerId);
+      allow delete: if isExistingOwner(resource.data.ownerId);
     }
   }
 }

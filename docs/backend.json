@@ -146,10 +146,24 @@
         "country": {
           "type": "string",
           "description": "The country where the fireteam is based."
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "The user ID of the fireteam's creator."
+        },
+        "members": {
+          "type": "object",
+          "description": "A map of user IDs who are members of this fireteam. Keys are user IDs, values are true.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "type": "boolean"
+            }
+          }
         }
       },
       "required": [
-        "id"
+        "id",
+        "ownerId"
       ]
     }
   },
