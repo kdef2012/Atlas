@@ -177,14 +177,14 @@ export function FireteamStatus() {
                     <div className="text-center text-muted-foreground py-4">
                         <p className="mb-4">You are not in a Fireteam.</p>
                         <Button asChild size="sm">
-                            <Link href="/fireteams/create">
+                            <Link href="/fireteams">
                                 <PlusCircle className="mr-2 h-4 w-4" />
-                                Create a Team
+                                Find a Team
                             </Link>
                         </Button>
                     </div>
                 )}
             </CardContent>
         </Card>
-    )
+    );
 }
