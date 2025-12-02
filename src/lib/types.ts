@@ -19,8 +19,7 @@ export interface Skill {
   category: SkillCategory;
   xp: number;
   level: number;
-  creatorId: string;
-  users: number; // count of users who adopted this skill
+  pioneer?: boolean; // Is this a user-discovered skill?
 }
 
 export interface Quest {
@@ -39,7 +38,7 @@ export interface Fireteam {
 }
 
 export const CATEGORY_COLORS: Record<SkillCategory, string> = {
-  Physical: 'hsl(var(--chart-5))', // red-ish
+  Physical: 'hsl(var(--chart-5))', // red
   Mental: 'hsl(var(--chart-2))',   // blue
   Social: 'hsl(var(--chart-1))',   // purple
   Practical: 'hsl(var(--chart-3))', // green

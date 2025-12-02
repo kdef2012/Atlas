@@ -1,28 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { CATEGORY_COLORS, type SkillCategory } from '@/lib/types';
+import { CATEGORY_COLORS, type Skill, type SkillCategory } from '@/lib/types';
 
 // In a real app, this would come from a database.
-const mockSkills = [
-  { name: 'Running', xp: 500, category: 'Physical' as SkillCategory },
-  { name: 'React', xp: 1200, category: 'Mental' as SkillCategory },
-  { name: 'Public Speaking', xp: 300, category: 'Social' as SkillCategory },
-  { name: 'Cooking', xp: 750, category: 'Practical' as SkillCategory },
-  { name: 'Guitar', xp: 900, category: 'Creative' as SkillCategory },
-  { name: 'Weightlifting', xp: 1500, category: 'Physical' as SkillCategory },
-  { name: 'Meditation', xp: 250, category: 'Mental' as SkillCategory },
-  { name: 'Networking', xp: 400, category: 'Social' as SkillCategory },
-  { name: 'Budgeting', xp: 600, category: 'Practical' as SkillCategory },
-  { name: 'Spearfishing', xp: 150, category: 'Physical' as SkillCategory, pioneer: true }, // Pioneer skill
-  { name: 'Python', xp: 1100, category: 'Mental' as SkillCategory },
+const mockSkills: (Skill & { category: SkillCategory })[] = [
+  { id: '1', name: 'Running', xp: 500, level: 5, category: 'Physical' },
+  { id: '2', name: 'React', xp: 1200, level: 12, category: 'Mental' },
+  { id: '3', name: 'Public Speaking', xp: 300, level: 3, category: 'Social' },
+  { id: '4', name: 'Cooking', xp: 750, level: 7, category: 'Practical' },
+  { id: '5', name: 'Guitar', xp: 900, level: 9, category: 'Creative' },
+  { id: '6', name: 'Weightlifting', xp: 1500, level: 15, category: 'Physical' },
+  { id: '7', name: 'Meditation', xp: 250, level: 2, category: 'Mental' },
+  { id: '8', name: 'Networking', xp: 400, level: 4, category: 'Social' },
+  { id: '9', name: 'Budgeting', xp: 600, level: 6, category: 'Practical' },
+  { id: '10', name: 'Spearfishing', xp: 150, level: 1, category: 'Physical', pioneer: true }, // Pioneer skill
+  { id: '11', name: 'Python', xp: 1100, level: 11, category: 'Mental' },
 ];
 
-interface SkillNode {
-  name: string;
-  xp: number;
+interface SkillNode extends Skill {
   category: SkillCategory;
-  pioneer?: boolean;
   size: number;
   x: string;
   y: string;
@@ -90,7 +87,7 @@ export function NebulaView() {
               {node.name}
             </p>
             <p className="text-xs text-white/80" style={{ textShadow: '0 0 5px black' }}>
-              Lvl {Math.floor(node.xp / 100)}
+              Lvl {node.level}
             </p>
             {node.pioneer && <p className="text-xs font-bold text-accent neon-text">PIONEER</p>}
           </div>
