@@ -6,12 +6,14 @@ import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Box, ShieldAlert, Sparkles, Gem, Shirt } from 'lucide-react';
-import type { Archetype } from '@/lib/types';
-import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import type { Archetype, Quest, User } from '@/lib/types';
+import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
+import { collection, doc, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { generateQuests } from '@/ai/flows/generate-quests';
+import { useToast } from '@/hooks/use-toast';
 
 interface RewardPageProps {}
 
@@ -55,21 +57,63 @@ export default function RewardPage({}: RewardPageProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const [isClaimed, setIsClaimed] = useState(false);
+  const { toast } = useToast();
+
+  const handleQuestGeneration = useCallback(async (userData: User) => {
+    if (!user) return;
+    try {
+      const questsCollectionRef = collection(firestore, 'users', user.uid, 'quests');
+      const aiResult = await generateQuests({
+        archetype: userData.archetype,
+        level: 1, // User is now level 1
+        stats: {
+            physical: userData.physicalStat,
+            mental: userData.mentalStat,
+            social: userData.socialStat,
+            practical: userData.practicalStat,
+            creative: userData.creativeStat,
+        }
+      });
+      
+      // Add the new quests to Firestore without blocking UI
+      aiResult.quests.forEach(quest => {
+          const newQuest: Omit<Quest, 'id'> = {
+              ...quest,
+              isCompleted: false,
+              userId: user.uid,
+          };
+          addDocumentNonBlocking(questsCollectionRef, newQuest);
+      });
+
+    } catch (error) {
+        console.error("Failed to generate initial quests:", error);
+        toast({
+            variant: 'destructive',
+            title: "The Oracle is Silent",
+            description: "Could not generate your first quests. You can generate them from the Quest Log.",
+        })
+    }
+  }, [user, firestore, toast]);
 
   useEffect(() => {
     const claimReward = async () => {
       if (user && archetype) {
         const userRef = doc(firestore, 'users', user.uid);
         const userDoc = await getDoc(userRef);
-        // Only apply the rewards if the user is still level 0 to prevent replay.
+        
         if (userDoc.exists() && userDoc.data().level === 0) {
-          updateDocumentNonBlocking(userRef, { 
+          const updates = { 
             level: 1, 
             xp: 50,
             gems: 3,
-            streakFreezes: 1, // As per original design, a streak freeze is a good first reward
-            'avatarLayers.newbie_sweatband': true, // Equip the cosmetic
-          });
+            streakFreezes: 1,
+            'avatarLayers.newbie_sweatband': true,
+          };
+          updateDocumentNonBlocking(userRef, updates);
+
+          // After rewards are applied, generate the first quests based on the updated user data
+          const updatedUserData = { ...userDoc.data(), ...updates } as User;
+          await handleQuestGeneration(updatedUserData);
         }
       }
     };
@@ -77,7 +121,7 @@ export default function RewardPage({}: RewardPageProps) {
     if (isClaimed) {
         claimReward();
     }
-  }, [isClaimed, user, firestore, archetype]);
+  }, [isClaimed, user, firestore, archetype, handleQuestGeneration]);
 
   if (!archetype) {
     redirect('/onboarding/archetype');
@@ -86,7 +130,6 @@ export default function RewardPage({}: RewardPageProps) {
   const handleClaim = () => {
     setIsClaimed(true);
   };
-
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-black">

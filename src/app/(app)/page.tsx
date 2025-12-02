@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Suspense } from 'react';
@@ -12,10 +11,10 @@ import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
 import { QuestCard } from "@/components/dashboard/QuestCard";
 import { FireteamStatus } from "@/components/dashboard/FireteamStatus";
 import { FirstQuest } from '@/components/dashboard/FirstQuest';
-import { useDoc, useUser, useMemoFirebase } from '@/firebase';
-import { doc } from 'firebase/firestore';
+import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { User } from '@/lib/types';
+import type { Quest, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
@@ -26,8 +25,14 @@ function DashboardPageContent() {
   const { user: authUser } = useUser();
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading } = useDoc<User>(userRef);
+  
+  const questsCollectionRef = useMemoFirebase(
+      () => authUser ? collection(firestore, 'users', authUser.uid, 'quests') : null,
+      [firestore, authUser]
+  );
+  const { data: quests, isLoading: areQuestsLoading } = useCollection<Quest>(questsCollectionRef);
 
-  if (isLoading || !user) {
+  if (isLoading || !user || areQuestsLoading) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1 space-y-6">
@@ -64,6 +69,8 @@ function DashboardPageContent() {
 
   const isInactive = user.lastLogTimestamp ? (Date.now() - user.lastLogTimestamp) > (24 * 60 * 60 * 1000) : false;
   
+  const activeQuests = quests?.filter(q => !q.isCompleted).slice(0, 2) || [];
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1 space-y-6">
@@ -110,15 +117,7 @@ function DashboardPageContent() {
               </CardHeader>
               <CardContent className="space-y-4">
                   <FirstQuest />
-                  <QuestCard 
-                    quest={{ 
-                      id: 'q2', 
-                      name: 'Pioneer: First Steps', 
-                      description: 'Log a new, unique skill that doesn\'t exist in the ATLAS yet.',
-                      category: 'Creative',
-                      isCompleted: false // This would be dynamic
-                    }}
-                  />
+                  {activeQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)}
                   <Button asChild variant="outline" className="w-full group">
                     <Link href="/quests">
                         View All Quests
@@ -158,5 +157,3 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
-    
