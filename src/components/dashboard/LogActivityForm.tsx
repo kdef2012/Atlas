@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { categorizeUserSkill } from "@/ai/flows/categorize-user-skills";
+import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
-import type { SkillCategory, User } from "@/lib/types";
+import type { Skill, SkillCategory } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
-import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, query, where, getDocs, getDoc, serverTimestamp, increment } from "firebase/firestore";
+import { collection, doc, increment } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -34,9 +34,10 @@ export function LogActivityForm() {
   const { user } = useUser();
   const firestore = useFirestore();
 
-  const skillsCollection = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
+  const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
 
+  const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -49,38 +50,36 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection) return;
+    if (!user || !userLogsCollection || !allSkills) return;
 
     setIsLoading(true);
     try {
-      // Step 1: Categorize the skill
-      const result = await categorizeUserSkill({ skill: values.skill });
-      const category = result.category as SkillCategory;
-      const Icon = CATEGORY_ICONS[category];
-
-      let skillId = '';
-      let isPioneer = false;
-
-      // Step 2: Check if skill exists
-      const skillQuery = query(skillsCollection, where("name", "==", values.skill));
-      const skillSnapshot = await getDocs(skillQuery);
+      // Step 1: Call the AI flow to find or create the skill
+      const result = await findOrCreateSkill({ 
+        activity: values.skill,
+        existingSkills: allSkills,
+      });
       
-      if (skillSnapshot.empty) {
-        // Skill doesn't exist, create it
-        isPioneer = true;
-        const newSkillDoc = await addDocumentNonBlocking(collection(firestore, 'skills'), {
-          name: values.skill,
+      let { skillId, isNewSkill, skillName, category } = result;
+
+      // Step 2: If it's a new skill, create it in Firestore
+      if (isNewSkill) {
+        const newSkillDoc = await addDocumentNonBlocking(skillsCollectionRef, {
+          name: skillName,
           category: category,
           pioneerUserId: user.uid,
-          xp: 10,
+          xp: 10, // Initial XP for a new skill
         });
-        skillId = newSkillDoc?.id || '';
-      } else {
-        // Skill exists
-        skillId = skillSnapshot.docs[0].id;
+        if (newSkillDoc) {
+            skillId = newSkillDoc.id; // Get the actual ID of the newly created skill
+        } else {
+            throw new Error("Failed to create new skill document.");
+        }
       }
       
-      const xpGained = isPioneer ? 150 : 100; // Bonus XP for pioneers
+      const xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
+
+      // Always increment the total XP on the skill itself
       if (skillId) {
         const skillRef = doc(firestore, 'skills', skillId);
         updateDocumentNonBlocking(skillRef, { xp: increment(10) });
@@ -104,7 +103,6 @@ export function LogActivityForm() {
         }
       }
 
-
       // Step 4: Create a log entry
       await addDocumentNonBlocking(userLogsCollection, {
         userId: user.uid,
@@ -116,22 +114,21 @@ export function LogActivityForm() {
 
       // Step 5: Update user stats
       const userRef = doc(firestore, 'users', user.uid);
-      
       const statUpdate = {
         xp: increment(xpGained),
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
       };
-
       updateDocumentNonBlocking(userRef, statUpdate);
 
-
+      // Step 6: Show feedback toast
+      const Icon = CATEGORY_ICONS[category];
       toast({
         title: "Activity Logged!",
         description: (
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category] }}/>
-            <span>Your activity was categorized as <strong>{category}</strong>. {isPioneer && "You're a Pioneer!"} (+{xpGained} XP)</span>
+            <span>Your '{skillName}' activity was logged as <strong>{category}</strong>. {isNewSkill && "You're a Pioneer!"} (+{xpGained} XP)</span>
           </div>
         )
       });
@@ -179,7 +176,7 @@ export function LogActivityForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
+        <Button type="submit" disabled={isLoading || !user || !allSkills} className="w-full font-bold">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Log XP
         </Button>

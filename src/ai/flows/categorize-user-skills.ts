@@ -24,6 +24,9 @@ const CategorizeUserSkillOutputSchema = z.object({
 });
 export type CategorizeUserSkillOutput = z.infer<typeof CategorizeUserSkillOutputSchema>;
 
+/**
+ * @deprecated This flow is deprecated in favor of the more comprehensive findOrCreateSkill flow.
+ */
 export async function categorizeUserSkill(
   input: CategorizeUserSkillInput
 ): Promise<CategorizeUserSkillOutput> {
