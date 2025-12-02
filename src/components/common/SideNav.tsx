@@ -19,6 +19,7 @@ import {
   Settings,
   LogOut,
   Atom,
+  ScrollText,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -32,6 +33,7 @@ import { useRouter } from "next/navigation";
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/nebula", label: "Nebula", icon: Atom },
+  { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/turf-wars", label: "Turf Wars", icon: Map },
   { href: "/settings", label: "Settings", icon: Settings },

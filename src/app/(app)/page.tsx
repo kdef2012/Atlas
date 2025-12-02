@@ -2,7 +2,9 @@
 'use client';
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
 import { TwinskieAvatar } from "@/components/dashboard/TwinskieAvatar";
 import { StatsRadarChart } from "@/components/dashboard/StatsRadarChart";
 import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
@@ -14,6 +16,7 @@ import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ArrowRight } from 'lucide-react';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -38,11 +41,16 @@ function DashboardPageContent() {
                 <Skeleton className="h-96 w-full" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Skeleton className="h-60 w-full" />
-                    <div className="space-y-6">
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
-                      <Skeleton className="h-24 w-full" />
-                    </div>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle className="font-headline">Quest Log</CardTitle>
+                            <CardDescription>Your current objectives.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Skeleton className="h-20 w-full" />
+                             <Skeleton className="h-10 w-full" />
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
         </div>
@@ -98,27 +106,30 @@ function DashboardPageContent() {
                 </CardContent>
             </Card>
 
-            <div className="space-y-6">
-              <FirstQuest />
-              <QuestCard 
-                quest={{ 
-                  id: 'q2', 
-                  name: 'Pioneer: First Steps', 
-                  description: 'Log a new, unique skill that doesn\'t exist in the ATLAS yet.',
-                  category: 'Creative',
-                  isCompleted: false // This would be dynamic
-                }}
-              />
-               <QuestCard 
-                quest={{ 
-                  id: 'q3', 
-                  name: 'Social Bond', 
-                  description: 'Join or create a Fireteam.',
-                  category: 'Social',
-                  isCompleted: false // This would be dynamic
-                }}
-              />
-            </div>
+            <Card>
+              <CardHeader>
+                  <CardTitle className="font-headline">Quest Log</CardTitle>
+                  <CardDescription>A glimpse of your objectives.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <FirstQuest />
+                  <QuestCard 
+                    quest={{ 
+                      id: 'q2', 
+                      name: 'Pioneer: First Steps', 
+                      description: 'Log a new, unique skill that doesn\'t exist in the ATLAS yet.',
+                      category: 'Creative',
+                      isCompleted: false // This would be dynamic
+                    }}
+                  />
+                  <Button asChild variant="outline" className="w-full group">
+                    <Link href="/quests">
+                        View All Quests
+                        <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+              </CardContent>
+            </Card>
         </div>
       </div>
     </div>

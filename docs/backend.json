@@ -51,6 +51,12 @@
         "lastLogTimestamp": {
           "type": "number",
           "description": "The Unix timestamp of the user's last logged activity."
+        },
+        "quests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/backend/entities/Quest"
+          }
         }
       },
       "required": [
