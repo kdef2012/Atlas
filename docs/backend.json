@@ -77,6 +77,10 @@
           "type": "string",
           "description": "The name of the skill (e.g., 'Coding', 'Running')."
         },
+        "description": {
+            "type": "string",
+            "description": "A brief description of the skill."
+        },
         "category": {
           "type": "string",
           "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)."
@@ -84,6 +88,13 @@
         "pioneerUserId": {
           "type": "string",
           "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))"
+        },
+        "prerequisites": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "description": "An array of skill IDs that must be unlocked before this skill can be acquired."
         }
       },
       "required": [

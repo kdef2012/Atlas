@@ -1,4 +1,3 @@
-
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
@@ -25,10 +24,12 @@ export interface User {
 export interface Skill {
   id:string;
   name: string;
+  description: string;
   category: SkillCategory;
   xp: number;
   pioneer?: boolean; // Is this a user-discovered skill?
   pioneerUserId?: string;
+  prerequisites?: string[]; // Array of skill IDs
 }
 
 export interface Fireteam {
