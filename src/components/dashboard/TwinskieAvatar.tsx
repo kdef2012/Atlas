@@ -19,7 +19,7 @@ const LAYER_MAP: Record<SkillCategory, string> = {
     Creative: 'avatar-layer-creative',
 };
 
-const BASE_AVATAR_MAP: Record<SkillCategory, string> = {
+const BASE_AVATAR_MAP: Record<string, string> = {
     Physical: 'twinskie-physical',
     Mental: 'twinskie-mental',
     Social: 'twinskie-social',
@@ -110,7 +110,7 @@ export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
           width={400}
           height={400}
           data-ai-hint={baseAvatar.imageHint}
-          className={cn("absolute inset-0 object-cover transition-transform duration-500", isInactive && "scale-95")}
+          className={cn("absolute inset-0 w-full h-full object-cover transition-transform duration-500", isInactive && "scale-95")}
           priority
         />
       )}
@@ -123,7 +123,7 @@ export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
             width={400}
             height={400}
             data-ai-hint={layer.imageHint}
-            className="absolute inset-0 object-cover transition-opacity duration-500 animate-pulse-faint"
+            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 animate-pulse-faint"
         />
       ))}
 
