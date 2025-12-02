@@ -15,7 +15,8 @@ import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+import { useToast } from '@/hooks/use-toast';
 
 function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
     const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
@@ -80,6 +81,7 @@ function FireteamMembers({ fireteam }: { fireteam: Fireteam }) {
 export function FireteamStatus() {
     const firestore = useFirestore();
     const { user: authUser } = useUser();
+    const { toast } = useToast();
     
     const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
@@ -94,6 +96,8 @@ export function FireteamStatus() {
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
     }, [firestore, memberIds]);
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
+    
+    const prevStreakStatusRef = useRef<boolean | undefined>(fireteam?.streakActive);
 
     useEffect(() => {
         if (fireteamRef && members && members.length > 0) {
@@ -106,6 +110,22 @@ export function FireteamStatus() {
             }
         }
     }, [members, fireteamRef, fireteam]);
+
+    useEffect(() => {
+        // This effect triggers the notification when a streak breaks.
+        const prevStreakStatus = prevStreakStatusRef.current;
+        const currentStreakStatus = fireteam?.streakActive;
+
+        if (prevStreakStatus === true && currentStreakStatus === false) {
+            toast({
+                variant: 'destructive',
+                title: 'Soul Link Broken!',
+                description: `The activity streak for Fireteam "${fireteam.name}" has been broken.`,
+            });
+        }
+        // Update the ref to the current status for the next render.
+        prevStreakStatusRef.current = currentStreakStatus;
+    }, [fireteam?.streakActive, fireteam?.name, toast]);
 
     const isLoading = isUserLoading || (fireteamId && (isFireteamLoading || areMembersLoading));
     const isStreakActive = fireteam?.streakActive ?? false;
