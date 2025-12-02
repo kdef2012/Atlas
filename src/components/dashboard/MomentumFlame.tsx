@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Flame, ShieldOff } from "lucide-react";
 import { useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { doc } from "firebase/firestore";
+import { doc, increment } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from '@/lib/utils';
@@ -24,10 +24,21 @@ export function MomentumFlame() {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             const isFlameActive = user.lastLogTimestamp > twentyFourHoursAgo;
             
-            // If the current flame status in Firestore is different from what we've calculated, update it.
-            // This handles the case where a user becomes inactive. Logging an activity already sets it to true.
-            if (user.momentumFlameActive !== isFlameActive) {
-                updateDocumentNonBlocking(userRef, { momentumFlameActive: isFlameActive });
+            // If the flame should be inactive but is still marked as active in Firestore,
+            // trigger the decay and update the status.
+            if (user.momentumFlameActive && !isFlameActive) {
+                updateDocumentNonBlocking(userRef, { 
+                    momentumFlameActive: false,
+                    physicalStat: increment(-1),
+                    mentalStat: increment(-1),
+                    socialStat: increment(-1),
+                    practicalStat: increment(-1),
+                    creativeStat: increment(-1),
+                });
+            } else if (!user.momentumFlameActive && isFlameActive) {
+                 // If the flame is inactive but should be active (e.g. after a new log), just update the status.
+                 // The logging action itself handles the XP bonus.
+                 updateDocumentNonBlocking(userRef, { momentumFlameActive: isFlameActive });
             }
         }
     }, [user, userRef]);
@@ -47,7 +58,7 @@ export function MomentumFlame() {
                     <Flame />
                     Momentum Flame
                 </CardTitle>
-                <CardDescription>Your personal activity streak.</CardDescription>
+                <CardDescription>Your personal daily activity streak.</CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="flex justify-between items-center mb-2">
@@ -58,11 +69,9 @@ export function MomentumFlame() {
                     </Badge>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                    {isFlameActive ? "Your flame is burning brightly! Keep logging daily." : "Your flame has gone out. Log an activity to reignite it!"}
+                    {isFlameActive ? "Your flame is burning brightly! Log an activity every 24 hours." : "Your flame went out, slightly reducing your stats. Log an activity to reignite it!"}
                 </p>
             </CardContent>
         </Card>
     )
 }
-
-    
