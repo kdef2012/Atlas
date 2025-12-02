@@ -24,6 +24,16 @@
           "type": "string",
           "description": "The user's display name or username."
         },
+        "gender": {
+          "type": "string",
+          "enum": ["Male", "Female", "Non-binary"],
+          "description": "The user's selected gender identity."
+        },
+        "bodyType": {
+          "type": "string",
+          "enum": ["Slim", "Athletic", "Muscular"],
+          "description": "The user's selected starting body type."
+        },
         "physicalStat": {
           "type": "number",
           "description": "The user's physical skill points"

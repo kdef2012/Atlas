@@ -83,7 +83,7 @@ export default function ArchetypeSelectionPage() {
         { merge: true }
       );
       // Navigate programmatically after initiating the write
-      router.push(`/onboarding/welcome?archetype=${archetype}`);
+      router.push(`/onboarding/customize?archetype=${archetype}`);
     }
   };
 
@@ -113,5 +113,3 @@ export default function ArchetypeSelectionPage() {
     </main>
   );
 }
-
-    

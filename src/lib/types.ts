@@ -5,11 +5,16 @@ export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
 export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Creative';
 
+export type Gender = 'Male' | 'Female' | 'Non-binary';
+export type BodyType = 'Slim' | 'Athletic' | 'Muscular';
+
 export interface User {
   id: string;
   archetype: Archetype;
   email: string | null;
   userName: string;
+  gender?: Gender;
+  bodyType?: BodyType;
   physicalStat: number;
   mentalStat: number;
   socialStat: number;
@@ -80,7 +85,3 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Streak: Flame,
   Gems: Gem,
 };
-
-    
-
-    
