@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Tower } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2 } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -123,7 +123,7 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Streak: Flame,
   Gems: Gem,
   Verify: ShieldCheck,
-  Guilds: Tower,
+  Guilds: Building2,
 };
 
 export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useDoc, addDocumentNonBlocking, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
-import { Loader2, Tower } from 'lucide-react';
+import { Loader2, Building2 } from 'lucide-react';
 import type { SkillCategory, User } from '@/lib/types';
 import { CATEGORY_ICONS } from '@/lib/types';
 
@@ -159,7 +159,7 @@ export default function CreateGuildPage() {
             />
             <p className="text-sm text-muted-foreground">Your Guild will be founded in this region. Only users from this region will be able to see and join it initially.</p>
             <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tower className="mr-2 h-4 w-4" />}
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Building2 className="mr-2 h-4 w-4" />}
               Found Guild
             </Button>
           </form>
@@ -168,5 +168,3 @@ export default function CreateGuildPage() {
     </Card>
   );
 }
-
-    

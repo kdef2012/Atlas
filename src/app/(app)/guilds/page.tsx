@@ -9,7 +9,7 @@ import { collection, doc, query, where } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { Guild, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, PlusCircle, MapPin, Loader2, CheckCircle, Tower } from 'lucide-react';
+import { Users, PlusCircle, MapPin, Loader2, CheckCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -136,7 +136,7 @@ export default function GuildsPage() {
       <CardHeader className="flex flex-row items-center justify-between">
         <div>
           <CardTitle className="font-headline text-3xl flex items-center gap-2">
-            <Tower className="w-8 h-8 text-primary" />
+            <Building2 className="w-8 h-8 text-primary" />
             Find a Guild
           </CardTitle>
           <CardDescription>Join a community of like-minded individuals in your region.</CardDescription>
@@ -156,5 +156,3 @@ export default function GuildsPage() {
     </Card>
   );
 }
-
-    

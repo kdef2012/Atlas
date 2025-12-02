@@ -21,7 +21,7 @@ import {
   Atom,
   ScrollText,
   ShieldCheck,
-  Tower,
+  Building2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -37,7 +37,7 @@ const navItems = [
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/fireteams", label: "Fireteams", icon: Users },
-  { href: "/guilds", label: "Guilds", icon: Tower },
+  { href: "/guilds", label: "Guilds", icon: Building2 },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -107,5 +107,3 @@ export function SideNav() {
     </>
   );
 }
-
-    
