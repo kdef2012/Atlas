@@ -161,7 +161,7 @@ service cloud.firestore {
     match /territories/{territoryId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow write: if false; // Future implementation will allow fireteam owners to claim.
+      allow write: if isSignedIn();
     }
   }
 }
