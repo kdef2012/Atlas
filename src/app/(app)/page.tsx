@@ -17,6 +17,7 @@ import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
+import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -36,6 +37,7 @@ function DashboardPageContent() {
                    <Skeleton className="w-48 h-48 rounded-full" />
                 </Card>
                 <Skeleton className="h-56 w-full" />
+                <Skeleton className="h-24 w-full" />
             </div>
             <div className="lg:col-span-2 space-y-6">
                 <Skeleton className="h-96 w-full" />
@@ -79,6 +81,7 @@ function DashboardPageContent() {
           </CardHeader>
           <TwinskieAvatar dominantCategory={dominantCategory} isInactive={isInactive} />
         </Card>
+        <MomentumFlame />
         <FireteamStatus />
       </div>
 
@@ -161,3 +164,5 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
+
+    

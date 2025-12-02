@@ -133,6 +133,7 @@ export function LogActivityForm() {
         xp: increment(xpGained),
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
+        momentumFlameActive: true, // Logging an activity keeps the flame alive
       };
       updateDocumentNonBlocking(userRef, statUpdate);
       
@@ -213,3 +214,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    

@@ -75,6 +75,8 @@ export default function ArchetypeSelectionPage() {
           level: 0,
           xp: 0,
           unlockedSkills: {},
+          momentumFlameActive: true,
+          gems: 1,
         },
         { merge: true }
       );
@@ -109,3 +111,5 @@ export default function ArchetypeSelectionPage() {
     </main>
   );
 }
+
+    
