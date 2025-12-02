@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Suspense } from 'react';
@@ -18,6 +19,7 @@ import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
+import { TraitBadges } from '@/components/dashboard/TraitBadges';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -35,6 +37,7 @@ function DashboardPageContent() {
                     <Skeleton className="h-4 w-32 mt-2" />
                   </CardHeader>
                    <Skeleton className="w-48 h-48 rounded-full" />
+                   <Skeleton className="h-10 w-full mt-4" />
                 </Card>
                 <Skeleton className="h-56 w-full" />
                 <Skeleton className="h-24 w-full" />
@@ -70,6 +73,7 @@ function DashboardPageContent() {
             <CardDescription>Your digital self.</CardDescription>
           </CardHeader>
           <TwinskieAvatar isInactive={isInactive} />
+          <TraitBadges />
         </Card>
         <MomentumFlame />
         <FireteamStatus />

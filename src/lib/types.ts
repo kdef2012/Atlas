@@ -1,5 +1,6 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert, ShieldCheck } from 'lucide-react';
+
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert, ShieldCheck, Crown } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -11,6 +12,13 @@ export type BodyType = 'Slim' | 'Athletic' | 'Muscular';
 export interface UserSkillData {
   isUnlocked: boolean;
   xp: number;
+}
+
+export interface Trait {
+  id: string;
+  name: string;
+  description: string;
+  icon: keyof typeof TRAIT_ICONS;
 }
 
 export interface User {
@@ -35,6 +43,7 @@ export interface User {
   momentumFlameActive: boolean;
   gems: number;
   streakFreezes: number;
+  traits?: Partial<Record<string, boolean>>;
 }
 
 export interface Skill {
@@ -100,6 +109,10 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Streak: Flame,
   Gems: Gem,
   Verify: ShieldCheck,
+};
+
+export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+    pioneer: Crown,
 };
 
     

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -72,10 +73,15 @@ export function LogActivityForm() {
       
       let { skillId, isNewSkill, skillName, category, prerequisites, cost } = result;
       const hasProof = values.proof && values.proof.length > 0;
+      
+      const statUpdate: any = {
+        [`${category.toLowerCase()}Stat`]: increment(10),
+        lastLogTimestamp: Date.now(),
+        momentumFlameActive: true,
+      };
 
-      // Step 2: If it's a new skill, create it in Firestore
+      // Step 2: If it's a new skill, create it in Firestore and grant Pioneer trait
       if (isNewSkill) {
-        // Since addDocumentNonBlocking is tricky with getting the new ID back, we'll use the blocking `addDoc` here
         const newSkillDocRef = await addDoc(skillsCollectionRef, {
           name: skillName,
           category: category,
@@ -85,6 +91,9 @@ export function LogActivityForm() {
           cost: cost || { category: category, points: 10 },
         });
         skillId = newSkillDocRef.id;
+        
+        // Grant Pioneer Trait
+        statUpdate['traits.pioneer'] = true;
       }
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
@@ -135,12 +144,7 @@ export function LogActivityForm() {
       addDocumentNonBlocking(userLogsCollection, newLog);
 
       // Step 5: Update user stats
-      const statUpdate: any = {
-        [`${category.toLowerCase()}Stat`]: increment(10),
-        lastLogTimestamp: Date.now(),
-        momentumFlameActive: true,
-        [`userSkills.${skillId}.xp`]: increment(xpGained),
-      };
+      statUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
 
       // Only give global XP now if there's no proof needed
       if (!hasProof) {
@@ -236,3 +240,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    
