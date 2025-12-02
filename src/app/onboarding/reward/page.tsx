@@ -38,7 +38,7 @@ export default function RewardPage({}: RewardPageProps) {
         const userDoc = await getDoc(userRef);
         // Only apply the level up and rewards if the user is still level 0
         if(userDoc.exists() && userDoc.data().level === 0){
-             let layerToUnlock: SkillCategory = 'Physical';
+             let layerToUnlock: SkillCategory = 'Physical'; // Default for Titan
              if (archetype === 'Sage') layerToUnlock = 'Mental';
              if (archetype === 'Maverick') layerToUnlock = 'Creative';
             
