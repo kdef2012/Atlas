@@ -7,8 +7,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Check, Loader2, X } from 'lucide-react';
 import type { Log, Skill, User } from '@/lib/types';
-import { useFirestore, updateDocumentNonBlocking, useUser } from '@/firebase';
-import { doc, increment } from 'firebase/firestore';
+import { useFirestore, updateDocumentNonBlocking, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { doc, getDoc, increment } from 'firebase/firestore';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -28,18 +28,20 @@ interface SubmissionCardProps {
 export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
     const { log, skill, user } = submission;
     const firestore = useFirestore();
-    const { user: voter, isUserLoading } = useUser(); // The user who is voting
+    const { user: voter } = useUser(); // The user who is voting
+    const voterRef = useMemoFirebase(() => voter ? doc(firestore, 'users', voter.uid) : null, [firestore, voter]);
+    const { data: voterData } = useDoc<User>(voterRef);
+
     const { toast } = useToast();
     const [isVoting, setIsVoting] = useState(false);
 
     const handleVote = async (isPass: boolean) => {
-        if (!voter) {
+        if (!voter || !voterRef || voterData === undefined) {
             toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to vote.'});
             return;
         }
         setIsVoting(true);
         const logRef = doc(firestore, 'users', log.userId, 'logs', log.id);
-        const voterRef = doc(firestore, 'users', voter.uid);
 
         try {
             if (isPass) {
@@ -69,11 +71,9 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 verificationVotes: increment(1) 
             };
             
-            // We need to fetch the voter's data to check the new total
-            const voterDoc = await (await fetch(voterRef.path)).json(); // Simplified fetch, assumes API route
-            const newVoteCount = (voterDoc.verificationVotes || 0) + 1;
+            const newVoteCount = (voterData?.verificationVotes || 0) + 1;
 
-            if(newVoteCount >= VINDICATOR_THRESHOLD && !voterDoc.traits?.vindicator) {
+            if(newVoteCount >= VINDICATOR_THRESHOLD && !voterData?.traits?.vindicator) {
                 voterUpdate['traits.vindicator'] = true;
                 toast({ title: 'Trait Unlocked: Vindicator!', description: 'Your sharp judgment has been recognized.' });
             }
@@ -133,3 +133,5 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
         </Card>
     );
 }
+
+    

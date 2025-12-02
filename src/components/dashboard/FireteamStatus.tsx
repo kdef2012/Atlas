@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Link from 'next/link';
@@ -137,8 +138,9 @@ export function FireteamStatus() {
                         }
                     });
                     if (traitAwarded) {
-                        batch.commit();
-                        toast({ title: "Trait Unlocked: Soul-Sworn!", description: `Your Fireteam's bond is unbreakable. All members have earned this trait.` });
+                        batch.commit().then(() => {
+                            toast({ title: "Trait Unlocked: Soul-Sworn!", description: `Your Fireteam's bond is unbreakable. All members have earned this trait.` });
+                        });
                     }
                 }
             }
@@ -220,3 +222,5 @@ export function FireteamStatus() {
         </Card>
     );
 }
+
+    

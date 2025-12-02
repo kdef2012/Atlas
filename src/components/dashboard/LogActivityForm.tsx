@@ -22,9 +22,8 @@ import { Loader2, Paperclip } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
-import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, addDoc, getDoc, writeBatch } from "firebase/firestore";
-import type { Log } from "@/lib/log";
+import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
+import { collection, doc, increment, getDoc, writeBatch } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -93,9 +92,10 @@ export function LogActivityForm() {
         const newSkillDocRef = doc(skillsCollectionRef); // Create a reference with a new ID
         batch.set(newSkillDocRef, {
             name: skillName,
+            description: `A new skill discovered by a Pioneer.`,
             category: category,
             pioneerUserId: user.uid,
-            xp: 0, // Will be incremented later
+            xp: 0,
             prerequisites: prerequisites || [],
             cost: cost || { category: category, points: 10 },
             innovatorAwarded: false,
@@ -103,7 +103,10 @@ export function LogActivityForm() {
         skillId = newSkillDocRef.id;
         
         // Grant Pioneer Trait
-        userStatUpdate['traits.pioneer'] = true;
+        if (!userData.traits?.pioneer) {
+          userStatUpdate['traits.pioneer'] = true;
+          toast({ title: "Trait Unlocked: Pioneer!", description: "You've discovered a new skill and expanded the ATLAS!" });
+        }
       }
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
@@ -175,17 +178,17 @@ export function LogActivityForm() {
       };
       
       // Specialist Trait
-      const categoryStat = `${category.toLowerCase()}Stat` as keyof User;
-      const newCategoryValue = (userData[categoryStat] as number || 0) + 10;
+      const categoryStatName = `${category.toLowerCase()}Stat` as keyof typeof currentStats;
+      const newCategoryValue = (currentStats[categoryStatName] || 0) + 10;
       if (newCategoryValue >= SPECIALIST_THRESHOLD && !userData.traits?.specialist) {
           userStatUpdate['traits.specialist'] = true;
           toast({ title: "Trait Unlocked: Specialist!", description: `You've shown deep focus in the ${category} category.` });
       }
 
       // Jack of All Trades Trait
-      const stats = Object.values(currentStats);
-      const minStat = Math.min(...stats);
-      const maxStat = Math.max(...stats);
+      const statsValues = Object.values(currentStats);
+      const minStat = Math.min(...statsValues);
+      const maxStat = Math.max(...statsValues);
       if (minStat >= JACK_OF_ALL_TRADES_THRESHOLD && (maxStat - minStat) <= JACK_OF_ALL_TRADES_RANGE && !userData.traits?.jack_of_all_trades) {
           userStatUpdate['traits.jack_of_all_trades'] = true;
           toast({ title: "Trait Unlocked: Jack of All Trades!", description: "Your balanced approach to life is admirable." });
@@ -193,22 +196,28 @@ export function LogActivityForm() {
       
       batch.update(userRef, userStatUpdate);
       
-      // Always increment the total XP on the skill itself. Do this outside the batch for now
-      // as we need to read the skill doc first for the innovator trait.
+      // Innovator Trait check (must happen after batch commits user stat updates)
       const skillDoc = await getDoc(skillRef);
-      const skillData = skillDoc.data() as Skill;
-      const newSkillXp = (skillData?.xp || 0) + xpGained;
-      
-      // Innovator Trait check
-      if (skillData && skillData.pioneerUserId && !skillData.innovatorAwarded && newSkillXp >= INNOVATOR_THRESHOLD) {
-          const pioneerRef = doc(firestore, 'users', skillData.pioneerUserId);
-          updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true });
-          updateDocumentNonBlocking(skillRef, { innovatorAwarded: true });
-          // Notify the pioneer
-          toast({ title: `Your skill '${skillData.name}' became popular!`, description: "You have been awarded the Innovator trait." });
+      if (skillDoc.exists()) {
+        const skillData = skillDoc.data() as Skill;
+        const newSkillXp = (skillData.xp || 0) + xpGained;
+        
+        if (skillData.pioneerUserId && !skillData.innovatorAwarded && newSkillXp >= INNOVATOR_THRESHOLD) {
+            const pioneerRef = doc(firestore, 'users', skillData.pioneerUserId);
+            updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true });
+            updateDocumentNonBlocking(skillRef, { innovatorAwarded: true });
+            
+            // Check if we need to notify the pioneer
+            const pioneerDoc = await getDoc(pioneerRef);
+            if (pioneerDoc.exists()) {
+              toast({ title: `Your skill '${skillData.name}' became popular!`, description: `User ${pioneerDoc.data().userName} has been awarded the Innovator trait.` });
+            }
+        }
       }
       
+      // Always increment the total XP on the skill itself.
       updateDocumentNonBlocking(skillRef, { xp: increment(xpGained) });
+      
       await batch.commit();
 
 
@@ -285,3 +294,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    
