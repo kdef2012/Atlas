@@ -11,14 +11,6 @@ interface TwinskieAvatarProps {
   isInactive: boolean;
 }
 
-const STAT_THRESHOLDS: Record<SkillCategory, number> = {
-    Physical: 100,
-    Mental: 100,
-    Social: 100,
-    Practical: 100,
-    Creative: 100,
-};
-
 const LAYER_MAP: Record<SkillCategory, string> = {
     Physical: 'avatar-layer-physical',
     Mental: 'avatar-layer-mental',
@@ -37,18 +29,18 @@ export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
   const baseAvatar = PlaceHolderImages.find(p => p.id === 'twinskie-default');
 
   const getVisibleLayers = () => {
-    if (!user) return [];
+    if (!user || !user.avatarLayers) return [];
     
     const layers: ImagePlaceholder[] = [];
     
-    for (const [category, threshold] of Object.entries(STAT_THRESHOLDS) as [SkillCategory, number][]) {
-        const userStat = user[`${category.toLowerCase()}Stat` as keyof User] as number;
-        if (userStat >= threshold) {
-            const layerData = PlaceHolderImages.find(p => p.id === LAYER_MAP[category]);
-            if (layerData) {
-                layers.push(layerData);
-            }
+    // Check for explicit true flags in avatarLayers
+    for (const [category, layerId] of Object.entries(LAYER_MAP)) {
+      if (user.avatarLayers[category as SkillCategory]) {
+        const layerData = PlaceHolderImages.find(p => p.id === layerId);
+        if (layerData) {
+          layers.push(layerData);
         }
+      }
     }
     return layers;
   };

@@ -6,7 +6,7 @@ import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Box, ShieldAlert, Sparkles } from 'lucide-react';
-import type { Archetype } from '@/lib/types';
+import type { Archetype, SkillCategory } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, increment } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
@@ -38,7 +38,7 @@ export default function RewardPage({}: RewardPageProps) {
         const userDoc = await getDoc(userRef);
         // Only apply the level up and rewards if the user is still level 0
         if(userDoc.exists() && userDoc.data().level === 0){
-             let layerToUnlock = 'Physical';
+             let layerToUnlock: SkillCategory = 'Physical';
              if (archetype === 'Sage') layerToUnlock = 'Mental';
              if (archetype === 'Maverick') layerToUnlock = 'Creative';
             
@@ -46,7 +46,8 @@ export default function RewardPage({}: RewardPageProps) {
                 level: 1, 
                 xp: 100,
                 streakFreezes: increment(1),
-                [`avatarLayers.${layerToUnlock}`]: true
+                // This is the key change: setting the avatar layer based on archetype
+                [`avatarLayers.${layerToUnlock}`]: true 
             });
         }
       }
