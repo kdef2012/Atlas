@@ -47,6 +47,10 @@
         "fireteamId": {
           "type": "string",
           "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)"
+        },
+        "lastLogTimestamp": {
+          "type": "number",
+          "description": "The Unix timestamp of the user's last logged activity."
         }
       },
       "required": [

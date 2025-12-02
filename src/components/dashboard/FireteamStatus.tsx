@@ -8,11 +8,74 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Link as LinkIcon, Shield, Users, Crown, PlusCircle } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { doc } from "firebase/firestore";
+import { doc, collection, query, where } from "firebase/firestore";
 import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { cn } from '@/lib/utils';
+import { useEffect, useState } from 'react';
+
+function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
+    const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
+    const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+    const isActive = member.lastLogTimestamp > twentyFourHoursAgo;
+    const tooltipText = `${member.userName} - ${isActive ? 'Active' : 'Inactive'}`;
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>
+                <div className="relative">
+                    <Avatar className="border-2 border-background">
+                        <AvatarImage src={avatarData?.imageUrl} data-ai-hint={avatarData?.imageHint} />
+                        <AvatarFallback>{member.userName?.charAt(0) || 'U'}</AvatarFallback>
+                    </Avatar>
+                    <div className={cn("absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background", isActive ? "bg-green-500" : "bg-gray-500")}></div>
+                    {isOwner && (
+                        <Crown className="absolute -top-2 -right-2 w-4 h-4 text-yellow-400 rotate-12" style={{ filter: 'drop-shadow(0 0 2px black)'}}/>
+                    )}
+                </div>
+            </TooltipTrigger>
+            <TooltipContent>
+                <p>{tooltipText}</p>
+            </TooltipContent>
+        </Tooltip>
+    );
+}
+
+
+function FireteamMembers({ fireteam }: { fireteam: Fireteam }) {
+    const firestore = useFirestore();
+    const memberIds = Object.keys(fireteam.members);
+
+    const membersQuery = useMemoFirebase(() => {
+        if (memberIds.length === 0) return null;
+        return query(collection(firestore, 'users'), where('id', 'in', memberIds));
+    }, [firestore, memberIds]);
+
+    const { data: members, isLoading } = useCollection<User>(membersQuery);
+
+    if (isLoading) {
+        return <div className="flex -space-x-2 overflow-hidden mb-4">
+            {[...Array(memberIds.length)].map((_, i) => <Skeleton key={i} className="w-10 h-10 rounded-full" />)}
+        </div>;
+    }
+
+    return (
+        <TooltipProvider>
+            <div className="flex -space-x-2 overflow-hidden mb-4">
+                {members?.map(member => (
+                    <MemberAvatar key={member.id} member={member} isOwner={member.id === fireteam.ownerId} />
+                ))}
+                 <Avatar className="border-2 border-dashed border-muted-foreground">
+                    <AvatarFallback>+</AvatarFallback>
+                </Avatar>
+            </div>
+        </TooltipProvider>
+    );
+}
+
 
 export function FireteamStatus() {
     const firestore = useFirestore();
@@ -25,20 +88,31 @@ export function FireteamStatus() {
     const fireteamRef = useMemoFirebase(() => fireteamId ? doc(firestore, 'fireteams', fireteamId) : null, [firestore, fireteamId]);
     const { data: fireteam, isLoading: isFireteamLoading } = useDoc<Fireteam>(fireteamRef);
     
-    const user1Avatar = PlaceHolderImages.find(p => p.id === 'fireteam-user1');
-    const user2Avatar = PlaceHolderImages.find(p => p.id === 'fireteam-user2');
-    const user3Avatar = PlaceHolderImages.find(p => p.id === 'fireteam-user3');
-    const youAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
+    const [isStreakActive, setIsStreakActive] = useState<boolean | null>(null);
 
-    // This is placeholder data until we have real user profiles for fireteam members
-    const memberPlaceholders = [
-        { name: "Cypher", avatar: user1Avatar },
-        { name: "Glitch", avatar: user2Avatar },
-        { name: "Rogue", avatar: user3Avatar },
-        { name: "You", avatar: youAvatar },
-    ];
+    const memberIds = useMemoFirebase(() => fireteam ? Object.keys(fireteam.members) : [], [fireteam]);
+    const membersQuery = useMemoFirebase(() => {
+        if (memberIds.length === 0) return null;
+        return query(collection(firestore, 'users'), where('id', 'in', memberIds));
+    }, [firestore, memberIds]);
+    const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
 
-    if (isUserLoading || (fireteamId && isFireteamLoading)) {
+    useEffect(() => {
+        if (members && members.length > 0) {
+            const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+            const allActive = members.every(member => member.lastLogTimestamp > twentyFourHoursAgo);
+            setIsStreakActive(allActive);
+
+            // Here you would also update the fireteam document in Firestore if needed
+            // For now, we'll just reflect it in the UI
+        } else {
+            setIsStreakActive(null);
+        }
+    }, [members]);
+
+    const isLoading = isUserLoading || (fireteamId && (isFireteamLoading || areMembersLoading));
+
+    if (isLoading) {
         return <Skeleton className="h-56 w-full" />
     }
 
@@ -56,35 +130,29 @@ export function FireteamStatus() {
                 <>
                     <div className="flex justify-between items-center mb-4">
                         <h3 className="font-bold">{fireteam.name}</h3>
-                        {fireteam.streakActive ? (
+                        {isStreakActive === true && (
                              <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 border-accent-foreground/20">
                                 <LinkIcon className="h-3 w-3 mr-1"/>
                                 Soul Link Active
                             </Badge>
-                        ) : (
+                        )}
+                        {isStreakActive === false && (
                             <Badge variant="destructive">
                                 <Shield className="h-3 w-3 mr-1"/>
                                 Link Broken
                             </Badge>
                         )}
                     </div>
-                    <div className="flex -space-x-2 overflow-hidden mb-4">
-                        {Object.keys(fireteam.members).map((memberId, index) => {
-                            const member = memberPlaceholders[index % memberPlaceholders.length];
-                            return (
-                                <Avatar key={memberId} className="border-2 border-background">
-                                    <AvatarImage src={member?.avatar?.imageUrl} data-ai-hint={member?.avatar?.imageHint} />
-                                    <AvatarFallback>{member?.name.charAt(0) || 'U'}</AvatarFallback>
-                                </Avatar>
-                            )
-                        })}
-                         <Avatar className="border-2 border-dashed border-muted-foreground">
-                            <AvatarFallback>+</AvatarFallback>
-                        </Avatar>
-                    </div>
+                    
+                    <FireteamMembers fireteam={fireteam} />
+
                     <div className="text-sm text-muted-foreground">
-                        <p>XP Multiplier: <span className="font-bold text-accent">1.2x</span></p>
-                        <p className="text-xs mt-1">Keep the daily streak alive to maintain the bonus!</p>
+                        <p>XP Multiplier: <span className={cn("font-bold", isStreakActive ? "text-accent" : "text-destructive")}>
+                            {isStreakActive ? "1.2x" : "1.0x"}
+                        </span></p>
+                        <p className="text-xs mt-1">
+                            {isStreakActive ? "The Soul Link is strong! Keep the streak alive." : "A member has been inactive. Log an activity to rebuild the link!"}
+                        </p>
                     </div>
                 </>
                 ) : (
