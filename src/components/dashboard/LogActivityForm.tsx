@@ -158,13 +158,13 @@ export function LogActivityForm() {
       }
       
       // Step 6: Update Faction Challenge score
-      if (user.fireteamId && allTerritories) {
+      if (userData.fireteamId && allTerritories) {
           const now = Date.now();
           const activeChallenge = allTerritories.find(t => t.faction === category && t.endsAt > now);
 
           if (activeChallenge) {
               const territoryRef = doc(firestore, 'territories', activeChallenge.id);
-              batch.update(territoryRef, { [`scores.${user.fireteamId}`]: increment(xpGained) });
+              batch.update(territoryRef, { [`scores.${userData.fireteamId}`]: increment(xpGained) });
           }
       }
       
@@ -209,8 +209,10 @@ export function LogActivityForm() {
             
             // Check if we need to notify the pioneer
             const pioneerDoc = await getDoc(pioneerRef);
-            if (pioneerDoc.exists()) {
+            if (pioneerDoc.exists() && pioneerDoc.data().id !== user.uid) { // Don't notify if you are the pioneer
               toast({ title: `Your skill '${skillData.name}' became popular!`, description: `User ${pioneerDoc.data().userName} has been awarded the Innovator trait.` });
+            } else if (pioneerDoc.exists() && pioneerDoc.data().id === user.uid) {
+                toast({ title: "Trait Unlocked: Innovator!", description: `Your skill '${skillData.name}' has become a cornerstone of the ATLAS!` });
             }
         }
       }
@@ -294,5 +296,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    

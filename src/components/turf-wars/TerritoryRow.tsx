@@ -7,7 +7,7 @@ import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Shield, Trophy } from "lucide-react";
 import type { Territory, Fireteam, SkillCategory } from "@/lib/types";
 import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
-import { collection, doc, query, where, orderBy, limit } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/types";
 import { cn } from "@/lib/utils";

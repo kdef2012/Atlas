@@ -4,9 +4,9 @@
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { Territory, Fireteam, User } from "@/lib/types";
-import { useCollection, useMemoFirebase, addDocumentNonBlocking, useDoc } from "@/firebase";
+import { useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { useFirestore, useUser } from "@/firebase/provider";
-import { collection, doc, query, where, getDocs, writeBatch, increment } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, writeBatch } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TerritoryRow } from "@/components/turf-wars/TerritoryRow";
 import { CATEGORY_ICONS } from "@/lib/types";
