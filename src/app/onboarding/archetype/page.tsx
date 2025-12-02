@@ -60,7 +60,7 @@ export default function ArchetypeSelectionPage() {
         {
           id: user.uid,
           archetype: archetype,
-          email: user.email,
+          email: user.email || null,
           userName: user.displayName || 'Anonymous',
           physicalStat: 10,
           mentalStat: 10,
@@ -71,6 +71,7 @@ export default function ArchetypeSelectionPage() {
           createdAt: now,
           level: 0,
           xp: 0,
+          unlockedSkills: {},
         },
         { merge: true }
       );
