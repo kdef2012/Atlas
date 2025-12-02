@@ -38,13 +38,14 @@ function FireteamList() {
     setUpdatingTeamId(team.id);
 
     const fireteamRef = doc(firestore, 'fireteams', team.id);
+    const userDocRef = doc(firestore, 'users', authUser.uid);
     const updatedMembers = { ...team.members, [authUser.uid]: true };
     
-    // Update fireteam and user documents
+    // Update fireteam and user documents non-blockingly
     updateDocumentNonBlocking(fireteamRef, { members: updatedMembers });
-    updateDocumentNonBlocking(userRef, { fireteamId: team.id });
+    updateDocumentNonBlocking(userDocRef, { fireteamId: team.id });
 
-    // Simulate a delay for feedback, then toast and reset
+    // Simulate a delay for better UX, then toast and reset
     setTimeout(() => {
         toast({
             title: 'Welcome to the Squad!',
