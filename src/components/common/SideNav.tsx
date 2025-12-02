@@ -36,7 +36,7 @@ const navItems = [
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/fireteams", label: "Fireteams", icon: Users },
-  { href: "/turf-wars", label: "Turf Wars", icon: Map },
+  { href: "/turf-wars", label: "Faction Challenges", icon: Map },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
