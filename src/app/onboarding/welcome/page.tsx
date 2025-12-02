@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { collection, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { Quest } from '@/lib/quest';
+import { generateFirstQuest, type GenerateFirstQuestOutput } from '@/ai/flows/generate-first-quest';
 
 interface WelcomePageProps {}
 
@@ -24,17 +25,35 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const [quest, setQuest] = useState<GenerateFirstQuestOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const quest = {
-      questName: 'Drink a glass of water',
-      questDescription: 'Hydration is key to life. Complete this simple task to begin your journey.'
-  };
+  useEffect(() => {
+    async function getFirstQuest() {
+      try {
+        setIsLoading(true);
+        const result = await generateFirstQuest({ userArchetype: archetype });
+        setQuest(result);
+      } catch (error) {
+        console.error("Failed to generate first quest:", error);
+        // Fallback to a default quest if AI fails
+        setQuest({
+          questName: 'Drink a glass of water',
+          questDescription: 'Hydration is key to life. Complete this simple task to begin your journey.'
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    getFirstQuest();
+  }, [archetype]);
+
 
   const handleCompleteQuest = () => {
-    if (user) {
+    if (user && quest) {
         const questsCollectionRef = collection(firestore, `users/${user.uid}/quests`);
         const firstQuest: Omit<Quest, 'id'> = {
-            name: 'A New Beginning',
+            name: quest.questName,
             description: 'You\'ve taken your first step into a larger world.',
             category: 'Intro',
             isCompleted: true,
@@ -51,6 +70,10 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
         router.push(`/onboarding/reward?archetype=${archetype}`);
     }
   };
+
+  if (isLoading || !quest) {
+    return <FirstQuestCardSkeleton />;
+  }
 
   return (
     <Card className="w-full max-w-md border-accent neon-border">
