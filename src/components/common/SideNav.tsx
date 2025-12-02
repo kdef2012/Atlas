@@ -21,6 +21,7 @@ import {
   Atom,
   ScrollText,
   ShieldCheck,
+  Tower,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/fireteams", label: "Fireteams", icon: Users },
+  { href: "/guilds", label: "Guilds", icon: Tower },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -74,7 +76,7 @@ export function SideNav() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
                 tooltip={{ children: item.label, side: "right" }}
               >
                 <Link href={item.href}>
@@ -105,3 +107,5 @@ export function SideNav() {
     </>
   );
 }
+
+    

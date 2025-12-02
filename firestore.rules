@@ -13,6 +13,7 @@
  * - /users/{userId}/quests/{questId} - A subcollection storing a user's private quests.
  * - /territories/{territoryId} - A top-level collection of all territories, which are public to read.
  * - /traits/{traitId} - A top-level collection for global trait definitions.
+ * - /guilds/{guildId} - A top-level collection for user-run communities.
  *
  * Key Security Decisions:
  * - User data is strictly private. All documents and subcollections under /users/{userId} are
@@ -70,6 +71,13 @@ service cloud.firestore {
      * Checks if the requesting user is a member of the fireteam specified in the resource.
      */
     function isFireteamMember() {
+      return isSignedIn() && resource.data.members[request.auth.uid] == true;
+    }
+    
+    /**
+     * Checks if the requesting user is a member of the guild specified in the resource.
+     */
+    function isGuildMember() {
       return isSignedIn() && resource.data.members[request.auth.uid] == true;
     }
 
@@ -156,6 +164,22 @@ service cloud.firestore {
     }
     
     /**
+     * @description   Guilds are public communities. Anyone can read them.
+     *                Creation is open to any signed-in user. Updates are restricted.
+     * @path          /guilds/{guildId}
+     * @allow         (create) Any authenticated user can create a guild, becoming its owner.
+     * @allow         (update) The guild owner or a member can update the member list.
+     * @principle     Public read, with restricted, logical writes.
+     */
+    match /guilds/{guildId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
+        allow update: if isOwner(resource.data.ownerId) || isGuildMember();
+        allow delete: if isOwner(resource.data.ownerId);
+    }
+    
+    /**
      * @description   Territories are public to read for all users. Writes will be restricted in the future.
      * @path          /territories/{territoryId}
      * @allow         (get, list) Any authenticated user can read territory data.
@@ -183,3 +207,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

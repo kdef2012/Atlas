@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Tower } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -38,6 +38,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
+  guildId?: string;
   userSkills: Record<string, UserSkillData>;
   avatarLayers?: Partial<Record<SkillCategory, boolean>>;
   momentumFlameActive: boolean;
@@ -85,6 +86,15 @@ export interface Fireteam {
   streakStartDate?: number;
 }
 
+export interface Guild {
+    id: string;
+    name: string;
+    category: SkillCategory;
+    region: string;
+    ownerId: string;
+    members: Record<string, boolean>;
+}
+
 export interface Territory {
   id: string;
   faction: SkillCategory;
@@ -102,7 +112,7 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   Creative: 'hsl(var(--chart-4))',  // yellow
 };
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -112,6 +122,7 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Streak: Flame,
   Gems: Gem,
   Verify: ShieldCheck,
+  Guilds: Tower,
 };
 
 export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -122,5 +133,7 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     vindicator: ShieldCheck,
     soul_sworn: HeartHandshake,
 };
+
+    
 
     
