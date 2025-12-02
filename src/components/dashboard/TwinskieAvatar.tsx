@@ -1,3 +1,4 @@
+
 import type { SkillCategory } from "@/lib/types";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
