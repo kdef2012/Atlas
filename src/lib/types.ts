@@ -49,6 +49,17 @@ export interface Fireteam {
   streakActive: boolean;
 }
 
+export interface Territory {
+  id: string;
+  name: string;
+  controlledBy: string | null;
+  controlDuration: string | null;
+  avatarId: string | null;
+  lat: number;
+  lng: number;
+}
+
+
 export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   Physical: 'hsl(var(--chart-5))', // red
   Mental: 'hsl(var(--chart-2))',   // blue

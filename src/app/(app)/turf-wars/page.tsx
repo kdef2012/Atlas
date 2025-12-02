@@ -7,13 +7,14 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Shield } from "lucide-react";
 import dynamic from 'next/dynamic';
+import type { Territory } from "@/lib/types";
 
 // Mock data - this will be replaced with Firestore data
-const territories = [
-  { id: 't1', name: 'Quantum Park', controlledBy: 'Quantum Leapers', controlDuration: '48h', avatarId: 'fireteam-user1' },
-  { id: 't2', name: 'Central Station', controlledBy: 'Void Walkers', controlDuration: '12h', avatarId: 'fireteam-user2' },
-  { id: 't3', name: 'The Old Library', controlledBy: 'Chrono Guards', controlDuration: '7d', avatarId: 'fireteam-user3' },
-  { id: 't4', name: 'City Hall', controlledBy: null, controlDuration: null, avatarId: null },
+const territories: Territory[] = [
+  { id: 't1', name: 'Quantum Park', controlledBy: 'Quantum Leapers', controlDuration: '48h', avatarId: 'fireteam-user1', lat: 37.7749, lng: -122.4194 },
+  { id: 't2', name: 'Central Station', controlledBy: 'Void Walkers', controlDuration: '12h', avatarId: 'fireteam-user2', lat: 37.7849, lng: -122.4094 },
+  { id: 't3', name: 'The Old Library', controlledBy: 'Chrono Guards', controlDuration: '7d', avatarId: 'fireteam-user3', lat: 37.7649, lng: -122.4294 },
+  { id: 't4', name: 'City Hall', controlledBy: null, controlDuration: null, avatarId: null, lat: 37.779, lng: -122.4194 },
 ];
 
 const Map = dynamic(() => import('@/components/turf-wars/Map').then(mod => mod.Map), {
@@ -34,7 +35,7 @@ export default function TurfWarsPage() {
                 <CardDescription>Claim real-world locations for your Fireteam. Control generates resources.</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
-                <Map />
+                <Map territories={territories} />
             </CardContent>
         </Card>
       </div>
@@ -73,7 +74,7 @@ export default function TurfWarsPage() {
                                     </div>
                                     {t.controlDuration && <p className="text-xs text-muted-foreground">{t.controlDuration}</p>}
                                 </div>
-                            </Card>>
+                            </Card>
                         )
                     })}
                     </div>
