@@ -2,7 +2,7 @@
 /**
  * Core Philosophy: This ruleset enforces a strict user-ownership model for all private data,
  * ensuring that users can only access their own profiles and activity logs. Publicly shared
- * data, such as skills and fireteams, is readable by anyone to facilitate discovery and
+ * data, such as skills, fireteams, and territories is readable by anyone to facilitate discovery and
  * community interaction, but write access is tightly controlled.
  *
  * Data Structure:
@@ -11,13 +11,14 @@
  * - /skills/{skillId} - A top-level collection of all skills, which are public to read.
  * - /fireteams/{fireteamId} - A top-level collection of all fireteams, which are public to read.
  * - /users/{userId}/quests/{questId} - A subcollection storing a user's private quests.
+ * - /territories/{territoryId} - A top-level collection of all territories, which are public to read.
  *
  * Key Security Decisions:
  * - User data is strictly private. All documents and subcollections under /users/{userId} are
  *   accessible only by the authenticated user whose UID matches {userId}.
  * - User listing is disabled. To protect user privacy, it is not possible to query the top-level /users collection.
- * - Public data write access is restricted. Anyone can read /skills and /fireteams, but creating
- *   or modifying them requires specific permissions (e.g., being the original creator of a skill).
+ * - Public data write access is restricted. Anyone can read /skills, /fireteams and /territories, but creating
+ *   or modifying them requires specific permissions.
  * - Default posture is deny-all. Access is only granted through explicit `allow` statements.
  *
  * Denormalization for Authorization:
@@ -32,7 +33,7 @@
  * Structural Segregation:
  * - The ruleset leverages a clear separation between private and public data. User-specific,
  *   private data (`users`, `logs`, `quests`) is nested under a user-owned path. Publicly accessible data
- *   (`skills`, `fireteams`) is stored in top-level collections, which is more secure and performant
+ *   (`skills`, `fireteams`, `territories`) is stored in top-level collections, which is more secure and performant
  *   for public list operations.
  */
 rules_version = '2';
@@ -149,7 +150,18 @@ service cloud.firestore {
       allow update: if isExistingOwner(resource.data.ownerId);
       allow delete: if isExistingOwner(resource.data.ownerId);
     }
+    
+    /**
+     * @description   Territories are public to read for all users. Writes will be restricted in the future.
+     * @path          /territories/{territoryId}
+     * @allow         (get, list) Any authenticated user can read territory data.
+     * @deny          (write) Writes are disallowed for now.
+     * @principle     Public Read for a global game state feature.
+     */
+    match /territories/{territoryId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow write: if false; // Future implementation will allow fireteam owners to claim.
+    }
   }
 }
-
-    
