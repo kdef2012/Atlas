@@ -8,14 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Link as LinkIcon, Shield, Users, Crown, PlusCircle } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { useUser, useDoc, useCollection, useMemoFirebase } from "@/firebase";
+import { useUser, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc, collection, query, where } from "firebase/firestore";
 import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 
 function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
     const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
@@ -88,8 +88,6 @@ export function FireteamStatus() {
     const fireteamRef = useMemoFirebase(() => fireteamId ? doc(firestore, 'fireteams', fireteamId) : null, [firestore, fireteamId]);
     const { data: fireteam, isLoading: isFireteamLoading } = useDoc<Fireteam>(fireteamRef);
     
-    const [isStreakActive, setIsStreakActive] = useState<boolean | null>(null);
-
     const memberIds = useMemoFirebase(() => fireteam ? Object.keys(fireteam.members) : [], [fireteam]);
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
@@ -98,19 +96,19 @@ export function FireteamStatus() {
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
 
     useEffect(() => {
-        if (members && members.length > 0) {
+        if (fireteamRef && members && members.length > 0) {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             const allActive = members.every(member => member.lastLogTimestamp > twentyFourHoursAgo);
-            setIsStreakActive(allActive);
-
-            // Here you would also update the fireteam document in Firestore if needed
-            // For now, we'll just reflect it in the UI
-        } else {
-            setIsStreakActive(null);
+            
+            // If the current streak status in Firestore is different from what we've calculated, update it.
+            if (fireteam && fireteam.streakActive !== allActive) {
+                updateDocumentNonBlocking(fireteamRef, { streakActive: allActive });
+            }
         }
-    }, [members]);
+    }, [members, fireteamRef, fireteam]);
 
     const isLoading = isUserLoading || (fireteamId && (isFireteamLoading || areMembersLoading));
+    const isStreakActive = fireteam?.streakActive ?? false;
 
     if (isLoading) {
         return <Skeleton className="h-56 w-full" />

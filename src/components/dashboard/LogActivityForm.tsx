@@ -18,9 +18,9 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
-import type { Skill, SkillCategory, Territory } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
-import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, increment } from "firebase/firestore";
 import type { Log } from "@/lib/log";
@@ -36,6 +36,12 @@ export function LogActivityForm() {
   const { user } = useUser();
   const firestore = useFirestore();
 
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
+  const { data: userData } = useDoc(userRef);
+
+  const fireteamRef = useMemoFirebase(() => userData?.fireteamId ? doc(firestore, 'fireteams', userData.fireteamId) : null, [firestore, userData]);
+  const { data: fireteamData } = useDoc<Fireteam>(fireteamRef);
+  
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
@@ -54,7 +60,7 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection || !allSkills) return;
+    if (!user || !userLogsCollection || !allSkills || !userRef) return;
 
     setIsLoading(true);
     try {
@@ -81,7 +87,12 @@ export function LogActivityForm() {
         }
       }
       
-      const xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
+      let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
+
+      // Step 2.5: Apply Soul Link bonus if active
+      if (fireteamData?.streakActive) {
+        xpGained = Math.round(xpGained * 1.2);
+      }
 
       // Always increment the total XP on the skill itself
       if (skillId) {
@@ -118,7 +129,6 @@ export function LogActivityForm() {
       addDocumentNonBlocking(userLogsCollection, newLog);
 
       // Step 5: Update user stats
-      const userRef = doc(firestore, 'users', user.uid);
       const statUpdate = {
         xp: increment(xpGained),
         [`${category.toLowerCase()}Stat`]: increment(10),
@@ -147,7 +157,7 @@ export function LogActivityForm() {
         description: (
           <div className="flex items-center gap-2">
             <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category as SkillCategory] }}/>
-            <span>Your '{skillName}' activity was logged as <strong>{category}</strong>. {isNewSkill && "You're a Pioneer!"} (+{xpGained} XP)</span>
+            <span>Your '{skillName}' activity was logged as <strong>{category}</strong>. {fireteamData?.streakActive && ' (Soul Link Bonus!)'} (+{xpGained} XP)</span>
           </div>
         )
       });
