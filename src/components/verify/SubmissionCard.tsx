@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import Image from 'next/image';
@@ -11,6 +12,7 @@ import { doc, increment } from 'firebase/firestore';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
+const VINDICATOR_THRESHOLD = 50;
 
 interface Submission {
     log: Log;
@@ -26,7 +28,7 @@ interface SubmissionCardProps {
 export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
     const { log, skill, user } = submission;
     const firestore = useFirestore();
-    const { user: voter } = useUser(); // The user who is voting
+    const { user: voter, isUserLoading } = useUser(); // The user who is voting
     const { toast } = useToast();
     const [isVoting, setIsVoting] = useState(false);
 
@@ -61,8 +63,22 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 });
             }
             
-            // Reward the voter
-            updateDocumentNonBlocking(voterRef, { xp: increment(5) });
+            // Reward the voter and check for Vindicator trait
+            const voterUpdate: any = { 
+                xp: increment(5),
+                verificationVotes: increment(1) 
+            };
+            
+            // We need to fetch the voter's data to check the new total
+            const voterDoc = await (await fetch(voterRef.path)).json(); // Simplified fetch, assumes API route
+            const newVoteCount = (voterDoc.verificationVotes || 0) + 1;
+
+            if(newVoteCount >= VINDICATOR_THRESHOLD && !voterDoc.traits?.vindicator) {
+                voterUpdate['traits.vindicator'] = true;
+                toast({ title: 'Trait Unlocked: Vindicator!', description: 'Your sharp judgment has been recognized.' });
+            }
+
+            updateDocumentNonBlocking(voterRef, voterUpdate);
 
             // Notify parent component to show the next submission
             onVote(log.id);

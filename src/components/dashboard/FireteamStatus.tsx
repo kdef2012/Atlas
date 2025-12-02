@@ -10,13 +10,15 @@ import { Link as LinkIcon, Shield, Users, Crown, PlusCircle } from "lucide-react
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { doc, collection, query, where } from "firebase/firestore";
+import { doc, collection, query, where, writeBatch } from "firebase/firestore";
 import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
+
+const SOUL_SWORN_THRESHOLD_DAYS = 7;
 
 function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
     const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
@@ -100,19 +102,50 @@ export function FireteamStatus() {
     const prevStreakStatusRef = useRef<boolean | undefined>(fireteam?.streakActive);
 
     useEffect(() => {
-        if (fireteamRef && members && members.length > 0) {
+        if (fireteamRef && members && members.length > 0 && fireteam) {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
             const allActive = members.every(member => member.lastLogTimestamp > twentyFourHoursAgo);
             
-            // If the current streak status in Firestore is different from what we've calculated, update it.
-            if (fireteam && fireteam.streakActive !== allActive) {
-                updateDocumentNonBlocking(fireteamRef, { streakActive: allActive });
+            let fireteamUpdate: any = {};
+            let shouldUpdate = false;
+
+            if (fireteam.streakActive && !allActive) { // Streak just broke
+                fireteamUpdate.streakActive = false;
+                fireteamUpdate.streakStartDate = null;
+                shouldUpdate = true;
+            } else if (!fireteam.streakActive && allActive) { // Streak just started
+                fireteamUpdate.streakActive = true;
+                fireteamUpdate.streakStartDate = Date.now();
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+                updateDocumentNonBlocking(fireteamRef, fireteamUpdate);
+            }
+
+            // Check for Soul-Sworn trait
+            if (fireteam.streakActive && fireteam.streakStartDate) {
+                const streakDuration = Date.now() - fireteam.streakStartDate;
+                if (streakDuration >= SOUL_SWORN_THRESHOLD_DAYS * 24 * 60 * 60 * 1000) {
+                    const batch = writeBatch(firestore);
+                    let traitAwarded = false;
+                    members.forEach(member => {
+                        if (!member.traits?.soul_sworn) {
+                            const memberRef = doc(firestore, 'users', member.id);
+                            batch.update(memberRef, { 'traits.soul_sworn': true });
+                            traitAwarded = true;
+                        }
+                    });
+                    if (traitAwarded) {
+                        batch.commit();
+                        toast({ title: "Trait Unlocked: Soul-Sworn!", description: `Your Fireteam's bond is unbreakable. All members have earned this trait.` });
+                    }
+                }
             }
         }
-    }, [members, fireteamRef, fireteam]);
+    }, [members, fireteamRef, fireteam, firestore, toast]);
 
     useEffect(() => {
-        // This effect triggers the notification when a streak breaks.
         const prevStreakStatus = prevStreakStatusRef.current;
         const currentStreakStatus = fireteam?.streakActive;
 
@@ -123,7 +156,6 @@ export function FireteamStatus() {
                 description: `The activity streak for Fireteam "${fireteam.name}" has been broken.`,
             });
         }
-        // Update the ref to the current status for the next render.
         prevStreakStatusRef.current = currentStreakStatus;
     }, [fireteam?.streakActive, fireteam?.name, toast]);
 

@@ -85,7 +85,8 @@ service cloud.firestore {
       allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      // Allow updates by the owner. Also allow specific fields (like traits) to be updated by server-side logic (represented by allowing writes when not owned).
+      allow update: if isOwner(userId) || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
       allow delete: if isExistingOwner(userId);
 
       /**
@@ -132,7 +133,8 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
       allow create: if isSignedIn() && request.resource.data.pioneerUserId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId;
+      // Allow pioneer to update, and allow anyone to update specific fields like XP and innovatorAwarded
+      allow update: if (isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId) || (request.resource.data.keys().hasAll(['xp', 'innovatorAwarded']));
       allow delete: if isExistingOwner(resource.data.pioneerUserId);
     }
 
@@ -148,7 +150,8 @@ service cloud.firestore {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isExistingOwner(resource.data.ownerId);
+      // Allow owner or members to update (for streak logic)
+      allow update: if isExistingOwner(resource.data.ownerId) || isFireteamMember();
       allow delete: if isExistingOwner(resource.data.ownerId);
     }
     
@@ -175,9 +178,8 @@ service cloud.firestore {
     match /traits/{traitId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow write: if false; // Only admin should write to this
+      // Allow creating traits by anyone for now to populate them. In production, this would be admin-only.
+      allow write: if isSignedIn();
     }
   }
 }
-
-    

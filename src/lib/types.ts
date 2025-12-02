@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert, ShieldCheck, Crown } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -44,6 +44,7 @@ export interface User {
   gems: number;
   streakFreezes: number;
   traits?: Partial<Record<string, boolean>>;
+  verificationVotes?: number;
 }
 
 export interface Skill {
@@ -59,6 +60,7 @@ export interface Skill {
     category: SkillCategory;
     points: number;
   };
+  innovatorAwarded?: boolean;
 }
 
 export interface Log {
@@ -80,6 +82,7 @@ export interface Fireteam {
   ownerId: string;
   members: Record<string, boolean>;
   streakActive: boolean;
+  streakStartDate?: number;
 }
 
 export interface Territory {
@@ -113,6 +116,9 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
 
 export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
     pioneer: Crown,
+    innovator: Lightbulb,
+    specialist: Star,
+    jack_of_all_trades: Award,
+    vindicator: ShieldCheck,
+    soul_sworn: HeartHandshake,
 };
-
-    

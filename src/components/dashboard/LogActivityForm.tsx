@@ -23,13 +23,20 @@ import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/type
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, addDoc } from "firebase/firestore";
+import { collection, doc, increment, addDoc, getDoc, writeBatch } from "firebase/firestore";
 import type { Log } from "@/lib/log";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
   proof: z.instanceof(FileList).optional(),
 });
+
+// Trait thresholds
+const INNOVATOR_THRESHOLD = 1000;
+const SPECIALIST_THRESHOLD = 500;
+const JACK_OF_ALL_TRADES_THRESHOLD = 150;
+const JACK_OF_ALL_TRADES_RANGE = 50;
+
 
 export function LogActivityForm() {
   const [isLoading, setIsLoading] = useState(false);
@@ -61,7 +68,7 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection || !allSkills || !userRef) return;
+    if (!user || !userLogsCollection || !allSkills || !userRef || !userData) return;
 
     setIsLoading(true);
     try {
@@ -74,7 +81,8 @@ export function LogActivityForm() {
       let { skillId, isNewSkill, skillName, category, prerequisites, cost } = result;
       const hasProof = values.proof && values.proof.length > 0;
       
-      const statUpdate: any = {
+      const batch = writeBatch(firestore);
+      let userStatUpdate: any = {
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
         momentumFlameActive: true,
@@ -82,18 +90,20 @@ export function LogActivityForm() {
 
       // Step 2: If it's a new skill, create it in Firestore and grant Pioneer trait
       if (isNewSkill) {
-        const newSkillDocRef = await addDoc(skillsCollectionRef, {
-          name: skillName,
-          category: category,
-          pioneerUserId: user.uid,
-          xp: 10,
-          prerequisites: prerequisites || [],
-          cost: cost || { category: category, points: 10 },
+        const newSkillDocRef = doc(skillsCollectionRef); // Create a reference with a new ID
+        batch.set(newSkillDocRef, {
+            name: skillName,
+            category: category,
+            pioneerUserId: user.uid,
+            xp: 0, // Will be incremented later
+            prerequisites: prerequisites || [],
+            cost: cost || { category: category, points: 10 },
+            innovatorAwarded: false,
         });
         skillId = newSkillDocRef.id;
         
         // Grant Pioneer Trait
-        statUpdate['traits.pioneer'] = true;
+        userStatUpdate['traits.pioneer'] = true;
       }
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
@@ -107,13 +117,8 @@ export function LogActivityForm() {
       if (userData?.momentumFlameActive) {
         xpGained = Math.round(xpGained * 1.5);
       }
-
-      // Always increment the total XP on the skill itself
-      if (skillId) {
-        const skillRef = doc(firestore, 'skills', skillId);
-        updateDocumentNonBlocking(skillRef, { xp: increment(10) });
-      }
       
+      const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
       let proofUrl = '';
       if (hasProof) {
@@ -133,25 +138,21 @@ export function LogActivityForm() {
       }
 
       // Step 4: Create a log entry
-      const newLog: Omit<Log, 'id'> = {
+      const newLogRef = doc(userLogsCollection); // Create a reference with a new ID
+      batch.set(newLogRef, {
         userId: user.uid,
         skillId: skillId,
         timestamp: Date.now(),
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
-        isVerified: !hasProof, // Auto-verified if no proof is provided
-      };
-      addDocumentNonBlocking(userLogsCollection, newLog);
+        isVerified: !hasProof,
+      });
 
       // Step 5: Update user stats
-      statUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
-
-      // Only give global XP now if there's no proof needed
+      userStatUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
       if (!hasProof) {
-        statUpdate.xp = increment(xpGained);
+        userStatUpdate.xp = increment(xpGained);
       }
-
-      updateDocumentNonBlocking(userRef, statUpdate);
       
       // Step 6: Update Faction Challenge score
       if (user.fireteamId && allTerritories) {
@@ -160,14 +161,58 @@ export function LogActivityForm() {
 
           if (activeChallenge) {
               const territoryRef = doc(firestore, 'territories', activeChallenge.id);
-              const scoreUpdate = {
-                  [`scores.${user.fireteamId}`]: increment(xpGained)
-              };
-              updateDocumentNonBlocking(territoryRef, scoreUpdate);
+              batch.update(territoryRef, { [`scores.${user.fireteamId}`]: increment(xpGained) });
           }
       }
+      
+      // Step 7: Check for and award new traits
+      const currentStats = {
+          physical: userData.physicalStat,
+          mental: userData.mentalStat,
+          social: userData.socialStat,
+          practical: userData.practicalStat,
+          creative: userData.creativeStat,
+      };
+      
+      // Specialist Trait
+      const categoryStat = `${category.toLowerCase()}Stat` as keyof User;
+      const newCategoryValue = (userData[categoryStat] as number || 0) + 10;
+      if (newCategoryValue >= SPECIALIST_THRESHOLD && !userData.traits?.specialist) {
+          userStatUpdate['traits.specialist'] = true;
+          toast({ title: "Trait Unlocked: Specialist!", description: `You've shown deep focus in the ${category} category.` });
+      }
 
-      // Step 7: Show feedback toast
+      // Jack of All Trades Trait
+      const stats = Object.values(currentStats);
+      const minStat = Math.min(...stats);
+      const maxStat = Math.max(...stats);
+      if (minStat >= JACK_OF_ALL_TRADES_THRESHOLD && (maxStat - minStat) <= JACK_OF_ALL_TRADES_RANGE && !userData.traits?.jack_of_all_trades) {
+          userStatUpdate['traits.jack_of_all_trades'] = true;
+          toast({ title: "Trait Unlocked: Jack of All Trades!", description: "Your balanced approach to life is admirable." });
+      }
+      
+      batch.update(userRef, userStatUpdate);
+      
+      // Always increment the total XP on the skill itself. Do this outside the batch for now
+      // as we need to read the skill doc first for the innovator trait.
+      const skillDoc = await getDoc(skillRef);
+      const skillData = skillDoc.data() as Skill;
+      const newSkillXp = (skillData?.xp || 0) + xpGained;
+      
+      // Innovator Trait check
+      if (skillData && skillData.pioneerUserId && !skillData.innovatorAwarded && newSkillXp >= INNOVATOR_THRESHOLD) {
+          const pioneerRef = doc(firestore, 'users', skillData.pioneerUserId);
+          updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true });
+          updateDocumentNonBlocking(skillRef, { innovatorAwarded: true });
+          // Notify the pioneer
+          toast({ title: `Your skill '${skillData.name}' became popular!`, description: "You have been awarded the Innovator trait." });
+      }
+      
+      updateDocumentNonBlocking(skillRef, { xp: increment(xpGained) });
+      await batch.commit();
+
+
+      // Step 8: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
       let toastDescription = `Your '${skillName}' activity was logged as <strong>${category}</strong>.`;
       if (!hasProof) {
@@ -240,5 +285,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    
