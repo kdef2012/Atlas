@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -23,6 +23,7 @@ export interface User {
   unlockedSkills?: Record<string, boolean>;
   momentumFlameActive: boolean;
   gems: number;
+  streakFreezes: number;
 }
 
 export interface Skill {

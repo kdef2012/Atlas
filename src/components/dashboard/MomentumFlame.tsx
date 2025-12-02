@@ -3,18 +3,22 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Flame, ShieldOff } from "lucide-react";
+import { Button } from "../ui/button";
+import { Flame, ShieldOff, ShieldAlert, Loader2 } from "lucide-react";
 import { useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc, increment } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { cn } from '@/lib/utils';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useToast } from "@/hooks/use-toast";
 
 export function MomentumFlame() {
     const firestore = useFirestore();
     const { user: authUser } = useUser();
+    const { toast } = useToast();
+    const [isRestoring, setIsRestoring] = useState(false);
     
     const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
@@ -43,12 +47,38 @@ export function MomentumFlame() {
         }
     }, [user, userRef]);
 
+    const handleRestoreStreak = () => {
+        if (!user || !userRef || user.streakFreezes <= 0) return;
+
+        setIsRestoring(true);
+        const updates = {
+            streakFreezes: increment(-1),
+            momentumFlameActive: true,
+            lastLogTimestamp: Date.now(), // Refresh timestamp to prevent immediate decay
+            physicalStat: increment(1),
+            mentalStat: increment(1),
+            socialStat: increment(1),
+            practicalStat: increment(1),
+            creativeStat: increment(1),
+        };
+        updateDocumentNonBlocking(userRef, updates);
+
+        // Optimistically update UI and show toast
+        setTimeout(() => {
+             toast({
+                title: "Streak Restored!",
+                description: "Your Momentum Flame roars back to life and your stats are restored."
+            });
+            setIsRestoring(false);
+        }, 1000)
+    };
+
     const isLoading = isUserLoading;
     const isFlameActive = user?.momentumFlameActive ?? false;
     const xpBonus = isFlameActive ? "1.5x" : "1.0x";
 
     if (isLoading) {
-        return <Skeleton className="h-32 w-full" />
+        return <Skeleton className="h-40 w-full" />
     }
 
     return (
@@ -68,9 +98,16 @@ export function MomentumFlame() {
                         {xpBonus} XP
                     </Badge>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                    {isFlameActive ? "Your flame is burning brightly! Log an activity every 24 hours." : "Your flame went out, slightly reducing your stats. Log an activity to reignite it!"}
+                <p className="text-xs text-muted-foreground mb-4">
+                    {isFlameActive ? "Your flame is burning brightly! Log an activity every 24 hours." : "Your flame went out, slightly reducing your stats. Log an activity or use a freeze to reignite it!"}
                 </p>
+
+                {!isFlameActive && user && user.streakFreezes > 0 && (
+                    <Button onClick={handleRestoreStreak} disabled={isRestoring} size="sm" variant="outline" className="w-full">
+                         {isRestoring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldAlert className="mr-2 h-4 w-4" />}
+                        Use Streak Freeze ({user.streakFreezes})
+                    </Button>
+                )}
             </CardContent>
         </Card>
     )

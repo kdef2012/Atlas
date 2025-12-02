@@ -77,6 +77,7 @@ export default function ArchetypeSelectionPage() {
           unlockedSkills: {},
           momentumFlameActive: true,
           gems: 1,
+          streakFreezes: 0,
         },
         { merge: true }
       );

@@ -74,6 +74,10 @@
         "gems": {
             "type": "number",
             "description": "The user's balance of premium currency."
+        },
+        "streakFreezes": {
+            "type": "number",
+            "description": "The number of streak-repair items the user owns."
         }
       },
       "required": [
@@ -423,5 +427,3 @@
   }
 }
 
-
-    

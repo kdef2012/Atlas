@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Box, Gem, Sparkles } from 'lucide-react';
+import { ArrowRight, Box, Gem, ShieldAlert, Sparkles } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, increment } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
 
@@ -35,7 +35,11 @@ export default function RewardPage({}: RewardPageProps) {
       const levelUp = async () => {
         const userDoc = await getDoc(userRef);
         if(userDoc.exists() && userDoc.data().level === 0){
-             updateDocumentNonBlocking(userRef, { level: 1, xp: 100 });
+             updateDocumentNonBlocking(userRef, { 
+                level: 1, 
+                xp: 100,
+                streakFreezes: increment(1) 
+            });
         }
       }
       levelUp();
@@ -67,7 +71,7 @@ export default function RewardPage({}: RewardPageProps) {
                     <p className="text-sm text-muted-foreground">({archetype} Themed)</p>
                 </div>
                  <div className="bg-black/20 p-3 rounded-lg">
-                    <p className="font-bold text-lg text-accent flex items-center justify-center gap-2"><Gem className="w-4 h-4" /> Streak Freeze</p>
+                    <p className="font-bold text-lg text-accent flex items-center justify-center gap-2"><ShieldAlert className="w-4 h-4" /> Streak Freeze</p>
                     <p className="text-sm text-muted-foreground">(x1)</p>
                 </div>
             </div>
