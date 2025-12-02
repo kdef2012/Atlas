@@ -1,0 +1,131 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model for all private data,
+ * ensuring that users can only access their own profiles and activity logs. Publicly shared
+ * data, such as skills and fireteams, is readable by anyone to facilitate discovery and
+ * community interaction, but write access is tightly controlled.
+ *
+ * Data Structure:
+ * - /users/{userId} - Contains a user's private profile. This path forms the root for all user-owned data.
+ * - /users/{userId}/logs/{logId} - A subcollection storing a user's private activity logs.
+ * - /skills/{skillId} - A top-level collection of all skills, which are public to read.
+ * - /fireteams/{fireteamId} - A top-level collection of all fireteams, which are public to read.
+ *
+ * Key Security Decisions:
+ * - User data is strictly private. All documents and subcollections under /users/{userId} are
+ *   accessible only by the authenticated user whose UID matches {userId}.
+ * - User listing is disabled. To protect user privacy, it is not possible to query the top-level /users collection.
+ * - Public data write access is restricted. Anyone can read /skills and /fireteams, but creating
+ *   or modifying them requires specific permissions (e.g., being the original creator of a skill).
+ * - Default posture is deny-all. Access is only granted through explicit `allow` statements.
+ *
+ * Denormalization for Authorization:
+ * - Skill Ownership: Each document in the `/skills` collection must contain a `pioneerUserId` field.
+ *   This denormalized field allows rules to grant write access to the skill's creator without
+ *   needing to perform extra document reads.
+ * - Log Ownership: Documents in `/users/{userId}/logs/{logId}` contain a `userId` field that must
+ *   match the path, ensuring data integrity and simplifying ownership checks for collection group queries.
+ *
+ * Structural Segregation:
+ * - The ruleset leverages a clear separation between private and public data. User-specific,
+ *   private data (`users`, `logs`) is nested under a user-owned path. Publicly accessible data
+ *   (`skills`, `fireteams`) is stored in top-level collections, which is more secure and performant
+ *   for public list operations.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions to improve readability and maintainability.
+
+    /**
+     * Checks if a user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for verifying document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Checks for ownership on an existing document. Used for safe updates and deletes.
+     * Prevents modifying or deleting documents that do not exist.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description   User profile data. A user can create their own profile and has
+     *                full control over it. No other user can read or write to it.
+     * @path          /users/{userId}
+     * @allow         (create) An authenticated user creating their own user document: request.auth.uid == userId.
+     * @deny          (get) An authenticated user trying to read another user's profile.
+     * @principle     Restricts access to a user's own data tree and prevents user enumeration.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description   User activity logs. These are private and nested under the user's
+       *                document, inheriting the same ownership-based security.
+       * @path          /users/{userId}/logs/{logId}
+       * @allow         (create) An authenticated user creating a log in their own subcollection.
+       * @deny          (list) A user trying to list logs belonging to another user.
+       * @principle     Enforces document ownership for a user's private subcollections.
+       */
+      match /logs/{logId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+    }
+
+    /**
+     * @description   Skills are public and can be read by anyone, but can only be created,
+     *                updated, or deleted by the original "pioneer" user.
+     * @path          /skills/{skillId}
+     * @allow         (get) Any user (authenticated or not) reading a skill document.
+     * @deny          (update) A user trying to modify a skill they did not create.
+     * @principle     Public Read with Owner-Only Writes, based on a denormalized 'pioneerUserId' field.
+     */
+    match /skills/{skillId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isSignedIn() && request.resource.data.pioneerUserId == request.auth.uid;
+      allow update: if isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId;
+      allow delete: if isExistingOwner(resource.data.pioneerUserId);
+    }
+
+    /**
+     * @description   Fireteams are public and can be read by anyone. Write access is
+     *                currently disabled pending schema updates.
+     * @path          /fireteams/{fireteamId}
+     * @allow         (list) Any user (authenticated or not) listing all fireteams.
+     * @deny          (create) Any user attempting to create a fireteam.
+     * @principle     Public Read with Denied Writes. This is a secure default because the
+     *                'Fireteam' entity is missing an ownership or membership field for authorization.
+     */
+    match /fireteams/{fireteamId} {
+      allow get: if true;
+      allow list: if true;
+
+      // CRITICAL: Cannot implement owner-only or member-only writes. The 'Fireteam' entity
+      // is missing an 'ownerId' field or a `members` map for authorization checks.
+      allow create: if false; // TODO: Add owner/member validation once the schema is updated.
+      allow update: if false; // TODO: Add owner/member validation once the schema is updated.
+      allow delete: if false; // TODO: Add owner/member validation once the schema is updated.
+    }
+  }
+}

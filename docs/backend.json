@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user in the ATLAS application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the User entity."
+        },
+        "archetype": {
+          "type": "string",
+          "description": "The user's chosen archetype (e.g., Titan, Sage, Maverick)."
+        },
+        "email": {
+          "type": "string",
+          "description": "The user's email address.",
+          "format": "email"
+        },
+        "userName": {
+          "type": "string",
+          "description": "The user's display name or username."
+        },
+        "physicalStat": {
+          "type": "number",
+          "description": "The user's physical skill points"
+        },
+        "mentalStat": {
+          "type": "number",
+          "description": "The user's mental skill points."
+        },
+        "socialStat": {
+          "type": "number",
+          "description": "The user's social skill points."
+        },
+        "practicalStat": {
+          "type": "number",
+          "description": "The user's practical skill points."
+        },
+        "creativeStat": {
+          "type": "number",
+          "description": "The user's creative skill points."
+        },
+        "fireteamId": {
+          "type": "string",
+          "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)"
+        }
+      },
+      "required": [
+        "id"
+      ]
+    },
+    "Skill": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Skill",
+      "type": "object",
+      "description": "Represents a skill in the Nebula skill tree.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Skill entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the skill (e.g., 'Coding', 'Running')."
+        },
+        "category": {
+          "type": "string",
+          "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)."
+        },
+        "pioneerUserId": {
+          "type": "string",
+          "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "category"
+      ]
+    },
+    "Log": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Log",
+      "type": "object",
+      "description": "Represents a user's activity log entry.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Log entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to the User who performed the activity. (Relationship: User 1:N Log)"
+        },
+        "skillId": {
+          "type": "string",
+          "description": "Reference to the Skill associated with this log entry. (Relationship: Skill 1:N Log)"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "The timestamp of when the activity was performed.",
+          "format": "date-time"
+        },
+        "xp": {
+          "type": "number",
+          "description": "The amount of experience points gained from this activity."
+        },
+        "verificationPhotoUrl": {
+          "type": "string",
+          "description": "URL of the photo/video used to verify the activity.",
+          "format": "uri"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "skillId",
+        "timestamp"
+      ]
+    },
+    "Fireteam": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Fireteam",
+      "type": "object",
+      "description": "Represents a fireteam (a group of up to 5 users).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Fireteam entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the fireteam."
+        },
+        "region": {
+          "type": "string",
+          "description": "The region (city) where the fireteam is based."
+        },
+        "state": {
+          "type": "string",
+          "description": "The state where the fireteam is based."
+        },
+        "country": {
+          "type": "string",
+          "description": "The country where the fireteam is based."
+        }
+      },
+      "required": [
+        "id"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile data. Path-based ownership enables simple security rules.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/skills/{skillId}",
+        "definition": {
+          "entityName": "Skill",
+          "schema": {
+            "$ref": "#/backend/entities/Skill"
+          },
+          "description": "Stores skill data created by pioneer user.",
+          "params": [
+            {
+              "name": "skillId",
+              "description": "The unique identifier for the skill."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/logs/{logId}",
+        "definition": {
+          "entityName": "Log",
+          "schema": {
+            "$ref": "#/backend/entities/Log"
+          },
+          "description": "Stores logs, for the activities realized by each user and the skills they are trained on. Enables filtering and aggregation of logs based on user and skill.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "logId",
+              "description": "The unique identifier for the log."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/fireteams/{fireteamId}",
+        "definition": {
+          "entityName": "Fireteam",
+          "schema": {
+            "$ref": "#/backend/entities/Fireteam"
+          },
+          "description": "Stores fireteam data. The 'members' map is denormalized for authorization independence, removing the need for `get()` calls in security rules.",
+          "params": [
+            {
+              "name": "fireteamId",
+              "description": "The unique identifier for the fireteam."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. The structure supports required QAPs, such as listing skills by user (using a collection group query with the `userId` field in Logs), and listing Fireteams by region (using a composite index on `region` and `state`).\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
+  }
+}
