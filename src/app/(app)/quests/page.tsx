@@ -9,10 +9,10 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, addDocumentNonBl
 import { collection, doc } from "firebase/firestore";
 import type { Quest } from "@/lib/quest";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2, Wand2, Mountain, Bot, Zap } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { generateQuests } from '@/ai/flows/generate-quests';
-import type { User } from '@/lib/types';
+import type { User, Archetype } from '@/lib/types';
 import { useDoc } from '@/firebase/firestore/use-doc';
 
 function QuestList() {
@@ -20,7 +20,7 @@ function QuestList() {
     const firestore = useFirestore();
     const { toast } = useToast();
 
-    const [isGenerating, setIsGenerating] = useState(false);
+    const [isGenerating, setIsGenerating] = useState<Archetype | null>(null);
 
     const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
@@ -33,13 +33,13 @@ function QuestList() {
 
     const isLoading = isAuthLoading || isUserDocLoading || areQuestsLoading;
 
-    const handleGenerateQuests = async () => {
+    const handleGenerateQuests = async (archetype: Archetype) => {
         if (!user || !questsCollectionRef) return;
         
-        setIsGenerating(true);
+        setIsGenerating(archetype);
         try {
             const aiResult = await generateQuests({
-                archetype: user.archetype,
+                archetype: archetype,
                 level: user.level,
                 stats: {
                     physical: user.physicalStat,
@@ -62,7 +62,7 @@ function QuestList() {
             
             toast({
                 title: "New Quests Forged!",
-                description: "Your destiny has been updated with new challenges."
+                description: `Your destiny has been updated with new ${archetype} challenges.`
             })
 
         } catch (error) {
@@ -73,9 +73,27 @@ function QuestList() {
                 description: "Could not generate new quests at this time. Please try again later.",
             })
         } finally {
-            setIsGenerating(false);
+            setIsGenerating(null);
         }
     }
+
+    const questGenerationButtons = (
+        <div className="flex flex-col sm:flex-row gap-2">
+            <Button onClick={() => handleGenerateQuests('Titan')} disabled={!!isGenerating || !user} variant="outline" className="border-red-500/50 hover:bg-red-500/10 hover:text-red-400">
+                {isGenerating === 'Titan' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mountain className="mr-2 h-4 w-4 text-red-500" />}
+                Generate Titan Quests
+            </Button>
+            <Button onClick={() => handleGenerateQuests('Sage')} disabled={!!isGenerating || !user} variant="outline" className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400">
+                {isGenerating === 'Sage' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4 text-blue-500" />}
+                Generate Sage Quests
+            </Button>
+            <Button onClick={() => handleGenerateQuests('Maverick')} disabled={!!isGenerating || !user} variant="outline" className="border-yellow-500/50 hover:bg-yellow-500/10 hover:text-yellow-400">
+                {isGenerating === 'Maverick' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4 text-yellow-500" />}
+                Generate Maverick Quests
+            </Button>
+        </div>
+    )
+
 
     if (isLoading) {
         return (
@@ -91,10 +109,9 @@ function QuestList() {
         return (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="mb-4">Your quest log is empty.</p>
-                <Button onClick={handleGenerateQuests} disabled={isGenerating || !user}>
-                    {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                    {isGenerating ? 'Generating...' : 'Generate New Quests'}
-                </Button>
+                <div className="flex justify-center">
+                    {questGenerationButtons}
+                </div>
             </div>
         )
     }
@@ -106,20 +123,19 @@ function QuestList() {
     return (
         <div className="space-y-6">
             <div>
-                <div className="flex justify-between items-center mb-2">
+                <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
                     <h2 className="font-headline text-2xl">Active Quests</h2>
-                     {activeQuests.length === 0 && (
-                        <Button onClick={handleGenerateQuests} disabled={isGenerating || !user} size="sm" variant="outline">
-                            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Wand2 className="mr-2 h-4 w-4" />}
-                            {isGenerating ? 'Generating...' : 'Generate More'}
-                        </Button>
+                     {activeQuests.length < 3 && (
+                        <div className="flex justify-center">
+                             {questGenerationButtons}
+                        </div>
                      )}
                 </div>
                 <div className="space-y-4">
                     {activeQuests.length > 0 ? (
                         activeQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
                     ) : (
-                        <p className="text-muted-foreground">No active quests at the moment. Generate some more!</p>
+                        <p className="text-muted-foreground text-center">No active quests at the moment. Generate some more!</p>
                     )}
                 </div>
             </div>
