@@ -6,7 +6,7 @@ import { QuestCard } from '@/components/dashboard/QuestCard';
 
 export function FirstQuest() {
     const searchParams = useSearchParams();
-    const firstQuestCompleted = searchParams.get('first_quest_complete');
+    const firstQuestCompleted = searchParams.get('first_quest_complete') === 'true';
 
     if (firstQuestCompleted) {
         return (

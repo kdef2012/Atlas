@@ -1,3 +1,4 @@
+
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
@@ -15,17 +16,11 @@ interface WelcomePageProps {
 }
 
 async function FirstQuestCard({ archetype }: { archetype: Archetype }) {
-  const input: GenerateFirstQuestInput = { userArchetype: archetype };
-  let quest;
-  try {
-    quest = await generateFirstQuest(input);
-  } catch (error) {
-    console.error('Failed to generate first quest:', error);
-    quest = {
+  // Per design doc, the first quest is fixed to be simple.
+  const quest = {
       questName: 'Drink a glass of water',
       questDescription: 'Hydration is key to life. Complete this simple task to begin your journey.'
-    };
-  }
+  };
 
   return (
     <Card className="w-full max-w-md border-accent neon-border">
@@ -43,7 +38,7 @@ async function FirstQuestCard({ archetype }: { archetype: Archetype }) {
         </div>
         <p className="text-xs text-center mt-4 text-muted-foreground">This quest is auto-verified for your convenience.</p>
         <Button asChild size="lg" className="w-full mt-6 font-bold group">
-          <Link href="/?first_quest_complete=true">
+          <Link href={`/onboarding/reward?archetype=${archetype}`}>
             I Did It! Claim Reward
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Link>
@@ -102,7 +97,7 @@ export default function WelcomePage({ searchParams }: WelcomePageProps) {
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">Title</span>
-              <span className="font-bold text-lg">Novice</span>
+              <span className="font-bold text-lg text-muted-foreground/80 italic">Novice</span>
             </div>
             <div className="flex justify-between items-baseline">
               <span className="text-muted-foreground">XP</span>
