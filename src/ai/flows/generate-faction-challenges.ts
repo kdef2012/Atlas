@@ -56,7 +56,7 @@ Each challenge is tied to one of the five core skill Factions: Physical, Mental,
 **Guidelines:**
 1.  Generate exactly FIVE unique challenges, one for each Faction.
 2.  The 'challengeDescription' should be a clear, measurable goal that users can contribute to by logging activities.
-3.  Be creative and thematic! The descriptions should be engaging and fit the tone of a futuristic RPG.
+3.  Be creative and thematic! The descriptions should be engaging and fit the tone of a futuristic RPG. Avoid generic goals like "log the most XP". Focus on specific, fun activities.
 
 **Example Output:**
 - faction: "Physical", challengeDescription: "The Grav-Cycle Marathon: Log the most distance cycling this week."
