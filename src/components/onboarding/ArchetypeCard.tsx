@@ -10,9 +10,10 @@ interface ArchetypeCardProps {
   name: Archetype;
   description: string;
   icon: React.ReactNode;
+  onSelect: (archetype: Archetype) => void;
 }
 
-export function ArchetypeCard({ name, description, icon }: ArchetypeCardProps) {
+export function ArchetypeCard({ name, description, icon, onSelect }: ArchetypeCardProps) {
   return (
     <Card className="bg-card border-primary/20 hover:border-primary hover:shadow-primary/20 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-2 flex flex-col">
       <CardHeader className="items-center text-center">
@@ -25,7 +26,7 @@ export function ArchetypeCard({ name, description, icon }: ArchetypeCardProps) {
         <CardDescription>{description}</CardDescription>
       </CardContent>
       <div className="p-6 pt-0">
-        <Button asChild className="w-full font-bold bg-primary hover:bg-primary/90 group">
+        <Button asChild className="w-full font-bold bg-primary hover:bg-primary/90 group" onClick={() => onSelect(name)}>
           <Link href={`/onboarding/welcome?archetype=${name}`}>
             Select {name}
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />

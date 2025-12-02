@@ -1,10 +1,15 @@
+'use client';
 
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Box, Gem, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Box, Gem, Sparkles } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
+import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { useEffect } from 'react';
 
 interface RewardPageProps {
   searchParams: {
@@ -23,6 +28,21 @@ function LootBox() {
 
 export default function RewardPage({ searchParams }: RewardPageProps) {
   const { archetype } = searchParams;
+  const { user } = useUser();
+  const firestore = useFirestore();
+
+  useEffect(() => {
+    if (user) {
+      const userRef = doc(firestore, 'users', user.uid);
+      const levelUp = async () => {
+        const userDoc = await getDoc(userRef);
+        if(userDoc.exists() && userDoc.data().level === 0){
+             updateDocumentNonBlocking(userRef, { level: 1, xp: 100 });
+        }
+      }
+      levelUp();
+    }
+  }, [user, firestore]);
 
   if (!archetype) {
     redirect('/onboarding/archetype');

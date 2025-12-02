@@ -21,6 +21,10 @@ import {
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { useUser, useDoc } from "@/firebase";
+import { useFirestore } from "@/firebase/provider";
+import { doc } from "firebase/firestore";
+import type { User } from "@/lib/types";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -33,6 +37,11 @@ const navItems = [
 export function SideNav() {
   const pathname = usePathname();
   const userAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
+  const { user: authUser } = useUser();
+  const firestore = useFirestore();
+  const userRef = authUser ? doc(firestore, 'users', authUser.uid) : null;
+  const { data: user } = useDoc<User>(userRef);
+
 
   return (
     <>
@@ -67,11 +76,11 @@ export function SideNav() {
         <div className="flex items-center gap-3 p-2">
            <Avatar>
               <AvatarImage src={userAvatar?.imageUrl} data-ai-hint={userAvatar?.imageHint} />
-              <AvatarFallback>U</AvatarFallback>
+              <AvatarFallback>{user?.userName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="font-bold text-sm">Username</p>
-              <p className="text-xs text-muted-foreground">Level 1</p>
+              <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
+              <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
             </div>
             <button className="ml-auto group-data-[collapsible=icon]:hidden">
               <LogOut className="w-5 h-5 text-muted-foreground hover:text-foreground" />

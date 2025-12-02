@@ -5,12 +5,15 @@ import { cn } from "@/lib/utils";
 import { PlaceHolderImages, type ImagePlaceholder } from "@/lib/placeholder-images";
 
 interface TwinskieAvatarProps {
-  dominantCategory: SkillCategory | 'None';
+  dominantCategory: SkillCategory | 'None' | undefined;
   isInactive: boolean;
 }
 
 export function TwinskieAvatar({ dominantCategory, isInactive }: TwinskieAvatarProps) {
   const getAvatarData = (): ImagePlaceholder | undefined => {
+    if (!dominantCategory) {
+      return PlaceHolderImages.find(p => p.id === 'twinskie-default');
+    }
     switch (dominantCategory) {
       case 'Physical':
         return PlaceHolderImages.find(p => p.id === 'twinskie-physical');
@@ -32,7 +35,7 @@ export function TwinskieAvatar({ dominantCategory, isInactive }: TwinskieAvatarP
   return (
     <div className={cn(
       "relative w-48 h-48 rounded-full overflow-hidden border-4 border-primary/50 flex items-center justify-center transition-all duration-500",
-      isInactive && "grayscale animate-pulse"
+      isInactive && "grayscale"
     )}>
       {avatarData && (
         <Image

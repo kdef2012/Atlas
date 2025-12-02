@@ -7,16 +7,11 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { CATEGORY_COLORS, CATEGORY_ICONS, type SkillCategory } from "@/lib/types";
+import { CATEGORY_COLORS, CATEGORY_ICONS, type SkillCategory, type User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-
-const chartData = [
-  { category: "Physical", value: 85, fill: CATEGORY_COLORS.Physical },
-  { category: "Mental", value: 90, fill: CATEGORY_COLORS.Mental },
-  { category: "Social", value: 60, fill: CATEGORY_COLORS.Social },
-  { category: "Practical", value: 75, fill: CATEGORY_COLORS.Practical },
-  { category: "Creative", value: 50, fill: CATEGORY_COLORS.Creative },
-];
+import { useDoc, useUser } from "@/firebase";
+import { doc } from "firebase/firestore";
+import { useFirestore } from "@/firebase/provider";
 
 const chartConfig = {
   value: {
@@ -35,7 +30,7 @@ const chartConfig = {
   Social: {
     label: "Social",
     color: CATEGORY_COLORS.Social,
-    icon: CATEGORY_ICONS.Social,
+    icon: CATEGORY_ICONS.Social  
   },
   Practical: {
     label: "Practical",
@@ -50,6 +45,23 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function StatsRadarChart() {
+  const firestore = useFirestore();
+  const { user } = useUser();
+  const userRef = user ? doc(firestore, 'users', user.uid) : null;
+  const { data: userData, isLoading } = useDoc<User>(userRef);
+
+  if (isLoading || !userData) {
+    return <StatsRadarChartSkeleton />;
+  }
+
+  const chartData = [
+    { category: "Physical", value: userData.physicalStat, fill: CATEGORY_COLORS.Physical },
+    { category: "Mental", value: userData.mentalStat, fill: CATEGORY_COLORS.Mental },
+    { category: "Social", value: userData.socialStat, fill: CATEGORY_COLORS.Social },
+    { category: "Practical", value: userData.practicalStat, fill: CATEGORY_COLORS.Practical },
+    { category: "Creative", value: userData.creativeStat, fill: CATEGORY_COLORS.Creative },
+  ];
+
   return (
     <ChartContainer
       config={chartConfig}

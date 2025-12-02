@@ -4,12 +4,18 @@ export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Cr
 
 export interface User {
   id: string;
-  name: string;
   archetype: Archetype;
+  email: string | null;
+  userName: string;
+  physicalStat: number;
+  mentalStat: number;
+  socialStat: number;
+  practicalStat: number;
+  creativeStat: number;
+  lastLogTimestamp: number; // Unix timestamp
+  createdAt: number;
   level: number;
   xp: number;
-  stats: Record<SkillCategory, number>;
-  lastLogTimestamp: number; // Unix timestamp
   fireteamId?: string;
 }
 
@@ -18,13 +24,22 @@ export interface Skill {
   name: string;
   category: SkillCategory;
   xp: number;
-  level: number;
   pioneer?: boolean; // Is this a user-discovered skill?
+  pioneerUserId?: string;
+}
+
+export interface Log {
+    id: string;
+    userId: string;
+    skillId: string;
+    timestamp: number;
+    xp: number;
+    verificationPhotoUrl?: string;
 }
 
 export interface Quest {
   id: string;
-  name: string;
+  name:string;
   description: string;
   category: SkillCategory | 'Intro';
   isCompleted: boolean;
@@ -33,7 +48,10 @@ export interface Quest {
 export interface Fireteam {
   id: string;
   name: string;
-  members: User[];
+  region: string;
+  state: string;
+  country: string;
+  members: string[]; // array of user IDs
   streakActive: boolean;
 }
 
