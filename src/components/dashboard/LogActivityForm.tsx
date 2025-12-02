@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
-import type { Skill, SkillCategory } from "@/lib/types";
+import type { Skill, SkillCategory, Territory } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -37,9 +37,11 @@ export function LogActivityForm() {
   const firestore = useFirestore();
 
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
+  const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
+  const { data: allTerritories } = useCollection<Territory>(territoriesCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -123,8 +125,22 @@ export function LogActivityForm() {
         lastLogTimestamp: Date.now(),
       };
       updateDocumentNonBlocking(userRef, statUpdate);
+      
+      // Step 6: Update Faction Challenge score
+      if (user.fireteamId && allTerritories) {
+          const now = Date.now();
+          const activeChallenge = allTerritories.find(t => t.faction === category && t.endsAt > now);
 
-      // Step 6: Show feedback toast
+          if (activeChallenge) {
+              const territoryRef = doc(firestore, 'territories', activeChallenge.id);
+              const scoreUpdate = {
+                  [`scores.${user.fireteamId}`]: increment(xpGained)
+              };
+              updateDocumentNonBlocking(territoryRef, scoreUpdate);
+          }
+      }
+
+      // Step 7: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
       toast({
         title: "Activity Logged!",
