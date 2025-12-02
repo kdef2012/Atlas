@@ -30,7 +30,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
-  userSkills?: Record<string, UserSkillData>;
+  userSkills: Record<string, UserSkillData>;
   avatarLayers?: Partial<Record<SkillCategory, boolean>>;
   momentumFlameActive: boolean;
   gems: number;

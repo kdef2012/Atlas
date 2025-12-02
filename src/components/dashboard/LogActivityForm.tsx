@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
-import type { Skill, SkillCategory, Territory, Fireteam } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -37,7 +37,7 @@ export function LogActivityForm() {
   const firestore = useFirestore();
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
-  const { data: userData } = useDoc(userRef);
+  const { data: userData } = useDoc<User>(userRef);
 
   const fireteamRef = useMemoFirebase(() => userData?.fireteamId ? doc(firestore, 'fireteams', userData.fireteamId) : null, [firestore, userData]);
   const { data: fireteamData } = useDoc<Fireteam>(fireteamRef);
@@ -137,12 +137,12 @@ export function LogActivityForm() {
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
         momentumFlameActive: true,
+        [`userSkills.${skillId}.xp`]: increment(xpGained),
       };
 
       // Only give global XP now if there's no proof needed
       if (!hasProof) {
         statUpdate.xp = increment(xpGained);
-        statUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
       }
 
       updateDocumentNonBlocking(userRef, statUpdate);
@@ -231,5 +231,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    
