@@ -21,6 +21,7 @@ export interface User {
   xp: number;
   fireteamId?: string;
   unlockedSkills?: Record<string, boolean>;
+  avatarLayers?: Partial<Record<SkillCategory, boolean>>;
   momentumFlameActive: boolean;
   gems: number;
   streakFreezes: number;

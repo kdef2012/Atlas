@@ -61,16 +61,6 @@ function DashboardPageContent() {
 
   const isInactive = user.lastLogTimestamp ? (Date.now() - user.lastLogTimestamp) > (24 * 60 * 60 * 1000) : false;
   
-  const stats = [
-    { name: 'Physical', value: user.physicalStat },
-    { name: 'Mental', value: user.mentalStat },
-    { name: 'Social', value: user.socialStat },
-    { name: 'Practical', value: user.practicalStat },
-    { name: 'Creative', value: user.creativeStat },
-  ];
-
-  const dominantCategory = stats.reduce((a, b) => (a.value > b.value ? a : b)).name as any;
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1 space-y-6">
@@ -79,7 +69,7 @@ function DashboardPageContent() {
             <CardTitle className="font-headline text-3xl">The Twinskie</CardTitle>
             <CardDescription>Your digital self.</CardDescription>
           </CardHeader>
-          <TwinskieAvatar dominantCategory={dominantCategory} isInactive={isInactive} />
+          <TwinskieAvatar isInactive={isInactive} />
         </Card>
         <MomentumFlame />
         <FireteamStatus />

@@ -75,6 +75,7 @@ export default function ArchetypeSelectionPage() {
           level: 0,
           xp: 0,
           unlockedSkills: {},
+          avatarLayers: {},
           momentumFlameActive: true,
           gems: 1,
           streakFreezes: 0,
