@@ -1,10 +1,12 @@
 
 'use client';
 
+import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Link, Shield, Users, Crown } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { Link as LinkIcon, Shield, Users, Crown, PlusCircle } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -16,11 +18,12 @@ export function FireteamStatus() {
     const firestore = useFirestore();
     const { user: authUser } = useUser();
     
-    // In a real app, the user's fireteamId would be used.
-    // For now, we'll hardcode one for demonstration.
-    const fireteamId = "quantum-leapers";
+    const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+    const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
+
+    const fireteamId = user?.fireteamId;
     const fireteamRef = useMemoFirebase(() => fireteamId ? doc(firestore, 'fireteams', fireteamId) : null, [firestore, fireteamId]);
-    const { data: fireteam, isLoading } = useDoc<Fireteam>(fireteamRef);
+    const { data: fireteam, isLoading: isFireteamLoading } = useDoc<Fireteam>(fireteamRef);
     
     const user1Avatar = PlaceHolderImages.find(p => p.id === 'fireteam-user1');
     const user2Avatar = PlaceHolderImages.find(p => p.id === 'fireteam-user2');
@@ -35,7 +38,7 @@ export function FireteamStatus() {
         { name: "You", avatar: youAvatar },
     ];
 
-    if (isLoading) {
+    if (isUserLoading || (fireteamId && isFireteamLoading)) {
         return <Skeleton className="h-56 w-full" />
     }
 
@@ -46,7 +49,7 @@ export function FireteamStatus() {
                     <Users />
                     Fireteam
                 </CardTitle>
-                <CardDescription>Your current squad and status.</CardDescription>
+                <CardDescription>Your current squad status.</CardDescription>
             </CardHeader>
             <CardContent>
                 {fireteam ? (
@@ -55,7 +58,7 @@ export function FireteamStatus() {
                         <h3 className="font-bold">{fireteam.name}</h3>
                         {fireteam.streakActive ? (
                              <Badge className="bg-accent text-accent-foreground hover:bg-accent/90 border-accent-foreground/20">
-                                <Link className="h-3 w-3 mr-1"/>
+                                <LinkIcon className="h-3 w-3 mr-1"/>
                                 Soul Link Active
                             </Badge>
                         ) : (
@@ -66,12 +69,15 @@ export function FireteamStatus() {
                         )}
                     </div>
                     <div className="flex -space-x-2 overflow-hidden mb-4">
-                        {memberPlaceholders.map(member => (
-                            <Avatar key={member.name} className="border-2 border-background">
-                                <AvatarImage src={member.avatar?.imageUrl} data-ai-hint={member.avatar?.imageHint} />
-                                <AvatarFallback>{member.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        ))}
+                        {Object.keys(fireteam.members).map((memberId, index) => {
+                            const member = memberPlaceholders[index % memberPlaceholders.length];
+                            return (
+                                <Avatar key={memberId} className="border-2 border-background">
+                                    <AvatarImage src={member?.avatar?.imageUrl} data-ai-hint={member?.avatar?.imageHint} />
+                                    <AvatarFallback>{member?.name.charAt(0) || 'U'}</AvatarFallback>
+                                </Avatar>
+                            )
+                        })}
                          <Avatar className="border-2 border-dashed border-muted-foreground">
                             <AvatarFallback>+</AvatarFallback>
                         </Avatar>
@@ -83,8 +89,13 @@ export function FireteamStatus() {
                 </>
                 ) : (
                     <div className="text-center text-muted-foreground py-4">
-                        <p>You are not in a Fireteam.</p>
-                        <button className="text-primary font-bold text-sm mt-2">Join or Create a Team</button>
+                        <p className="mb-4">You are not in a Fireteam.</p>
+                        <Button asChild size="sm">
+                            <Link href="/fireteams/create">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Create a Team
+                            </Link>
+                        </Button>
                     </div>
                 )}
             </CardContent>
