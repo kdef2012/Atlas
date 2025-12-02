@@ -9,14 +9,47 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { Archetype } from '@/lib/types';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useUser } from '@/firebase';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
+import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
+import { collection, doc } from 'firebase/firestore';
+import { useFirestore } from '@/firebase/provider';
+import type { Quest } from '@/lib/quest';
 
 interface WelcomePageProps {}
 
 function FirstQuestCard({ archetype }: { archetype: Archetype }) {
-  // Per design doc, the first quest is fixed to be simple.
+  const { user } = useUser();
+  const firestore = useFirestore();
+  const router = useRouter();
+  const { toast } = useToast();
+
   const quest = {
       questName: 'Drink a glass of water',
       questDescription: 'Hydration is key to life. Complete this simple task to begin your journey.'
+  };
+
+  const handleCompleteQuest = () => {
+    if (user) {
+        const questsCollectionRef = collection(firestore, `users/${user.uid}/quests`);
+        const firstQuest: Omit<Quest, 'id'> = {
+            name: 'A New Beginning',
+            description: 'You\'ve taken your first step into a larger world.',
+            category: 'Intro',
+            isCompleted: true,
+            userId: user.uid,
+        };
+        addDocumentNonBlocking(questsCollectionRef, firstQuest);
+
+        toast({
+            title: 'Quest Completed!',
+            description: 'Your journey begins now.',
+        });
+
+        // The reward page handles the actual level up.
+        router.push(`/onboarding/reward?archetype=${archetype}`);
+    }
   };
 
   return (
@@ -34,11 +67,9 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
           </div>
         </div>
         <p className="text-xs text-center mt-4 text-muted-foreground">This quest is auto-verified for your convenience.</p>
-        <Button asChild size="lg" className="w-full mt-6 font-bold group">
-          <Link href={`/onboarding/reward?archetype=${archetype}`}>
-            I Did It! Claim Reward
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
+        <Button onClick={handleCompleteQuest} size="lg" className="w-full mt-6 font-bold group">
+          I Did It! Claim Reward
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </CardContent>
     </Card>

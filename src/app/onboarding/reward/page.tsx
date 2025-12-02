@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Box, Gem, ShieldAlert, Sparkles } from 'lucide-react';
+import { ArrowRight, Box, ShieldAlert, Sparkles } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { useUser, useFirestore } from '@/firebase';
 import { doc, getDoc, increment } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface RewardPageProps {}
 
@@ -28,27 +28,40 @@ export default function RewardPage({}: RewardPageProps) {
   const archetype = searchParams.get('archetype') as Archetype | null;
   const { user } = useUser();
   const firestore = useFirestore();
+  const [isClaimed, setIsClaimed] = useState(false);
 
   useEffect(() => {
-    if (user) {
+    // This effect runs when the user clicks the "Claim Reward" button
+    if (isClaimed && user && archetype) {
       const userRef = doc(firestore, 'users', user.uid);
       const levelUp = async () => {
         const userDoc = await getDoc(userRef);
+        // Only apply the level up and rewards if the user is still level 0
         if(userDoc.exists() && userDoc.data().level === 0){
+             let layerToUnlock = 'Physical';
+             if (archetype === 'Sage') layerToUnlock = 'Mental';
+             if (archetype === 'Maverick') layerToUnlock = 'Creative';
+            
              updateDocumentNonBlocking(userRef, { 
                 level: 1, 
                 xp: 100,
-                streakFreezes: increment(1) 
+                streakFreezes: increment(1),
+                [`avatarLayers.${layerToUnlock}`]: true
             });
         }
       }
       levelUp();
     }
-  }, [user, firestore]);
+  }, [isClaimed, user, firestore, archetype]);
 
   if (!archetype) {
     redirect('/onboarding/archetype');
   }
+  
+  const handleClaim = () => {
+    setIsClaimed(true);
+  };
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
@@ -78,12 +91,19 @@ export default function RewardPage({}: RewardPageProps) {
           </CardContent>
         </Card>
         
-        <Button asChild size="lg" className="w-full max-w-md font-bold group">
-          <Link href="/?first_quest_complete=true">
-            Enter the ATLAS
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </Button>
+        {isClaimed ? (
+             <Button asChild size="lg" className="w-full max-w-md font-bold group">
+                <Link href="/?first_quest_complete=true">
+                    Enter the ATLAS
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+            </Button>
+        ) : (
+            <Button onClick={handleClaim} size="lg" className="w-full max-w-md font-bold group animate-pulse">
+                Claim Your Reward
+                <Sparkles className="ml-2 h-4 w-4" />
+            </Button>
+        )}
       </div>
     </main>
   );
