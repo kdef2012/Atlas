@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { SubmissionCard } from "@/components/verify/SubmissionCard";
 import { CATEGORY_ICONS } from "@/lib/types";
-import { useCollection, useFirestore, useMemoFirebase } from "@/firebase";
+import { useCollection, useFirestore, useMemoFirebase, useUser } from "@/firebase";
 import { collectionGroup, query, where, limit, getDoc, doc } from "firebase/firestore";
 import type { Log, Skill, User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -19,17 +19,21 @@ interface Submission {
 export default function VerifyPage() {
   const VerifyIcon = CATEGORY_ICONS['Verify'];
   const firestore = useFirestore();
+  const { user: authUser } = useUser();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Query for unverified logs that have a photo
-  const unverifiedLogsQuery = useMemoFirebase(() => 
-    query(
+  // Query for unverified logs that have a photo and were NOT submitted by the current user
+  const unverifiedLogsQuery = useMemoFirebase(() => {
+    if (!authUser) return null;
+    return query(
       collectionGroup(firestore, 'logs'), 
       where('isVerified', '==', false),
       where('verificationPhotoUrl', '!=', ''),
+      where('userId', '!=', authUser.uid), // Exclude own submissions
       limit(10) // Limit to 10 to prevent fetching too many at once
-    ), [firestore]);
+    )
+  }, [firestore, authUser]);
 
   const { data: logs, isLoading: isLoadingLogs } = useCollection<Log>(unverifiedLogsQuery);
 
@@ -41,6 +45,9 @@ export default function VerifyPage() {
 
         for (const log of logs) {
           try {
+            // No need to process logs from the current user, as they are pre-filtered.
+            if (authUser && log.userId === authUser.uid) continue;
+
             const skillRef = doc(firestore, 'skills', log.skillId);
             const userRef = doc(firestore, 'users', log.userId);
 
@@ -60,11 +67,15 @@ export default function VerifyPage() {
         }
         setSubmissions(detailedSubmissions);
         setIsLoading(false);
+      } else if (!isLoadingLogs) {
+        // If logs are done loading and are null/empty
+        setSubmissions([]);
+        setIsLoading(false);
       }
     }
 
     fetchSubmissionDetails();
-  }, [logs, firestore]);
+  }, [logs, firestore, authUser, isLoadingLogs]);
 
   const handleVote = (logId: string) => {
     // Remove the voted submission from the local state to show the next one
@@ -96,6 +107,7 @@ export default function VerifyPage() {
             ) : (
                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                     <p>No submissions are currently awaiting verification.</p>
+                    <p className="text-sm mt-2">Check back later to help validate the community's achievements.</p>
                 </div>
             )}
         </div>

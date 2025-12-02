@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Check, Loader2, X } from 'lucide-react';
 import type { Log, Skill, User } from '@/lib/types';
-import { useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { useFirestore, updateDocumentNonBlocking, useUser } from '@/firebase';
 import { doc, increment } from 'firebase/firestore';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -26,12 +26,18 @@ interface SubmissionCardProps {
 export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
     const { log, skill, user } = submission;
     const firestore = useFirestore();
+    const { user: voter } = useUser(); // The user who is voting
     const { toast } = useToast();
     const [isVoting, setIsVoting] = useState(false);
 
     const handleVote = async (isPass: boolean) => {
+        if (!voter) {
+            toast({ variant: 'destructive', title: 'Error', description: 'You must be logged in to vote.'});
+            return;
+        }
         setIsVoting(true);
         const logRef = doc(firestore, 'users', log.userId, 'logs', log.id);
+        const voterRef = doc(firestore, 'users', voter.uid);
 
         try {
             if (isPass) {
@@ -40,10 +46,10 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 updateDocumentNonBlocking(originalUserRef, {
                     xp: increment(log.xp)
                 });
-                 updateDocumentNonBlocking(logRef, { isVerified: true });
-                 toast({
+                updateDocumentNonBlocking(logRef, { isVerified: true });
+                toast({
                     title: "Vote Cast: Pass",
-                    description: `Verified "${skill.name}" for ${user.userName}.`,
+                    description: `Verified "${skill.name}" for ${user.userName}. You earned 5 XP!`,
                 });
             } else {
                 // If fail, just mark as verified to remove from queue, but don't grant XP
@@ -51,9 +57,12 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 toast({
                     variant: 'destructive',
                     title: "Vote Cast: Fail",
-                    description: `Rejected submission from ${user.userName}.`,
+                    description: `Rejected submission from ${user.userName}. You earned 5 XP for your judgment.`,
                 });
             }
+            
+            // Reward the voter
+            updateDocumentNonBlocking(voterRef, { xp: increment(5) });
 
             // Notify parent component to show the next submission
             onVote(log.id);
