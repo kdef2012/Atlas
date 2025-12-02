@@ -20,6 +20,7 @@ import {
   LogOut,
   Atom,
   ScrollText,
+  ShieldCheck,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/turf-wars", label: "Turf Wars", icon: Map },
+  { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

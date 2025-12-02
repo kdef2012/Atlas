@@ -125,6 +125,7 @@ export function LogActivityForm() {
         timestamp: Date.now(),
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
+        isVerified: false, // Default to not verified
       };
       addDocumentNonBlocking(userLogsCollection, newLog);
 
@@ -214,5 +215,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    

@@ -187,13 +187,18 @@
           "type": "string",
           "description": "URL of the photo/video used to verify the activity.",
           "format": "uri"
+        },
+        "isVerified": {
+          "type": "boolean",
+          "description": "Whether the log entry has been verified by the community."
         }
       },
       "required": [
         "id",
         "userId",
         "skillId",
-        "timestamp"
+        "timestamp",
+        "isVerified"
       ]
     },
     "Fireteam": {

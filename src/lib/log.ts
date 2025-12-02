@@ -6,4 +6,5 @@ export interface Log {
     timestamp: number;
     xp: number;
     verificationPhotoUrl?: string;
+    isVerified: boolean;
 }

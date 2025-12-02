@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldAlert, ShieldCheck } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -47,6 +47,16 @@ export interface Skill {
   };
 }
 
+export interface Log {
+    id: string;
+    userId: string;
+    skillId: string;
+    timestamp: number;
+    xp: number;
+    verificationPhotoUrl?: string;
+    isVerified: boolean;
+}
+
 export interface Fireteam {
   id: string;
   name: string;
@@ -75,7 +85,7 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   Creative: 'hsl(var(--chart-4))',  // yellow
 };
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -84,4 +94,5 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Challenge: Swords,
   Streak: Flame,
   Gems: Gem,
+  Verify: ShieldCheck,
 };
