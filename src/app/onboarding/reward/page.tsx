@@ -1,21 +1,18 @@
+
 'use client';
 
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ArrowRight, Box, Gem, Sparkles } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
-import { useUser, useFirestore, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { useUser, useFirestore } from '@/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
 
-interface RewardPageProps {
-  searchParams: {
-    archetype?: Archetype;
-  };
-}
+interface RewardPageProps {}
 
 function LootBox() {
     return (
@@ -26,8 +23,9 @@ function LootBox() {
     )
 }
 
-export default function RewardPage({ searchParams }: RewardPageProps) {
-  const { archetype } = searchParams;
+export default function RewardPage({}: RewardPageProps) {
+  const searchParams = useSearchParams();
+  const archetype = searchParams.get('archetype') as Archetype | null;
   const { user } = useUser();
   const firestore = useFirestore();
 
