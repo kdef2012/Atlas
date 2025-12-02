@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -51,12 +51,10 @@ export interface Fireteam {
 
 export interface Territory {
   id: string;
-  name: string;
-  controlledBy: string | null;
-  controlDuration: string | null;
-  avatarId: string | null;
-  lat: number;
-  lng: number;
+  faction: SkillCategory;
+  challengeDescription: string;
+  endsAt: number; // Unix timestamp
+  scores: Record<string, number>; // fireteamId: score
 }
 
 
@@ -68,12 +66,13 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   Creative: 'hsl(var(--chart-4))',  // yellow
 };
 
-export const CATEGORY_ICONS: Record<SkillCategory, React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
   Practical: Wrench,
   Creative: Paintbrush,
+  Challenge: Swords,
 };
 
     

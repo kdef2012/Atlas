@@ -254,42 +254,40 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Territory",
       "type": "object",
-      "description": "Represents a real-world location that can be controlled by a Fireteam.",
+      "description": "Represents a Faction Challenge that Fireteams can compete in.",
       "properties": {
         "id": {
           "type": "string",
-          "description": "Unique identifier for the Territory."
+          "description": "Unique identifier for the Territory Challenge."
         },
-        "name": {
+        "faction": {
           "type": "string",
-          "description": "The name of the territory (e.g., 'Quantum Park')."
+          "enum": ["Physical", "Mental", "Social", "Practical", "Creative"],
+          "description": "The skill category this challenge is associated with."
         },
-        "lat": {
-          "type": "number",
-          "description": "The latitude of the territory's location."
+        "challengeDescription": {
+          "type": "string",
+          "description": "A description of the challenge (e.g., 'Log the most running distance this week')."
         },
-        "lng": {
-          "type": "number",
-          "description": "The longitude of the territory's location."
+        "endsAt": {
+            "type": "number",
+            "description": "The Unix timestamp when the challenge ends."
         },
-        "controlledBy": {
-          "type": ["string", "null"],
-          "description": "The ID of the Fireteam currently controlling this territory, or null if unclaimed."
-        },
-        "controlDuration": {
-          "type": ["string", "null"],
-          "description": "A human-readable string indicating how long the territory has been held (e.g., '48h', '7d')."
-        },
-        "avatarId": {
-          "type": ["string", "null"],
-          "description": "The ID of the placeholder image for the controlling fireteam's avatar."
+        "scores": {
+          "type": "object",
+          "description": "A map of Fireteam IDs to their scores in this challenge.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "type": "number"
+            }
+          }
         }
       },
       "required": [
         "id",
-        "name",
-        "lat",
-        "lng"
+        "faction",
+        "challengeDescription",
+        "endsAt"
       ]
     }
   },
@@ -399,16 +397,16 @@
           "schema": {
             "$ref": "#/backend/entities/Territory"
           },
-          "description": "Stores data about real-world locations that can be captured by Fireteams.",
+          "description": "Stores data about Faction Challenges that Fireteams can compete in.",
           "params": [
             {
               "name": "territoryId",
-              "description": "The unique identifier for the territory."
+              "description": "The unique identifier for the territory challenge."
             }
           ]
         }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Territories are stored in a top-level collection for public access. The structure supports required QAPs, such as listing skills by user (using a collection group query with the `userId` field in Logs), and listing Fireteams by region (using a composite index on `region` and `state`).\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
+    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. The structure supports required QAPs, such as listing skills by user (using a collection group query with the `userId` field in Logs), and listing Fireteams by region (using a composite index on `region` and `state`).\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
   }
 }
