@@ -3,11 +3,10 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { Territory, Fireteam, User } from "@/lib/types";
 import { useCollection, useMemoFirebase, addDocumentNonBlocking, useDoc } from "@/firebase";
 import { useFirestore, useUser } from "@/firebase/provider";
-import { collection, doc, query, where } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, writeBatch, increment } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TerritoryRow } from "@/components/turf-wars/TerritoryRow";
 import { CATEGORY_ICONS } from "@/lib/types";
@@ -35,7 +34,7 @@ function Leaderboard({ territory }: { territory: Territory }) {
         where('region', '==', user.region),
         where('__name__', 'in', fireteamIds)
     );
-  }, [firestore, user?.region, fireteamIds]);
+  }, [firestore, user?.region, JSON.stringify(fireteamIds)]); // Stringify to memoize array
 
   const { data: fireteams, isLoading } = useCollection<Fireteam>(fireteamsQuery);
   const teamAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
@@ -96,7 +95,7 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
 
   return (
     <div className="space-y-4 p-6 pt-0">
-      {activeTerritories.length > 0 && (
+      {activeTerritories.length > 0 ? (
         <Accordion type="single" collapsible className="w-full">
             {activeTerritories.map(t => (
                 <AccordionItem key={t.id} value={t.id}>
@@ -109,6 +108,10 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
                 </AccordionItem>
             ))}
         </Accordion>
+      ) : (
+         <div className="flex items-center justify-center h-48 text-muted-foreground p-6 text-center border-2 border-dashed rounded-lg">
+            <p>No active challenges at the moment.</p>
+        </div>
       )}
 
        {pastTerritories.length > 0 && (
@@ -137,15 +140,64 @@ export default function TurfWarsPage() {
   const handleGenerateChallenges = async () => {
     setIsGenerating(true);
     try {
+      // Step 1: Award "State Best" Trait for previous cycle before generating new one
+      const now = Date.now();
+      const recentlyEndedQuery = query(territoriesCollection, where('endsAt', '<', now), where('awarded', '==', false));
+      const recentlyEndedSnap = await getDocs(recentlyEndedQuery);
+      
+      const batch = writeBatch(firestore);
+
+      for (const challengeDoc of recentlyEndedSnap.docs) {
+        const challenge = challengeDoc.data() as Territory;
+        const scores = challenge.scores || {};
+        const stateScores: Record<string, number> = {};
+
+        const fireteamIds = Object.keys(scores);
+        if (fireteamIds.length > 0) {
+          const fireteamsQuery = query(collection(firestore, 'fireteams'), where('__name__', 'in', fireteamIds));
+          const fireteamsSnap = await getDocs(fireteamsQuery);
+          
+          fireteamsSnap.forEach(ftDoc => {
+            const fireteam = ftDoc.data() as Fireteam;
+            if(fireteam.state && scores[ftDoc.id]) {
+                stateScores[fireteam.state] = (stateScores[fireteam.state] || 0) + scores[ftDoc.id];
+            }
+          });
+
+          const winningState = Object.keys(stateScores).reduce((a, b) => stateScores[a] > stateScores[b] ? a : b, '');
+
+          if (winningState) {
+            const winningFireteamsQuery = query(collection(firestore, 'fireteams'), where('state', '==', winningState));
+            const winningFireteamsSnap = await getDocs(winningFireteamsQuery);
+
+            for (const ftDoc of winningFireteamsSnap.docs) {
+              const memberIds = Object.keys(ftDoc.data().members);
+              for (const memberId of memberIds) {
+                const userRef = doc(firestore, 'users', memberId);
+                batch.update(userRef, { 'traits.state_best': true });
+              }
+            }
+          }
+        }
+        // Mark challenge as awarded
+        batch.update(challengeDoc.ref, { awarded: true });
+      }
+      
+      await batch.commit();
+
+      // Step 2: Generate new challenges
       const result = await generateFactionChallenges();
       
+      const generationBatch = writeBatch(firestore);
       result.challenges.forEach(challenge => {
-        addDocumentNonBlocking(territoriesCollection, challenge);
+        const newChallengeRef = doc(territoriesCollection);
+        generationBatch.set(newChallengeRef, { ...challenge, awarded: false });
       });
+      await generationBatch.commit();
       
       toast({
-        title: "New Challenges Generated!",
-        description: "A new week of Faction Challenges has begun."
+        title: "New Challenge Cycle Initiated!",
+        description: "Past victors have been awarded, and a new week of Faction Challenges has begun."
       });
 
     } catch (error) {
@@ -153,7 +205,7 @@ export default function TurfWarsPage() {
       toast({
         variant: "destructive",
         title: "Generation Failed",
-        description: "Could not generate new challenges. The AI might be busy."
+        description: "Could not start new challenge cycle. The AI might be busy."
       });
     } finally {
       setIsGenerating(false);
@@ -174,7 +226,7 @@ export default function TurfWarsPage() {
         </div>
         <Button onClick={handleGenerateChallenges} disabled={isGenerating || !territoriesCollection}>
             {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            Generate New Cycle
+            New Cycle
         </Button>
       </CardHeader>
       <CardContent className="p-0">

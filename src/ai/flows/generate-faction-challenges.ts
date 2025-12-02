@@ -62,7 +62,7 @@ Each challenge is tied to one of the five core skill Factions: Physical, Mental,
 - faction: "Physical", challengeDescription: "The Grav-Cycle Marathon: Log the most distance cycling this week."
 - faction: "Mental", challengeDescription: "Neural Pathway Expansion: Complete the most new skill unlocks in the Nebula."
 - faction: "Social", challengeDescription: "Alliance Building: Log the most activities with a Fireteam member."
-- faction: "Practical", challengeDescription: "Construct Architect: Complete the most home improvement or DIY projects."
+- faction: "Practical", challengeDescription: "The Chicken Dish Challenge: Log the most varied and creative chicken-based meals."
 - faction: "Creative", challengeDescription: "The Muse's Embrace: Log the most time practicing a new creative skill."
 
 Now, generate a new set of five Faction Challenges.`,

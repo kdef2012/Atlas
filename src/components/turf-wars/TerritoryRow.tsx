@@ -21,7 +21,7 @@ function getLeadingFireteam(scores: Record<string, number>): [string, number] | 
     const entries = Object.entries(scores);
     if (entries.length === 0) return null;
 
-    return entries.reduce((a, b) => a[1] > b[1] ? a : b);
+    return entries.reduce((a, b) => a[1] > b[1] ? a : b, ["", 0]);
 }
 
 export function TerritoryRow({ territory, isPast = false }: TerritoryRowProps) {
@@ -59,9 +59,9 @@ export function TerritoryRow({ territory, isPast = false }: TerritoryRowProps) {
             </div>
             
             <div className="flex flex-col items-center justify-center w-32 text-center">
-                {fireteam ? (
+                {fireteam && leadingTeamId ? (
                     <>
-                        {isPast && <p className="text-xs font-bold text-yellow-400 flex items-center gap-1"><Trophy className="w-3 h-3"/> WINNER</p>}
+                        {isPast ? <p className="text-xs font-bold text-yellow-400 flex items-center gap-1"><Trophy className="w-3 h-3"/> WINNER</p> : <p className="text-xs font-bold text-accent">LEADING</p> }
                         <Avatar className="mt-1">
                             <AvatarImage src={teamAvatar?.imageUrl} data-ai-hint={teamAvatar?.imageHint} />
                             <AvatarFallback>{fireteam.name.charAt(0)}</AvatarFallback>

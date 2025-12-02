@@ -9,6 +9,7 @@ import { TRAIT_ICONS } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Skeleton } from '../ui/skeleton';
+import { Trophy } from 'lucide-react';
 
 export function TraitBadges() {
     const firestore = useFirestore();
@@ -31,6 +32,15 @@ export function TraitBadges() {
     }
     
     const earnedTraits = earnedTraitIds.map(traitId => {
+        // Special case for state_best as it's not in the global collection
+        if (traitId === 'state_best') {
+            return {
+                id: 'state_best',
+                name: 'State Best',
+                description: 'Your state was the top performer in a recent Faction Challenge.',
+                icon: 'state_best'
+            }
+        }
         return allTraits?.find(t => t.id === traitId);
     }).filter((t): t is Trait => !!t);
 
@@ -39,7 +49,7 @@ export function TraitBadges() {
         <TooltipProvider>
             <div className="flex flex-wrap gap-2 justify-center mt-4 border-t pt-4 w-full">
                 {earnedTraits.map(trait => {
-                    const Icon = TRAIT_ICONS[trait.icon];
+                    const Icon = TRAIT_ICONS[trait.icon as keyof typeof TRAIT_ICONS] || Trophy;
                     return (
                          <Tooltip key={trait.id}>
                             <TooltipTrigger asChild>

@@ -355,6 +355,10 @@
               "type": "number"
             }
           }
+        },
+        "awarded": {
+          "type": "boolean",
+          "description": "A flag to track if the 'State Best' trait has been awarded for this challenge cycle."
         }
       },
       "required": [

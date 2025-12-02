@@ -102,6 +102,7 @@ export interface Territory {
   challengeDescription: string;
   endsAt: number; // Unix timestamp
   scores: Record<string, number>; // fireteamId: score
+  awarded?: boolean; // New field to track if State Best trait has been awarded
 }
 
 
@@ -133,4 +134,5 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     jack_of_all_trades: Award,
     vindicator: ShieldCheck,
     soul_sworn: HeartHandshake,
+    state_best: Trophy,
 };
