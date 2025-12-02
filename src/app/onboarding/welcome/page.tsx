@@ -2,7 +2,6 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { generateFirstQuest, type GenerateFirstQuestInput } from '@/ai/flows/generate-first-quest';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Archetype } from '@/lib/types';
@@ -15,7 +14,7 @@ interface WelcomePageProps {
   };
 }
 
-async function FirstQuestCard({ archetype }: { archetype: Archetype }) {
+function FirstQuestCard({ archetype }: { archetype: Archetype }) {
   // Per design doc, the first quest is fixed to be simple.
   const quest = {
       questName: 'Drink a glass of water',
