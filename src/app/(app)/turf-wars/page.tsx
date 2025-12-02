@@ -3,15 +3,13 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { Shield } from "lucide-react";
 import dynamic from 'next/dynamic';
 import type { Territory } from "@/lib/types";
 import { useCollection, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { collection } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TerritoryRow } from "@/components/turf-wars/TerritoryRow";
 
 const Map = dynamic(() => import('@/components/turf-wars/Map').then(mod => mod.Map), {
   ssr: false,
@@ -39,35 +37,9 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
   return (
     <ScrollArea className="h-full">
       <div className="space-y-2 p-6 pt-0">
-      {territories.map(t => {
-          const teamAvatar = PlaceHolderImages.find(p => p.id === t.avatarId);
-          return (
-              <Card key={t.id} className="p-3 bg-card/50">
-                  <div className="flex items-center gap-4">
-                      {t.controlledBy ? (
-                          <Avatar>
-                              <AvatarImage src={teamAvatar?.imageUrl} data-ai-hint={teamAvatar?.imageHint} />
-                              <AvatarFallback>{t.controlledBy.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                      ) : (
-                          <div className="p-2.5 rounded-full bg-muted">
-                              <Shield className="w-5 h-5 text-muted-foreground"/>
-                          </div>
-                      )}
-                      <div className="flex-1">
-                          <p className="font-bold">{t.name}</p>
-                          {t.controlledBy ? (
-                                <p className="text-xs text-primary">{t.controlledBy}</p>
-                          ) : (
-                              <p className="text-xs text-muted-foreground italic">Unclaimed</p>
-                          )}
-                          
-                      </div>
-                      {t.controlDuration && <p className="text-xs text-muted-foreground">{t.controlDuration}</p>}
-                  </div>
-              </Card>
-          )
-      })}
+      {territories.map(t => (
+        <TerritoryRow key={t.id} territory={t} />
+      ))}
       </div>
     </ScrollArea>
   );

@@ -144,8 +144,8 @@ service cloud.firestore {
      * @principle     Public Read with Owner-Only Writes, based on a denormalized 'ownerId' field.
      */
     match /fireteams/{fireteamId} {
-      allow get: if true;
-      allow list: if true;
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       allow update: if isExistingOwner(resource.data.ownerId);
       allow delete: if isExistingOwner(resource.data.ownerId);
