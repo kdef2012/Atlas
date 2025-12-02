@@ -7,4 +7,5 @@ export interface Quest {
   description: string;
   category: SkillCategory | 'Intro';
   isCompleted: boolean;
+  userId: string;
 }
