@@ -8,6 +8,11 @@ export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Cr
 export type Gender = 'Male' | 'Female' | 'Non-binary';
 export type BodyType = 'Slim' | 'Athletic' | 'Muscular';
 
+export interface UserSkillData {
+  isUnlocked: boolean;
+  xp: number;
+}
+
 export interface User {
   id: string;
   archetype: Archetype;
@@ -25,7 +30,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
-  unlockedSkills?: Record<string, boolean>;
+  userSkills?: Record<string, UserSkillData>;
   avatarLayers?: Partial<Record<SkillCategory, boolean>>;
   momentumFlameActive: boolean;
   gems: number;
@@ -96,3 +101,5 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Gems: Gem,
   Verify: ShieldCheck,
 };
+
+    

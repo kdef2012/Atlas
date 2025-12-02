@@ -133,15 +133,16 @@ export function LogActivityForm() {
       addDocumentNonBlocking(userLogsCollection, newLog);
 
       // Step 5: Update user stats
-      const statUpdate = {
+      const statUpdate: any = {
         [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
         momentumFlameActive: true,
       };
 
-      // Only give XP now if there's no proof needed
+      // Only give global XP now if there's no proof needed
       if (!hasProof) {
-        (statUpdate as any).xp = increment(xpGained);
+        statUpdate.xp = increment(xpGained);
+        statUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
       }
 
       updateDocumentNonBlocking(userRef, statUpdate);
@@ -230,3 +231,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    

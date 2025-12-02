@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { CATEGORY_COLORS, type Skill, type SkillCategory, type User } from '@/lib/types';
 import { useCollection, useUser, useMemoFirebase, useDoc, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, increment } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '../ui/button';
@@ -93,8 +93,8 @@ export function NebulaView() {
     const color = CATEGORY_COLORS[node.category] || 'gray';
     const isPioneer = node.pioneerUserId === user?.id;
 
-    const isUnlocked = user.unlockedSkills?.[node.id] === true;
-    const prereqsMet = node.prerequisites?.every(prereqId => user.unlockedSkills?.[prereqId]) ?? true;
+    const isUnlocked = user.userSkills?.[node.id]?.isUnlocked === true;
+    const prereqsMet = node.prerequisites?.every(prereqId => user.userSkills?.[prereqId]?.isUnlocked) ?? true;
     const userStat = user[`${node.cost?.category.toLowerCase()}Stat` as keyof User] as number || 0;
     const hasEnoughPoints = node.cost ? userStat >= node.cost.points : true;
     const canUnlock = !isUnlocked && prereqsMet && hasEnoughPoints;
@@ -107,7 +107,7 @@ export function NebulaView() {
             const newStatValue = userStat - node.cost.points;
             const updates = {
                 [`${node.cost.category.toLowerCase()}Stat`]: newStatValue,
-                [`unlockedSkills.${node.id}`]: true,
+                [`userSkills.${node.id}.isUnlocked`]: true,
             };
 
             updateDocumentNonBlocking(userRef, updates);
@@ -188,7 +188,7 @@ export function NebulaView() {
                             <p className="font-bold">Prerequisites:</p>
                              <ul className="list-disc pl-4">
                                 {node.prerequisites.map(id => (
-                                    <li key={id} className={cn(user.unlockedSkills?.[id] ? 'text-green-400' : 'text-red-400')}>
+                                    <li key={id} className={cn(user.userSkills?.[id]?.isUnlocked ? 'text-green-400' : 'text-red-400')}>
                                         {skills?.find(s => s.id === id)?.name || 'Unknown Skill'}
                                     </li>
                                 ))}
@@ -280,5 +280,7 @@ export function NebulaView() {
     </div>
   );
 }
+
+    
 
     
