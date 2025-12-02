@@ -170,6 +170,46 @@
         "id",
         "ownerId"
       ]
+    },
+    "Quest": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Quest",
+      "type": "object",
+      "description": "Represents a quest assigned to a user.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the Quest entity."
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the quest."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of what the user needs to do to complete the quest."
+        },
+        "category": {
+          "type": "string",
+          "description": "The skill category this quest is related to (e.g., Physical, Mental)."
+        },
+        "isCompleted": {
+          "type": "boolean",
+          "description": "Whether the user has completed the quest."
+        },
+        "userId": {
+          "type": "string",
+          "description": "The ID of the user this quest is assigned to."
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "category",
+        "isCompleted",
+        "userId"
+      ]
     }
   },
   "auth": {
@@ -247,6 +287,26 @@
             {
               "name": "fireteamId",
               "description": "The unique identifier for the fireteam."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/quests/{questId}",
+        "definition": {
+          "entityName": "Quest",
+          "schema": {
+            "$ref": "#/backend/entities/Quest"
+          },
+          "description": "Stores personalized quests for each user. Enables private quest tracking and management.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier for the user."
+            },
+            {
+              "name": "questId",
+              "description": "The unique identifier for the quest."
             }
           ]
         }
