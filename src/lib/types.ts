@@ -1,3 +1,4 @@
+
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
@@ -19,6 +20,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
+  unlockedSkills?: Record<string, boolean>;
 }
 
 export interface Skill {
@@ -30,6 +32,10 @@ export interface Skill {
   pioneer?: boolean; // Is this a user-discovered skill?
   pioneerUserId?: string;
   prerequisites?: string[]; // Array of skill IDs
+  cost?: {
+    category: SkillCategory;
+    points: number;
+  };
 }
 
 export interface Fireteam {
@@ -58,3 +64,5 @@ export const CATEGORY_ICONS: Record<SkillCategory, React.ComponentType<{ classNa
   Practical: Wrench,
   Creative: Paintbrush,
 };
+
+    

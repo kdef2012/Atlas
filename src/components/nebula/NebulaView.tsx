@@ -1,45 +1,52 @@
+
 'use client'
 
 import { useState, useEffect } from 'react';
-import { CATEGORY_COLORS, type Skill, type SkillCategory } from '@/lib/types';
-import { useCollection, useUser, useMemoFirebase } from '@/firebase';
-import { collection } from 'firebase/firestore';
+import { CATEGORY_COLORS, type Skill, type SkillCategory, type User } from '@/lib/types';
+import { useCollection, useUser, useMemoFirebase, useDoc, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '../ui/button';
 import { CATEGORY_ICONS } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Check, Info, Key, Loader2, Lock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface SkillNode extends Skill {
+interface SkillNodeData extends Skill {
   category: SkillCategory;
   size: number;
-  x: number; // Use numbers for position
-  y: number; // Use numbers for position
+  x: number;
+  y: number;
 }
 
 interface Connection {
-  from: SkillNode;
-  to: SkillNode;
+  from: SkillNodeData;
+  to: SkillNodeData;
 }
 
 export function NebulaView() {
-  const [nodes, setNodes] = useState<SkillNode[]>([]);
+  const [nodes, setNodes] = useState<SkillNodeData[]>([]);
   const [connections, setConnections] = useState<Connection[]>([]);
-  const { user } = useUser();
+  const { user: authUser } = useUser();
   const firestore = useFirestore();
+  const { toast } = useToast();
+
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
 
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
-  const { data: skills, isLoading } = useCollection<Skill>(skillsCollectionRef);
+  const { data: skills, isLoading: areSkillsLoading } = useCollection<Skill>(skillsCollectionRef);
 
   useEffect(() => {
     if (skills) {
       const maxXP = Math.max(...skills.map(s => s.xp || 10), 1);
-      const skillMap = new Map<string, SkillNode>();
+      const skillMap = new Map<string, SkillNodeData>();
 
       const generatedNodes = skills.map(skill => {
         const size = 30 + ((skill.xp || 10) / maxXP) * 120; // min 30px, max 150px
-        const node = {
+        const node: SkillNodeData = {
           ...skill,
           size,
           x: Math.random() * 80 + 10,
@@ -50,7 +57,6 @@ export function NebulaView() {
       });
       setNodes(generatedNodes);
 
-      // Generate connections based on prerequisites
       const generatedConnections: Connection[] = [];
       generatedNodes.forEach(node => {
         if (node.prerequisites) {
@@ -66,6 +72,8 @@ export function NebulaView() {
     }
   }, [skills]);
 
+  const isLoading = areSkillsLoading || isUserLoading;
+
   if (isLoading || nodes.length === 0) {
       return (
           <div className="w-full h-[60vh] flex items-center justify-center bg-black/20 rounded-lg">
@@ -76,10 +84,53 @@ export function NebulaView() {
       )
   }
   
-  const SkillNodeComponent = ({ node, index }: { node: SkillNode, index: number }) => {
+  const SkillNodeComponent = ({ node, index }: { node: SkillNodeData, index: number }) => {
+    const [isUnlocking, setIsUnlocking] = useState(false);
+    
+    if (!user) return null;
+
     const Icon = CATEGORY_ICONS[node.category];
     const color = CATEGORY_COLORS[node.category] || 'gray';
-    const isPioneer = node.pioneerUserId === user?.uid;
+    const isPioneer = node.pioneerUserId === user?.id;
+
+    const isUnlocked = user.unlockedSkills?.[node.id] === true;
+    const prereqsMet = node.prerequisites?.every(prereqId => user.unlockedSkills?.[prereqId]) ?? true;
+    const userStat = user[`${node.cost?.category.toLowerCase()}Stat` as keyof User] as number || 0;
+    const hasEnoughPoints = node.cost ? userStat >= node.cost.points : true;
+    const canUnlock = !isUnlocked && prereqsMet && hasEnoughPoints;
+
+    const handleUnlockSkill = async () => {
+        if (!canUnlock || !node.cost || !userRef) return;
+        
+        setIsUnlocking(true);
+        try {
+            const newStatValue = userStat - node.cost.points;
+            const updates = {
+                [`${node.cost.category.toLowerCase()}Stat`]: newStatValue,
+                [`unlockedSkills.${node.id}`]: true,
+            };
+
+            updateDocumentNonBlocking(userRef, updates);
+
+            toast({
+                title: 'Skill Unlocked!',
+                description: `You have mastered the skill of ${node.name}.`,
+            });
+        } catch (error) {
+            console.error("Failed to unlock skill:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Unlock Failed',
+                description: 'Could not unlock the skill. Please try again.',
+            });
+        } finally {
+            setIsUnlocking(false);
+        }
+    };
+
+    let statusStyles = 'opacity-40 grayscale-[50%]';
+    if(isUnlocked) statusStyles = 'opacity-100 grayscale-0';
+    if(canUnlock) statusStyles = 'opacity-80 grayscale-0 animate-pulse-glow';
 
     return (
        <Popover>
@@ -88,23 +139,25 @@ export function NebulaView() {
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: index * 0.05 }}
-            className="absolute flex items-center justify-center rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-accent"
+            className={cn(
+                "absolute flex items-center justify-center rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent",
+                statusStyles
+            )}
             style={{
               width: node.size,
               height: node.size,
               left: `${node.x}%`,
               top: `${node.y}%`,
               transform: 'translate(-50%, -50%)',
-              backgroundColor: color.replace(')', ' / 0.2)') ,
-              border: `2px solid ${color}`,
+              borderColor: color,
               boxShadow: `0 0 ${node.size / 5}px ${color}`,
             }}
           >
             <div 
               className="absolute inset-0 rounded-full" 
               style={{ 
-                backgroundColor: color,
-                animation: `pulse-nebula 3s infinite ease-in-out`,
+                backgroundColor: color.replace(')', ' / 0.2)'),
+                animation: isUnlocked ? `pulse-nebula 3s infinite ease-in-out` : undefined,
                 animationDelay: `${Math.random() * 3}s`
               }}
             ></div>
@@ -118,18 +171,55 @@ export function NebulaView() {
         </PopoverTrigger>
         <PopoverContent className="w-80 border-primary bg-background/80 backdrop-blur-sm">
           <div className="flex items-start gap-4">
-              <div className="p-2 rounded-lg bg-primary/10">
-                 <Icon className="h-6 w-6 text-primary" />
+              <div className="p-2 rounded-lg" style={{ backgroundColor: color.replace(')', ' / 0.1)'), color }}>
+                 <Icon className="h-6 w-6" />
               </div>
               <div>
                   <h3 className="text-lg font-bold font-headline">{node.name}</h3>
                   <p className="text-sm text-muted-foreground">{node.description || "A skill waiting to be mastered."}</p>
-                  <p className="text-xs text-accent mt-2 font-bold">XP Earned: {node.xp || 10}</p>
               </div>
           </div>
-          <div className="mt-4">
-             {/* Unlock button will go here in a future step */}
-             <Button variant="outline" size="sm" className="w-full" disabled>Unlock (Coming Soon)</Button>
+          <div className="mt-4 space-y-3">
+             <div className="text-xs text-muted-foreground space-y-2">
+                {node.prerequisites && node.prerequisites.length > 0 && (
+                    <div className="flex items-start gap-2">
+                        <Lock className="w-4 h-4 mt-0.5 text-primary"/>
+                        <div>
+                            <p className="font-bold">Prerequisites:</p>
+                             <ul className="list-disc pl-4">
+                                {node.prerequisites.map(id => (
+                                    <li key={id} className={cn(user.unlockedSkills?.[id] ? 'text-green-400' : 'text-red-400')}>
+                                        {skills?.find(s => s.id === id)?.name || 'Unknown Skill'}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    </div>
+                )}
+                {node.cost && (
+                    <div className="flex items-start gap-2">
+                        <Key className="w-4 h-4 mt-0.5 text-primary"/>
+                        <div>
+                            <p className="font-bold">Cost:</p>
+                            <p>
+                                {node.cost.points} {node.cost.category} Points (You have: {userStat})
+                            </p>
+                        </div>
+                    </div>
+                )}
+             </div>
+
+             {isUnlocked ? (
+                 <Button variant="outline" size="sm" className="w-full" disabled>
+                    <Check className="mr-2" />
+                    Unlocked
+                </Button>
+             ) : (
+                <Button onClick={handleUnlockSkill} disabled={!canUnlock || isUnlocking} size="sm" className="w-full">
+                    {isUnlocking && <Loader2 className="mr-2 animate-spin" />}
+                    {canUnlock ? 'Unlock Skill' : 'Requirements not met'}
+                </Button>
+             )}
           </div>
         </PopoverContent>
       </Popover>
@@ -138,7 +228,6 @@ export function NebulaView() {
 
   return (
     <div className="relative w-full h-[60vh] bg-black/20 rounded-lg overflow-hidden border border-border">
-      {/* Background stars */}
       <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
       
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
@@ -179,7 +268,17 @@ export function NebulaView() {
           50% { transform: scale(1.05); opacity: 0.5; }
           100% { transform: scale(1); opacity: 0.3; }
         }
+        @keyframes pulse-glow {
+          0% { box-shadow: 0 0 10px ${'hsl(var(--accent))'}; }
+          50% { box-shadow: 0 0 25px ${'hsl(var(--accent))'}; }
+          100% { box-shadow: 0 0 10px ${'hsl(var(--accent))'}; }
+        }
+        .animate-pulse-glow {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
       `}</style>
     </div>
   );
 }
+
+    

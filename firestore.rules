@@ -1,3 +1,4 @@
+
 /**
  * Core Philosophy: This ruleset enforces a strict user-ownership model for all private data,
  * ensuring that users can only access their own profiles and activity logs. Publicly shared
@@ -150,3 +151,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
