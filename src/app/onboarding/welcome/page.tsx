@@ -1,122 +1,50 @@
 
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { redirect, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
+import { redirect, useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Archetype } from '@/lib/types';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useUser } from '@/firebase';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { addDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { collection, doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
-import type { Quest } from '@/lib/quest';
-import { generateFirstQuest, type GenerateFirstQuestOutput } from '@/ai/flows/generate-first-quest';
+import { StatsRadarChart, StatsRadarChartSkeleton } from '@/components/dashboard/StatsRadarChart';
+import { motion } from 'framer-motion';
 
 interface WelcomePageProps {}
 
 function FirstQuestCard({ archetype }: { archetype: Archetype }) {
-  const { user } = useUser();
-  const firestore = useFirestore();
   const router = useRouter();
-  const { toast } = useToast();
-  const [quest, setQuest] = useState<GenerateFirstQuestOutput | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function getFirstQuest() {
-      try {
-        setIsLoading(true);
-        const result = await generateFirstQuest({ userArchetype: archetype });
-        setQuest(result);
-      } catch (error) {
-        console.error("Failed to generate first quest:", error);
-        // Fallback to a default quest if AI fails
-        setQuest({
-          questName: 'Drink a glass of water',
-          questDescription: 'Hydration is key to life. Complete this simple task to begin your journey.'
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    getFirstQuest();
-  }, [archetype]);
-
-
-  const handleCompleteQuest = () => {
-    if (user && quest) {
-        const questsCollectionRef = collection(firestore, `users/${user.uid}/quests`);
-        const firstQuest: Omit<Quest, 'id'> = {
-            name: quest.questName,
-            description: 'You\'ve taken your first step into a larger world.',
-            category: 'Intro',
-            isCompleted: true,
-            userId: user.uid,
-        };
-        addDocumentNonBlocking(questsCollectionRef, firstQuest);
-
-        toast({
-            title: 'Quest Completed!',
-            description: 'Your journey begins now.',
-        });
-
-        // The reward page handles the actual level up.
-        router.push(`/onboarding/reward?archetype=${archetype}`);
-    }
+  const handleClaim = () => {
+    // Redirect to a dedicated camera page to claim the quest
+    router.push(`/claim-quest?quest=elixir-of-life&archetype=${archetype}`);
   };
 
-  if (isLoading || !quest) {
-    return <FirstQuestCardSkeleton />;
-  }
-
   return (
-    <Card className="w-full max-w-md border-accent neon-border">
-      <CardHeader>
-        <CardTitle className="font-headline text-2xl text-accent neon-text">Your First Quest</CardTitle>
-        <CardDescription>Complete this to begin your journey and claim your first reward.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-start space-x-4">
-          <CheckCircle2 className="h-8 w-8 text-accent neon-icon mt-1" />
-          <div>
-            <h3 className="font-bold text-lg">{quest.questName}</h3>
-            <p className="text-muted-foreground">{quest.questDescription}</p>
+    <motion.div
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.8, delay: 0.5, ease: 'easeOut' }}
+    >
+      <Card className="w-full max-w-md border-accent neon-border">
+        <CardHeader>
+          <CardTitle className="font-headline text-2xl text-accent neon-text">QUEST RECEIVED: "The Elixir of Life"</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start space-x-4">
+            <CheckCircle2 className="h-8 w-8 text-accent neon-icon mt-1" />
+            <div>
+              <p className="text-muted-foreground">Your avatar is dehydrated. Consume 8oz of water to restore vitality.</p>
+              <p className="text-sm font-bold mt-2">Reward: +50 XP / +10 Health</p>
+            </div>
           </div>
-        </div>
-        <p className="text-xs text-center mt-4 text-muted-foreground">This quest is auto-verified for your convenience.</p>
-        <Button onClick={handleCompleteQuest} size="lg" className="w-full mt-6 font-bold group">
-          I Did It! Claim Reward
-          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
-
-function FirstQuestCardSkeleton() {
-  return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-full mt-2" />
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-start space-x-4">
-          <Skeleton className="h-8 w-8 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-4 w-full" />
-          </div>
-        </div>
-        <Skeleton className="h-12 w-full mt-8" />
-      </CardContent>
-    </Card>
+          <Button onClick={handleClaim} size="lg" className="w-full mt-6 font-bold group">
+            Open Camera to Claim
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Button>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }
 
@@ -131,38 +59,35 @@ export default function WelcomePage({}: WelcomePageProps) {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-      <div className="text-center mb-12">
-        <h1 className="font-headline text-4xl md:text-5xl font-bold">Welcome, {archetype}</h1>
-        <p className="text-lg text-muted-foreground mt-2">Your adventure starts now. But first, a simple task.</p>
+      <div className="text-center mb-8">
+        <h1 className="font-headline text-4xl md:text-5xl font-bold">Current Status: <span className="text-muted-foreground">LEVEL 0</span></h1>
       </div>
       
-      <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 max-w-4xl">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="font-headline text-2xl">Your Current Status</CardTitle>
-            <CardDescription>A blank slate, ready to be forged.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between items-baseline">
-              <span className="text-muted-foreground">Level</span>
-              <span className="font-headline text-3xl font-bold text-primary">0</span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-muted-foreground">Title</span>
-              <span className="font-bold text-lg text-muted-foreground/80 italic">Novice</span>
-            </div>
-            <div className="flex justify-between items-baseline">
-              <span className="text-muted-foreground">XP</span>
-              <span className="font-bold text-lg">0 / 100</span>
-            </div>
-             <p className="text-xs text-center pt-4 text-muted-foreground animate-pulse">This is where your journey begins. Every great story has a humble start.</p>
-          </CardContent>
-        </Card>
+      <div className="flex flex-col items-center gap-8 w-full max-w-4xl">
+        <div className="w-full max-w-md opacity-50 grayscale">
+            <Suspense fallback={<StatsRadarChartSkeleton />}>
+                <StatsRadarChart />
+            </Suspense>
+        </div>
         
-        <Suspense fallback={<FirstQuestCardSkeleton />}>
+        <Suspense>
           <FirstQuestCard archetype={archetype} />
         </Suspense>
       </div>
+      <style jsx>{`
+        .neon-text {
+          text-shadow:
+            0 0 5px hsl(var(--accent)),
+            0 0 10px hsl(var(--accent));
+        }
+        .neon-icon {
+          filter: drop-shadow(0 0 4px hsl(var(--accent)));
+        }
+        .neon-border {
+          border-color: hsl(var(--accent) / 0.5);
+          box-shadow: 0 0 8px hsl(var(--accent) / 0.5);
+        }
+      `}</style>
     </main>
   );
 }

@@ -1,46 +1,42 @@
+
 "use client";
 
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Atom } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 
 export default function LandingPage() {
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background text-white overflow-hidden">
-      <div className="absolute inset-0 z-0 opacity-20">
-        {/* Animated background grid */}
-        <div 
-          className="absolute inset-0" 
-          style={{
-            backgroundImage: 'linear-gradient(to right, hsl(var(--primary) / 0.3) 1px, transparent 1px), linear-gradient(to bottom, hsl(var(--primary) / 0.3) 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
-          }}
-        ></div>
-      </div>
+  const router = useRouter();
 
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+  const handleStart = () => {
+    router.push('/onboarding/archetype');
+  };
+
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-black text-white overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 2, delay: 0.5 }}
         className="text-center z-10"
       >
-        <div className="flex justify-center items-center mb-6">
-          <Atom className="w-16 h-16 text-primary animate-pulse" />
-        </div>
-        <h1 className="font-headline text-5xl md:text-7xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent">
-          ATLAS
+        <h1 className="font-headline text-2xl md:text-4xl font-bold mb-10" style={{ fontFamily: '"Courier New", Courier, monospace' }}>
+          Your life has been waiting for a player.
         </h1>
-        <p className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-          A revolutionary application that gamifies human existence. Log your skills, complete quests, and become the person you were meant to be.
-        </p>
-        <Button asChild size="lg" className="w-full max-w-xs font-bold group bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/30 transition-all duration-300 transform hover:scale-105">
-          <Link href="/onboarding/archetype">
-            Begin Your Journey
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
-        </Button>
+        <motion.button
+          onClick={handleStart}
+          className="font-headline text-xl bg-transparent border border-white rounded-md px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white"
+          style={{ fontFamily: '"Courier New", Courier, monospace' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 1, delay: 2.5, repeat: Infinity, repeatType: 'reverse', ease: 'easeInOut' }}
+        >
+          [PRESS START]
+        </motion.button>
       </motion.div>
+      <div className="absolute inset-0 z-0 opacity-5" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+      <audio autoPlay loop>
+        <source src="https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fthrum.mp3?alt=media&token=2ab4f4df-a82b-4752-921c-91ede4f686c5" type="audio/mpeg" />
+      </audio>
     </main>
   );
 }
