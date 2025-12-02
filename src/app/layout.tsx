@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import 'dotenv/config';
 import { FirebaseClientProvider } from '@/firebase';
+import 'leaflet/dist/leaflet.css';
 
 export const metadata: Metadata = {
   title: 'ATLAS: Your Life, Reborn',

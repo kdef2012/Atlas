@@ -1,10 +1,12 @@
 
+'use client';
+
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Map } from "@/components/turf-wars/Map";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Shield } from "lucide-react";
+import dynamic from 'next/dynamic';
 
 // Mock data - this will be replaced with Firestore data
 const territories = [
@@ -13,6 +15,11 @@ const territories = [
   { id: 't3', name: 'The Old Library', controlledBy: 'Chrono Guards', controlDuration: '7d', avatarId: 'fireteam-user3' },
   { id: 't4', name: 'City Hall', controlledBy: null, controlDuration: null, avatarId: null },
 ];
+
+const Map = dynamic(() => import('@/components/turf-wars/Map').then(mod => mod.Map), {
+  ssr: false,
+  loading: () => <div className="w-full h-full bg-muted/50 rounded-lg flex items-center justify-center border-2 border-dashed border-muted-foreground"><p className="text-muted-foreground">Loading Map...</p></div>
+});
 
 
 export default function TurfWarsPage() {
