@@ -21,7 +21,7 @@ import type { SkillCategory, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, getDoc } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -93,7 +93,7 @@ export function LogActivityForm() {
 
       // Step 4: Update user stats
       const userRef = doc(firestore, 'users', user.uid);
-      const userDoc = (await getDocs(query(collection(firestore, 'users'), where("id", "==", user.uid)))).docs[0];
+      const userDoc = await getDoc(userRef);
       
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
@@ -102,7 +102,7 @@ export function LogActivityForm() {
         
         updateDocumentNonBlocking(userRef, {
             xp: newXP,
-            level: newLevel,
+            level: newLevel > userData.level ? newLevel : userData.level,
             [`${category.toLowerCase()}Stat`]: (userData[`${category.toLowerCase()}Stat` as keyof User] as number || 0) + 10,
             lastLogTimestamp: Date.now(),
         });
