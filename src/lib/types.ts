@@ -1,3 +1,6 @@
+
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush } from 'lucide-react';
+
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
 export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Creative';
@@ -28,23 +31,6 @@ export interface Skill {
   pioneerUserId?: string;
 }
 
-export interface Log {
-    id: string;
-    userId: string;
-    skillId: string;
-    timestamp: number;
-    xp: number;
-    verificationPhotoUrl?: string;
-}
-
-export interface Quest {
-  id: string;
-  name:string;
-  description: string;
-  category: SkillCategory | 'Intro';
-  isCompleted: boolean;
-}
-
 export interface Fireteam {
   id: string;
   name: string;
@@ -65,9 +51,9 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
 };
 
 export const CATEGORY_ICONS: Record<SkillCategory, React.ComponentType<{ className?: string }>> = {
-  Physical: require('lucide-react').Dumbbell,
-  Mental: require('lucide-react').BrainCircuit,
-  Social: require('lucide-react').Users,
-  Practical: require('lucide-react').Wrench,
-  Creative: require('lucide-react').Paintbrush,
+  Physical: Dumbbell,
+  Mental: BrainCircuit,
+  Social: Users,
+  Practical: Wrench,
+  Creative: Paintbrush,
 };

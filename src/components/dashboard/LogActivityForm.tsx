@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -22,6 +23,7 @@ import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, increment } from "firebase/firestore";
+import type { Log } from "@/lib/log";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -104,13 +106,14 @@ export function LogActivityForm() {
       }
 
       // Step 4: Create a log entry
-      await addDocumentNonBlocking(userLogsCollection, {
+      const newLog: Omit<Log, 'id'> = {
         userId: user.uid,
         skillId: skillId,
         timestamp: Date.now(),
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
-      });
+      };
+      addDocumentNonBlocking(userLogsCollection, newLog);
 
       // Step 5: Update user stats
       const userRef = doc(firestore, 'users', user.uid);
@@ -122,12 +125,12 @@ export function LogActivityForm() {
       updateDocumentNonBlocking(userRef, statUpdate);
 
       // Step 6: Show feedback toast
-      const Icon = CATEGORY_ICONS[category];
+      const Icon = CATEGORY_ICONS[category as SkillCategory];
       toast({
         title: "Activity Logged!",
         description: (
           <div className="flex items-center gap-2">
-            <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category] }}/>
+            <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category as SkillCategory] }}/>
             <span>Your '{skillName}' activity was logged as <strong>{category}</strong>. {isNewSkill && "You're a Pioneer!"} (+{xpGained} XP)</span>
           </div>
         )

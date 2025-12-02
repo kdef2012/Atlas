@@ -1,13 +1,17 @@
+
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_COLORS, CATEGORY_ICONS, type Quest } from "@/lib/types";
+import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
+import type { Quest } from "@/lib/quest";
+import { Sparkles } from "lucide-react";
+
 
 interface QuestCardProps {
   quest: Quest;
 }
 
 export function QuestCard({ quest }: QuestCardProps) {
-  const Icon = quest.category !== 'Intro' ? CATEGORY_ICONS[quest.category] : require('lucide-react').Sparkles;
+  const Icon = quest.category !== 'Intro' ? CATEGORY_ICONS[quest.category] : Sparkles;
   const color = quest.category !== 'Intro' ? CATEGORY_COLORS[quest.category] : 'hsl(var(--primary))';
 
   return (

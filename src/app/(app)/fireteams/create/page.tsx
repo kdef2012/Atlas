@@ -50,48 +50,51 @@ export default function CreateFireteamPage() {
     }
 
     setIsLoading(true);
-    try {
-      // Create the new fireteam document
-      const fireteamData = {
-        ...values,
-        ownerId: user.uid,
-        members: {
-          [user.uid]: true,
-        },
-        streakActive: false, // Default value
-      };
-      
-      const fireteamsCollection = collection(firestore, 'fireteams');
-      const newFireteamDoc = await addDocumentNonBlocking(fireteamsCollection, fireteamData);
-      
-      if (!newFireteamDoc) throw new Error("Failed to create fireteam document.");
-      
-      // Update the user's document with the new fireteamId
-      const userRef = doc(firestore, 'users', user.uid);
-      updateDocumentNonBlocking(userRef, { fireteamId: newFireteamDoc.id });
+    
+    // Create the new fireteam document data
+    const fireteamData = {
+      ...values,
+      ownerId: user.uid,
+      members: {
+        [user.uid]: true,
+      },
+      streakActive: false, // Default value
+    };
+    
+    const fireteamsCollection = collection(firestore, 'fireteams');
 
-      toast({
-        title: 'Fireteam Created!',
-        description: (
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-accent" />
-            <span>The Fireteam "{values.name}" has been forged.</span>
-          </div>
-        ),
-      });
+    // addDocumentNonBlocking returns the promise, which we can await to get the doc ref
+    // The internal implementation handles the non-blocking nature and error bubbling.
+    addDocumentNonBlocking(fireteamsCollection, fireteamData).then(newFireteamDoc => {
+        if (!newFireteamDoc) {
+            throw new Error("Failed to create fireteam document.");
+        }
 
-      router.push('/fireteams');
+        // Update the user's document with the new fireteamId
+        const userRef = doc(firestore, 'users', user.uid);
+        updateDocumentNonBlocking(userRef, { fireteamId: newFireteamDoc.id });
 
-    } catch (error) {
-      console.error('Failed to create Fireteam:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not create your Fireteam. Please try again.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+        toast({
+            title: 'Fireteam Created!',
+            description: (
+            <div className="flex items-center gap-2">
+                <ShieldCheck className="h-5 w-5 text-accent" />
+                <span>The Fireteam "{values.name}" has been forged.</span>
+            </div>
+            ),
+        });
+
+        router.push('/fireteams');
+    }).catch(error => {
+        console.error('Failed to create Fireteam:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not create your Fireteam. Please try again.',
+        });
+    }).finally(() => {
+        setIsLoading(false);
+    });
   }
 
   return (
