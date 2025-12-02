@@ -9,67 +9,67 @@
     {
       "id": "twinskie-physical",
       "description": "Twinskie avatar for dominant physical skill",
-      "imageUrl": "https://images.unsplash.com/photo-1582439170934-d089aa10abda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxtdXNjdWxhciUyMG1hbnxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1677280953786-456bb8a71038?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bXVzY3VsYXIlMjBtYW58ZW58MHx8fHwxNzY0NjE4NzM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "muscular man"
     },
     {
       "id": "twinskie-practical",
       "description": "Twinskie avatar for dominant practical skill",
-      "imageUrl": "https://images.unsplash.com/photo-1534030347209-467a5b0ad3e6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtYW4lMjBzdWl0fGVufDB8fHx8MTc2NDU1MTgyNXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/flagged/photo-1573603867003-89f5fd7a7576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBzdWl0fGVufDB8fHx8MTc2NDY1NzY0MHww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "man suit"
     },
     {
       "id": "twinskie-creative",
       "description": "Twinskie avatar for dominant creative skill",
-      "imageUrl": "https://images.unsplash.com/photo-1541753866388-0b3c701627d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnRpc3QlMjBwYWludGluZ3xlbnwwfHx8fDE3NjQ1NTU0MzB8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1541753866388-0b3c701627d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnRpc3QlMjBwYWludGluZ3xlbnwwfHx8fDE3NjQ2NzkyODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "artist painting"
     },
     {
       "id": "twinskie-mental",
       "description": "Twinskie avatar for dominant mental skill",
-      "imageUrl": "https://images.unsplash.com/photo-1677212004257-103cfa6b59d0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxnbG93aW5nJTIwaGVhZHxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1764336312138-14a5368a6cd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxnbG93aW5nJTIwaGVhZHxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "glowing head"
     },
     {
       "id": "twinskie-social",
       "description": "Twinskie avatar for dominant social skill",
-      "imageUrl": "https://images.unsplash.com/photo-1691052478632-a714a09eb354?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxjaGFyaXNtYXRpYyUyMHBlcnNvbnxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1761058492039-bc7b2b7ad205?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2hhcmlzbWF0aWMlMjBwZXJzb258ZW58MHx8fHwxNzY0NzAyODgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "charismatic person"
     },
     {
       "id": "twinskie-default",
       "description": "Default Twinskie avatar",
-      "imageUrl": "https://images.unsplash.com/flagged/photo-1596913873199-64312fa091bf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzaWxob3VldHRlJTIwcGVyc29ufGVufDB8fHx8MTc2NDU0MDEwMnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1695825600829-6f968337f0f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2lsaG91ZXR0ZSUyMHBlcnNvbnxlbnwwfHx8fDE3NjQ3MDI4ODN8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "silhouette person"
     },
     {
       "id": "avatar-layer-physical",
       "description": "A layer showing a muscular build",
-      "imageUrl": "https://images.unsplash.com/photo-1725398753254-fa28d7f4944e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxtdXNjdWxhciUyMGJvZHl8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1677280953786-456bb8a71038?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtdXNjdWxhciUyMGJvZHl8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "muscular body"
     },
     {
       "id": "avatar-layer-practical",
       "description": "A layer showing a business suit",
-      "imageUrl": "https://images.unsplash.com/photo-1603394141103-0745b722a7dd?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxidXNpbmVzcyUyMHN1aXR8ZW58MHx8fHwxNzY0NjEzNjcyfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHN1aXR8ZW58MHx8fHwxNzY0NzAyODgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "business suit"
     },
     {
       "id": "avatar-layer-creative",
       "description": "A layer showing glowing hands with paint",
-      "imageUrl": "https://images.unsplash.com/photo-1602722705052-8a5a41c2f43a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxnbG93aW5nJTIwaGFuZHN8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1750325449126-67937857cb34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnbG93aW5nJTIwaGFuZHN8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "glowing hands"
     },
     {
       "id": "avatar-layer-mental",
       "description": "A layer showing a glowing brain aura",
-      "imageUrl": "https://images.unsplash.com/photo-1631962758042-925695881035?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHxnbG93aW5nJTIwYXVyYXxlbnwwfHx8fDE3NjQ2OTQ1NDV8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1764053478954-4e4e3e6b16a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2xvd2luZyUyMGF1cmF8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "glowing aura"
     },
     {
       "id": "avatar-layer-social",
       "description": "A layer showing a charismatic sparkle",
-      "imageUrl": "https://images.unsplash.com/photo-1688538586063-3465af18f04f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxzcGFya2xlJTIwZWZmZWN0fGVufDB8fHx8MTc2NDY5NDU0NXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageUrl": "https://images.unsplash.com/photo-1682244759666-e017b000482d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzcGFya2xlJTIwZWZmZWN0fGVufDB8fHx8MTc2NDY5NDU0NXww&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "sparkle effect"
     }
   ]

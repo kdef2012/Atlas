@@ -19,6 +19,45 @@ const LAYER_MAP: Record<SkillCategory, string> = {
     Creative: 'avatar-layer-creative',
 };
 
+const BASE_AVATAR_MAP: Record<SkillCategory, string> = {
+    Physical: 'twinskie-physical',
+    Mental: 'twinskie-mental',
+    Social: 'twinskie-social',
+    Practical: 'twinskie-practical',
+    Creative: 'twinskie-creative',
+};
+
+const MIN_STAT_THRESHOLD = 50; // Min stat value to trigger a dominant avatar
+
+function getDominantStat(user: User): SkillCategory | null {
+    const stats: [SkillCategory, number][] = [
+        ['Physical', user.physicalStat],
+        ['Mental', user.mentalStat],
+        ['Social', user.socialStat],
+        ['Practical', user.practicalStat],
+        ['Creative', user.creativeStat],
+    ];
+
+    // Find the max stat value
+    const maxStatValue = Math.max(...stats.map(s => s[1]));
+
+    // If max stat is below threshold, no dominant stat
+    if (maxStatValue < MIN_STAT_THRESHOLD) {
+        return null;
+    }
+
+    // Filter for stats that are equal to the max value
+    const topStats = stats.filter(s => s[1] === maxStatValue);
+
+    // If there's a single clear winner, return it
+    if (topStats.length === 1) {
+        return topStats[0][0];
+    }
+    
+    // If there's a tie, no dominant stat
+    return null;
+}
+
 
 export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
   const firestore = useFirestore();
@@ -26,7 +65,19 @@ export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user } = useDoc<User>(userRef);
 
-  const baseAvatar = PlaceHolderImages.find(p => p.id === 'twinskie-default');
+  const getBaseAvatar = (): ImagePlaceholder | undefined => {
+      if (!user) {
+          return PlaceHolderImages.find(p => p.id === 'twinskie-default');
+      }
+      const dominantStat = getDominantStat(user);
+      if (dominantStat) {
+          const avatarId = BASE_AVATAR_MAP[dominantStat];
+          return PlaceHolderImages.find(p => p.id === avatarId);
+      }
+      return PlaceHolderImages.find(p => p.id === 'twinskie-default');
+  };
+
+  const baseAvatar = getBaseAvatar();
 
   const getVisibleLayers = () => {
     if (!user || !user.avatarLayers) return [];
