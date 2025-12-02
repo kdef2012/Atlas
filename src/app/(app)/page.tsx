@@ -5,6 +5,7 @@ import { StatsRadarChart, StatsRadarChartSkeleton } from "@/components/dashboard
 import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
 import { QuestCard } from "@/components/dashboard/QuestCard";
 import { FireteamStatus } from "@/components/dashboard/FireteamStatus";
+import { FirstQuest } from '@/components/dashboard/FirstQuest';
 
 export default function DashboardPage() {
   // Mock data for now
@@ -53,6 +54,7 @@ export default function DashboardPage() {
             </Card>
 
             <div className="space-y-6">
+              <FirstQuest />
               <QuestCard 
                 quest={{ 
                   id: 'q2', 
