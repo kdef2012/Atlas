@@ -70,7 +70,7 @@ export function LogActivityForm() {
         existingSkills: allSkills,
       });
       
-      let { skillId, isNewSkill, skillName, category } = result;
+      let { skillId, isNewSkill, skillName, category, prerequisites, cost } = result;
       const hasProof = values.proof && values.proof.length > 0;
 
       // Step 2: If it's a new skill, create it in Firestore
@@ -81,6 +81,8 @@ export function LogActivityForm() {
           category: category,
           pioneerUserId: user.uid,
           xp: 10,
+          prerequisites: prerequisites || [],
+          cost: cost || { category: category, points: 10 },
         });
         skillId = newSkillDocRef.id;
       }
