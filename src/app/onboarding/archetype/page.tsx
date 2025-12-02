@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
@@ -8,6 +9,7 @@ import { doc } from 'firebase/firestore';
 import { initiateAnonymousSignIn } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 const archetypes: {
   name: Archetype;
@@ -37,6 +39,7 @@ const archetypes: {
 export default function ArchetypeSelectionPage() {
   const auth = useAuth();
   const firestore = useFirestore();
+  const router = useRouter();
   const { user, isUserLoading } = useUser();
 
   // This effect will run once when the component mounts.
@@ -50,7 +53,7 @@ export default function ArchetypeSelectionPage() {
 
   // This function is called when a user selects an archetype.
   // It creates a new user document in Firestore with the selected archetype
-  // and some initial default values.
+  // and some initial default values, then navigates to the welcome page.
   const handleSelectArchetype = (archetype: Archetype) => {
     if (user) {
       const userRef = doc(firestore, 'users', user.uid);
@@ -75,6 +78,8 @@ export default function ArchetypeSelectionPage() {
         },
         { merge: true }
       );
+      // Navigate programmatically after initiating the write
+      router.push(`/onboarding/welcome?archetype=${archetype}`);
     }
   };
 

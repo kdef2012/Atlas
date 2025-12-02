@@ -1,6 +1,6 @@
+
 'use client';
 
-import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import type { Archetype } from '@/lib/types';
@@ -26,11 +26,9 @@ export function ArchetypeCard({ name, description, icon, onSelect }: ArchetypeCa
         <CardDescription>{description}</CardDescription>
       </CardContent>
       <div className="p-6 pt-0">
-        <Button asChild className="w-full font-bold bg-primary hover:bg-primary/90 group" onClick={() => onSelect(name)}>
-          <Link href={`/onboarding/welcome?archetype=${name}`}>
-            Select {name}
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Link>
+        <Button className="w-full font-bold bg-primary hover:bg-primary/90 group" onClick={() => onSelect(name)}>
+          Select {name}
+          <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Button>
       </div>
     </Card>
