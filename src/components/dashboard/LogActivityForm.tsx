@@ -13,14 +13,16 @@ import {
   FormField,
   FormItem,
   FormMessage,
+  FormLabel,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Paperclip } from "lucide-react";
 import type { SkillCategory } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
+  proof: z.any().optional(), // Allow any file type
 });
 
 export function LogActivityForm() {
@@ -73,6 +75,22 @@ export function LogActivityForm() {
             <FormItem>
               <FormControl>
                 <Input placeholder="e.g., 'Ran 5k' or 'Learned React'" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="proof"
+          render={({ field }) => (
+            <FormItem>
+               <FormLabel className="sr-only">Proof of Work</FormLabel>
+              <FormControl>
+                <div className="relative">
+                   <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                   <Input type="file" className="pl-10" {...field} />
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
