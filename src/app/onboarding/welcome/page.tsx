@@ -1,18 +1,16 @@
 
+'use client';
+
 import { Suspense } from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
+import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import type { Archetype } from '@/lib/types';
 import { ArrowRight, CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface WelcomePageProps {
-  searchParams: {
-    archetype?: Archetype;
-  };
-}
+interface WelcomePageProps {}
 
 function FirstQuestCard({ archetype }: { archetype: Archetype }) {
   // Per design doc, the first quest is fixed to be simple.
@@ -69,8 +67,9 @@ function FirstQuestCardSkeleton() {
 }
 
 
-export default function WelcomePage({ searchParams }: WelcomePageProps) {
-  const { archetype } = searchParams;
+export default function WelcomePage({}: WelcomePageProps) {
+  const searchParams = useSearchParams();
+  const archetype = searchParams.get('archetype') as Archetype | null;
 
   if (!archetype) {
     redirect('/onboarding/archetype');
