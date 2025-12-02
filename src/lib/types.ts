@@ -46,6 +46,7 @@ export interface User {
   streakFreezes: number;
   traits?: Partial<Record<string, boolean>>;
   verificationVotes?: number;
+  region?: string;
 }
 
 export interface Skill {
@@ -133,7 +134,5 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     vindicator: ShieldCheck,
     soul_sworn: HeartHandshake,
 };
-
-    
 
     

@@ -23,6 +23,7 @@ const formSchema = z.object({
   category: z.enum(['Physical', 'Mental', 'Social', 'Practical', 'Creative'], {
     required_error: "Please select a category for your guild.",
   }),
+  region: z.string().min(2, 'Please enter a valid city/region.'),
 });
 
 export default function CreateGuildPage() {
@@ -39,15 +40,16 @@ export default function CreateGuildPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
+      region: user?.region || '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !user.region) {
+    if (!user) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'You must be logged in and have a region set to found a Guild.',
+        description: 'You must be logged in to found a Guild.',
       });
       return;
     }
@@ -56,7 +58,6 @@ export default function CreateGuildPage() {
     
     const guildData = {
       ...values,
-      region: user.region, // Guilds are founded in the user's home region
       ownerId: user.id,
       members: {
         [user.id]: true,
@@ -71,7 +72,7 @@ export default function CreateGuildPage() {
         }
 
         const userDocRef = doc(firestore, 'users', user.id);
-        updateDocumentNonBlocking(userDocRef, { guildId: newGuildDoc.id });
+        updateDocumentNonBlocking(userDocRef, { guildId: newGuildDoc.id, region: values.region });
 
         toast({
             title: 'Guild Founded!',
@@ -95,7 +96,7 @@ export default function CreateGuildPage() {
     <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="font-headline text-3xl">Found a New Guild</CardTitle>
-        <CardDescription>Establish a new community for like-minded individuals in your region.</CardDescription>
+        <CardDescription>Establish a new community for like-minded individuals.</CardDescription>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -143,9 +144,20 @@ export default function CreateGuildPage() {
                     </FormItem>
                 )}
             />
-            <div className="border rounded-md p-4 text-sm text-muted-foreground">
-                <p>Your Guild will be founded in your home region: <span className="font-bold text-foreground">{user?.region || 'Unknown'}</span>. Only users from this region will be able to see and join it initially.</p>
-            </div>
+             <FormField
+              control={form.control}
+              name="region"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Region (City)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="e.g., New York" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <p className="text-sm text-muted-foreground">Your Guild will be founded in this region. Only users from this region will be able to see and join it initially.</p>
             <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Tower className="mr-2 h-4 w-4" />}
               Found Guild

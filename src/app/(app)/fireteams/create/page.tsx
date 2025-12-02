@@ -72,7 +72,7 @@ export default function CreateFireteamPage() {
 
         // Update the user's document with the new fireteamId
         const userRef = doc(firestore, 'users', user.uid);
-        updateDocumentNonBlocking(userRef, { fireteamId: newFireteamDoc.id });
+        updateDocumentNonBlocking(userRef, { fireteamId: newFireteamDoc.id, region: values.region });
 
         toast({
             title: 'Fireteam Created!',
@@ -170,3 +170,5 @@ export default function CreateFireteamPage() {
     </Card>
   );
 }
+
+    
