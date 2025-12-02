@@ -19,13 +19,13 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
 import type { SkillCategory, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
-import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, query, where, getDocs, getDoc, serverTimestamp, increment } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
-  proof: z.any().optional(), // Allow any file type
+  proof: z.instanceof(FileList).optional(),
 });
 
 export function LogActivityForm() {
@@ -44,6 +44,9 @@ export function LogActivityForm() {
       skill: "",
     },
   });
+  
+  const fileRef = form.register("proof");
+
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !userLogsCollection) return;
@@ -62,8 +65,6 @@ export function LogActivityForm() {
       const skillQuery = query(skillsCollection, where("name", "==", values.skill));
       const skillSnapshot = await getDocs(skillQuery);
       
-      const xpGained = isPioneer ? 150 : 100; // Bonus XP for pioneers
-
       if (skillSnapshot.empty) {
         // Skill doesn't exist, create it
         isPioneer = true;
@@ -79,21 +80,41 @@ export function LogActivityForm() {
         skillId = skillSnapshot.docs[0].id;
       }
       
+      const xpGained = isPioneer ? 150 : 100; // Bonus XP for pioneers
       if (skillId) {
         const skillRef = doc(firestore, 'skills', skillId);
         updateDocumentNonBlocking(skillRef, { xp: increment(10) });
       }
+      
+      // Step 3: Handle file upload if proof is provided
+      let proofUrl = '';
+      if (values.proof && values.proof.length > 0) {
+        const file = values.proof[0];
+        try {
+          proofUrl = await uploadProofOfWork(user.uid, file);
+        } catch (uploadError) {
+           console.error("Failed to upload proof:", uploadError);
+           toast({
+              variant: "destructive",
+              title: "Upload Failed",
+              description: "Could not upload your proof file. Please try again.",
+           });
+           setIsLoading(false);
+           return;
+        }
+      }
 
-      // Step 3: Create a log entry
+
+      // Step 4: Create a log entry
       await addDocumentNonBlocking(userLogsCollection, {
         userId: user.uid,
         skillId: skillId,
         timestamp: Date.now(),
         xp: xpGained,
-        // verificationPhotoUrl will be handled later
+        verificationPhotoUrl: proofUrl,
       });
 
-      // Step 4: Update user stats
+      // Step 5: Update user stats
       const userRef = doc(firestore, 'users', user.uid);
       
       const statUpdate = {
@@ -151,7 +172,7 @@ export function LogActivityForm() {
               <FormControl>
                 <div className="relative">
                    <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input type="file" className="pl-10" {...field} />
+                   <Input type="file" className="pl-10" {...fileRef} />
                 </div>
               </FormControl>
               <FormMessage />

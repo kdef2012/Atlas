@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -172,6 +173,9 @@
       "password",
       "anonymous"
     ]
+  },
+  "storage": {
+    "rules": "storage.rules"
   },
   "firestore": {
     "structure": [
