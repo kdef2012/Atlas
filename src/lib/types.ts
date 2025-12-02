@@ -20,7 +20,7 @@ export interface User {
 }
 
 export interface Skill {
-  id: string;
+  id:string;
   name: string;
   category: SkillCategory;
   xp: number;
@@ -51,7 +51,8 @@ export interface Fireteam {
   region: string;
   state: string;
   country: string;
-  members: string[]; // array of user IDs
+  ownerId: string;
+  members: Record<string, boolean>;
   streakActive: boolean;
 }
 

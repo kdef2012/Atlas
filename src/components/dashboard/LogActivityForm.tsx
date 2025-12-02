@@ -21,7 +21,7 @@ import type { SkillCategory, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase } from "@/firebase";
 import { addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, query, where, getDocs, getDoc } from "firebase/firestore";
+import { collection, doc, query, where, getDocs, getDoc, serverTimestamp, increment } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -61,28 +61,30 @@ export function LogActivityForm() {
       // Step 2: Check if skill exists
       const skillQuery = query(skillsCollection, where("name", "==", values.skill));
       const skillSnapshot = await getDocs(skillQuery);
+      
+      const xpGained = isPioneer ? 150 : 100; // Bonus XP for pioneers
 
       if (skillSnapshot.empty) {
         // Skill doesn't exist, create it
         isPioneer = true;
-        const newSkillDoc = await addDocumentNonBlocking(skillsCollection, {
+        const newSkillDoc = await addDocumentNonBlocking(collection(firestore, 'skills'), {
           name: values.skill,
           category: category,
           pioneerUserId: user.uid,
-          xp: 100, // Initial XP for new skill
+          xp: 10,
         });
         skillId = newSkillDoc?.id || '';
       } else {
         // Skill exists
-        const existingSkill = skillSnapshot.docs[0];
-        skillId = existingSkill.id;
-        // Optionally update XP on existing skill
-        const skillRef = doc(firestore, 'skills', skillId);
-        updateDocumentNonBlocking(skillRef, { xp: (existingSkill.data().xp || 0) + 100 });
+        skillId = skillSnapshot.docs[0].id;
       }
       
+      if (skillId) {
+        const skillRef = doc(firestore, 'skills', skillId);
+        updateDocumentNonBlocking(skillRef, { xp: increment(10) });
+      }
+
       // Step 3: Create a log entry
-      const xpGained = isPioneer ? 150 : 100; // Bonus XP for pioneers
       await addDocumentNonBlocking(userLogsCollection, {
         userId: user.uid,
         skillId: skillId,
@@ -93,20 +95,14 @@ export function LogActivityForm() {
 
       // Step 4: Update user stats
       const userRef = doc(firestore, 'users', user.uid);
-      const userDoc = await getDoc(userRef);
       
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        const newXP = (userData.xp || 0) + xpGained;
-        const newLevel = Math.floor(newXP / 1000); // Simple level up logic
-        
-        updateDocumentNonBlocking(userRef, {
-            xp: newXP,
-            level: newLevel > userData.level ? newLevel : userData.level,
-            [`${category.toLowerCase()}Stat`]: (userData[`${category.toLowerCase()}Stat` as keyof User] as number || 0) + 10,
-            lastLogTimestamp: Date.now(),
-        });
-      }
+      const statUpdate = {
+        xp: increment(xpGained),
+        [`${category.toLowerCase()}Stat`]: increment(10),
+        lastLogTimestamp: Date.now(),
+      };
+
+      updateDocumentNonBlocking(userRef, statUpdate);
 
 
       toast({

@@ -24,10 +24,12 @@ export function NebulaView() {
   const { data: skills, isLoading } = useCollection<Skill>(skillsCollectionRef);
 
   useEffect(() => {
+    // These useEffects that produce different values on the server and client
+    // must be deferred until after client-side hydration.
     if (skills) {
-      const maxXP = Math.max(...skills.map(s => s.xp), 1);
+      const maxXP = Math.max(...skills.map(s => s.xp || 10), 1);
       const generatedNodes = skills.map(skill => {
-        const size = 30 + (skill.xp / maxXP) * 120; // min 30px, max 150px
+        const size = 30 + ((skill.xp || 10) / maxXP) * 120; // min 30px, max 150px
         return {
           ...skill,
           size,
@@ -83,9 +85,9 @@ export function NebulaView() {
               {node.name}
             </p>
             <p className="text-xs text-white/80" style={{ textShadow: '0 0 5px black' }}>
-              XP {node.xp}
+              XP {node.xp || 10}
             </p>
-            {node.pioneer && node.pioneerUserId === user?.uid && <p className="text-xs font-bold text-accent neon-text">PIONEER</p>}
+            {node.pioneerUserId === user?.uid && <p className="text-xs font-bold text-accent neon-text">PIONEER</p>}
           </div>
         </div>
       ))}
