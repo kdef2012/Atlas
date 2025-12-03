@@ -16,7 +16,7 @@ import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const SOUL_SWORN_THRESHOLD_DAYS = 7;
@@ -94,7 +94,7 @@ export function FireteamStatus() {
     const fireteamRef = useMemoFirebase(() => fireteamId ? doc(firestore, 'fireteams', fireteamId) : null, [firestore, fireteamId]);
     const { data: fireteam, isLoading: isFireteamLoading } = useDoc<Fireteam>(fireteamRef);
     
-    const memberIds = useMemoFirebase(() => fireteam ? Object.keys(fireteam.members) : [], [fireteam]);
+    const memberIds = useMemo(() => fireteam ? Object.keys(fireteam.members) : [], [fireteam]);
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
@@ -139,20 +139,24 @@ export function FireteamStatus() {
             });
         }
     };
+    
+    const memoizedMembers = useMemo(() => members, [JSON.stringify(members)]);
+    const memoizedFireteam = useMemo(() => fireteam, [JSON.stringify(fireteam)]);
+
 
     useEffect(() => {
-        if (fireteamRef && members && members.length > 0 && fireteam) {
+        if (fireteamRef && memoizedMembers && memoizedMembers.length > 0 && memoizedFireteam) {
             const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-            const allActive = members.every(member => member.lastLogTimestamp > twentyFourHoursAgo);
+            const allActive = memoizedMembers.every(member => member.lastLogTimestamp > twentyFourHoursAgo);
             
             let fireteamUpdate: any = {};
             let shouldUpdate = false;
 
-            if (fireteam.streakActive && !allActive) { // Streak just broke
+            if (memoizedFireteam.streakActive && !allActive) { // Streak just broke
                 fireteamUpdate.streakActive = false;
                 fireteamUpdate.streakStartDate = null;
                 shouldUpdate = true;
-            } else if (!fireteam.streakActive && allActive) { // Streak just started
+            } else if (!memoizedFireteam.streakActive && allActive) { // Streak just started
                 fireteamUpdate.streakActive = true;
                 fireteamUpdate.streakStartDate = Date.now();
                 shouldUpdate = true;
@@ -163,12 +167,12 @@ export function FireteamStatus() {
             }
 
             // Check for Soul-Sworn trait
-            if (fireteam.streakActive && fireteam.streakStartDate) {
-                const streakDuration = Date.now() - fireteam.streakStartDate;
+            if (memoizedFireteam.streakActive && memoizedFireteam.streakStartDate) {
+                const streakDuration = Date.now() - memoizedFireteam.streakStartDate;
                 if (streakDuration >= SOUL_SWORN_THRESHOLD_DAYS * 24 * 60 * 60 * 1000) {
                     const batch = writeBatch(firestore);
                     let traitAwarded = false;
-                    members.forEach(member => {
+                    memoizedMembers.forEach(member => {
                         if (!member.traits?.soul_sworn) {
                             const memberRef = doc(firestore, 'users', member.id);
                             batch.update(memberRef, { 'traits.soul_sworn': true });
@@ -183,7 +187,7 @@ export function FireteamStatus() {
                 }
             }
         }
-    }, [members, fireteamRef, fireteam?.streakActive, fireteam?.streakStartDate, firestore, toast]);
+    }, [memoizedMembers, memoizedFireteam, fireteamRef, firestore, toast]);
 
     useEffect(() => {
         const prevStreakStatus = prevStreakStatusRef.current;
