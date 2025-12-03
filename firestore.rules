@@ -106,8 +106,10 @@ service cloud.firestore {
       // Allow anyone to perform a list for counting, but not read individual docs.
       allow list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      // Allow updates by the owner or an admin.
-      allow update: if isOwner(userId) || isAdmin() || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
+      // Allow updates by the owner or an admin. Admins can only update specific fields.
+      allow update: if isOwner(userId) || 
+                    (isAdmin() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin', 'userName', 'gems']))) ||
+                    (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
       allow delete: if isExistingOwner(userId) || isAdmin();
 
       /**
@@ -254,7 +256,27 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         allow update, delete: if isAdmin();
     }
+
+    /**
+     * @description   Global events are public to read for all users. Writes are restricted to admins.
+     * @path          /events/{eventId}
+     * @principle     Public Read for global game state, with admin-only writes.
+     */
+    match /events/{eventId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow write: if isAdmin();
+    }
+
+    /**
+     * @description   Store items are public to read for all users. Writes are restricted to admins.
+     * @path          /store-items/{itemId}
+     * @principle     Public Read for store content, with admin-only writes.
+     */
+    match /store-items/{itemId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow write: if isAdmin();
+    }
   }
 }
-
-    

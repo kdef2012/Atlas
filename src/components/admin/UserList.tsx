@@ -14,6 +14,7 @@ import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { GiftGemsDialog } from "./GiftGemsDialog";
+import { EditUserDialog } from "./EditUserDialog";
 
 export function UserList() {
     const firestore = useFirestore();
@@ -84,6 +85,7 @@ export function UserList() {
                                 </TableCell>
                                  <TableCell className="text-right">
                                     <GiftGemsDialog user={user} />
+                                    <EditUserDialog user={user} />
                                 </TableCell>
                             </TableRow>
                         ))}
