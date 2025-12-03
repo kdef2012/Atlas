@@ -7,7 +7,7 @@ import { PopoverContent } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_ICONS, CATEGORY_COLORS, type Skill, type User, type SkillCategory } from '@/lib/types';
 import { useUser, useDoc, useMemoFirebase, useFirestore, updateDocumentNonBlocking, useCollection } from '@/firebase';
-import { collection, doc } from 'firebase/firestore';
+import { collection, doc, increment } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { Check, Key, Loader2, Lock, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -51,9 +51,8 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
 
     setIsUnlocking(true);
     try {
-      const newStatValue = userStat - node.cost.points;
       const updates = {
-        [`${node.cost.category.toLowerCase()}Stat`]: newStatValue,
+        [`${node.cost.category.toLowerCase()}Stat`]: increment(-node.cost.points),
         [`userSkills.${node.id}.isUnlocked`]: true,
       };
 
