@@ -12,7 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
+import { useFirestore, useUser, updateDocumentNonBlocking, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Loader2, ArrowRight, Sparkles, User2, Palette, Smile } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
@@ -31,6 +31,7 @@ import {
   type FacialHairStyle,
 } from '@/lib/avatar-system-openpeeps';
 import { TwinskieAvatar } from '@/components/twinskie-avatar-openpeeps';
+import { Label } from '@/components/ui/label';
 
 const formSchema = z.object({
   gender: z.enum(['Female', 'Male']),
