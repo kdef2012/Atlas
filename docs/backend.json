@@ -426,7 +426,7 @@
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Guild",
         "type": "object",
-        "description": "Represents a large, user-run community focused on a specific skill category.",
+        "description": "Represents a large, user-run community focused on a specific skill category, with a collective weekly challenge.",
         "properties": {
             "id": { "type": "string", "description": "Unique identifier for the Guild." },
             "name": { "type": "string", "description": "The name of the Guild." },
@@ -443,7 +443,7 @@
             "challengeEndsAt": { "type": "number", "description": "The Unix timestamp when the current challenge cycle ends." },
             "isBuffActive": { "type": "boolean", "description": "Whether the Guild-wide XP buff is currently active." }
         },
-        "required": ["id", "name", "category", "region", "ownerId"]
+        "required": ["id", "name", "category", "region", "ownerId", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"]
     }
   },
   "auth": {
@@ -602,7 +602,7 @@
         "definition": {
             "entityName": "Guild",
             "schema": { "$ref": "#/backend/entities/Guild" },
-            "description": "Stores data for large, user-run communities (Guilds).",
+            "description": "Stores data for large, user-run communities (Guilds). Includes weekly challenge data.",
             "params": [{ "name": "guildId", "description": "The unique identifier for the Guild." }]
         }
       },

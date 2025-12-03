@@ -78,7 +78,7 @@ export default function CreateGuildPage() {
         }
 
         const userDocRef = doc(firestore, 'users', user.id);
-        updateDocumentNonBlocking(userDocRef, { guildId: newGuildDoc.id, region: values.region });
+        updateDocumentNonBlocking(userDocRef, { guildId: newGuildDoc.id });
 
         toast({
             title: 'Guild Founded!',
@@ -133,7 +133,7 @@ export default function CreateGuildPage() {
                         </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            {(Object.keys(CATEGORY_ICONS) as (SkillCategory | 'Guilds' | 'Challenge' | 'Streak' | 'Gems' | 'Verify')[]).filter(k => !['Guilds', 'Challenge', 'Streak', 'Gems', 'Verify'].includes(k)).map(cat => {
+                            {(Object.keys(CATEGORY_ICONS) as (SkillCategory | 'Guilds' | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Store')[]).filter(k => !['Guilds', 'Challenge', 'Streak', 'Gems', 'Verify', 'Store'].includes(k)).map(cat => {
                                 const Icon = CATEGORY_ICONS[cat as SkillCategory];
                                 return (
                                     <SelectItem key={cat} value={cat}>

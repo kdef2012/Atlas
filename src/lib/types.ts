@@ -149,3 +149,5 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     soul_sworn: HeartHandshake,
     state_best: Trophy,
 };
+
+    

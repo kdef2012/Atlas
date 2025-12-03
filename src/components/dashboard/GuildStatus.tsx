@@ -8,12 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Building2, PlusCircle, Zap, MessageSquare } from "lucide-react";
 import { useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { doc, writeBatch, getDocs, collection } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import type { Guild, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Progress } from '../ui/progress';
 import { CATEGORY_ICONS } from '@/lib/types';
@@ -81,7 +80,7 @@ export function GuildStatus() {
         } else if (guildRef && !guild) {
             // This can happen if a user is part of a guild that gets deleted. Clean up user's record.
             if(userRef && user?.guildId) {
-                updateDocumentNonBlocking(userRef, { guildId: null });
+                updateDocumentNonBlocking(userRef, { guildId: undefined });
             }
         }
     }, [guild, guildRef, firestore, toast, userRef, user?.guildId]);
