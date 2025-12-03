@@ -30,19 +30,23 @@ export function ReadyPlayerMeCreator({
       // Only accept messages from Ready Player Me
       if (!event.origin.includes('readyplayer.me')) return;
 
-      const data = event.data;
+      try {
+        const data = JSON.parse(event.data);
+         // Avatar export completed
+        if (data.eventName === 'v1.avatar.exported') {
+            const avatarUrl = data.data.url as string; // Full 3D model URL (.glb)
+            
+            console.log('Avatar GLB created:', avatarUrl);
+            onAvatarCreated(avatarUrl);
+        }
 
-      // Avatar export completed
-      if (data.eventName === 'v1.avatar.exported') {
-        const avatarUrl = data.data.url as string; // Full 3D model URL (.glb)
-        
-        console.log('Avatar GLB created:', avatarUrl);
-        onAvatarCreated(avatarUrl);
-      }
+        // User cancelled
+        if (data.eventName === 'v1.user.cancelled' && onCancel) {
+            onCancel();
+        }
 
-      // User cancelled
-      if (data.eventName === 'v1.user.cancelled' && onCancel) {
-        onCancel();
+      } catch (error) {
+          // Ignore non-JSON messages
       }
     };
 
@@ -54,7 +58,8 @@ export function ReadyPlayerMeCreator({
   }, [onAvatarCreated, onCancel]);
 
   // Build the iframe URL with configuration
-  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&bodyType=fullbody&clearCache`;
+  // The `token` parameter is a placeholder to bypass the license agreement screen.
+  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&bodyType=fullbody&clearCache&token=placeholder-token`;
 
   return (
     <div className={`relative w-full ${className}`}>
