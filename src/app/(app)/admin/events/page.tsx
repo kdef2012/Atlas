@@ -43,6 +43,7 @@ function EventList() {
     const { data: events, isLoading } = useCollection<GlobalEvent>(eventsCollection);
 
     const handleDelete = (event: GlobalEvent) => {
+        if (!firestore) return;
         const eventRef = doc(firestore, 'events', event.id);
         deleteDocumentNonBlocking(eventRef);
         toast({
@@ -70,8 +71,8 @@ function EventList() {
     }
     
     const now = Date.now();
-    const activeEvents = events.filter(e => e.endAt > now);
-    const pastEvents = events.filter(e => e.endAt <= now);
+    const activeEvents = events.filter(e => e.endAt > now).sort((a,b) => a.startAt - b.startAt);
+    const pastEvents = events.filter(e => e.endAt <= now).sort((a,b) => b.endAt - a.endAt);
 
 
     return (
@@ -117,7 +118,7 @@ function EventList() {
                         </Card>
                     ))}
                 </div>
-            ) : <p className="text-sm text-muted-foreground">No active events.</p>}
+            ) : <p className="text-sm text-muted-foreground">No active or upcoming events.</p>}
 
             <h3 className="font-headline text-xl mt-6">Past Events</h3>
              {pastEvents.length > 0 ? (
@@ -128,6 +129,9 @@ function EventList() {
                                 <CardTitle>{event.title}</CardTitle>
                                 <CardDescription>{event.description}</CardDescription>
                             </CardHeader>
+                            <CardContent className="flex items-center justify-between text-sm text-muted-foreground">
+                                <span>Ended: {new Date(event.endAt).toLocaleDateString()}</span>
+                            </CardContent>
                        </Card>
                     ))}
                 </div>
@@ -233,7 +237,7 @@ export default function EventsPage() {
                                             variant={"outline"}
                                             className={cn(
                                                 "w-full justify-start text-left font-normal",
-                                                !field.value && "text-muted-foreground"
+                                                !field.value?.from && "text-muted-foreground"
                                             )}
                                             >
                                             <CalendarIcon className="mr-2 h-4 w-4" />
@@ -302,7 +306,7 @@ export default function EventsPage() {
             </Card>
              <Card>
                 <CardHeader>
-                    <CardTitle>Active & Upcoming Events</CardTitle>
+                    <CardTitle>Event Management</CardTitle>
                 </CardHeader>
                 <CardContent>
                    <EventList />
