@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { collection, query, where, orderBy } from "firebase/firestore";
+import { collection, query, where, orderBy, doc } from "firebase/firestore";
 import type { Suggestion, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
@@ -77,8 +77,9 @@ function SuggestionForm() {
 export function SuggestionBox() {
     const firestore = useFirestore();
     const { user: authUser } = useUser();
+    const { toast } = useToast();
     
-    const userRef = useMemoFirebase(() => authUser ? collection(firestore, 'users') : null, [firestore, authUser]);
+    const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
 
     const suggestionsQuery = useMemoFirebase(() => query(
@@ -90,8 +91,12 @@ export function SuggestionBox() {
     const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
     
     const handleArchive = (id: string) => {
-        const suggestionRef = collection(firestore, 'suggestions', id);
+        const suggestionRef = doc(firestore, 'suggestions', id);
         updateDocumentNonBlocking(suggestionRef, { isArchived: true });
+        toast({
+            title: 'Suggestion Archived',
+            description: 'The suggestion has been moved to the archive.'
+        });
     };
     
     if (user && !user.isAdmin) {
