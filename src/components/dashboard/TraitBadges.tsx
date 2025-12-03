@@ -69,5 +69,4 @@ export function TraitBadges() {
         </TooltipProvider>
     );
 }
-
     
