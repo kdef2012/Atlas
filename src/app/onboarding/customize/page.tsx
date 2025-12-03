@@ -80,7 +80,7 @@ export default function CustomizeAvatarPage() {
     setTimeout(() => {
       toast({
         title: '🎮 Twinskie Forged!',
-        description: 'Your digital soul has been born. Welcome to ATLAS.',
+        description: 'Your Twinskie has been born. Welcome to ATLAS.',
       });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
       setIsLoading(false);
