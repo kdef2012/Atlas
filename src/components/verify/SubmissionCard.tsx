@@ -41,7 +41,7 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
             return;
         }
         setIsVoting(true);
-        const logRef = doc(firestore, 'users', log.userId, 'logs', log.id);
+        const logRef = doc(firestore, `users/${log.userId}/logs`, log.id);
 
         try {
             if (isPass) {
