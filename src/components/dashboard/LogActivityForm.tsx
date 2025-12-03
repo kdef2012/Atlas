@@ -23,7 +23,7 @@ import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/l
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, getDoc, writeBatch, getDocs } from "firebase/firestore";
+import { collection, doc, increment, getDoc, writeBatch, getDocs, serverTimestamp } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -62,6 +62,7 @@ export function LogActivityForm() {
   
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
+  const guildsCollectionRef = useMemoFirebase(() => collection(firestore, 'guilds'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
@@ -112,12 +113,15 @@ export function LogActivityForm() {
         momentumFlameActive: true,
       };
 
-      // Step 2: If it's a new skill, create it in Firestore and grant Pioneer trait
+      // Step 2: If it's a new skill, create it AND its corresponding Guild
       if (isNewSkill) {
         const newSkillDocRef = doc(skillsCollectionRef); // Create a reference with a new ID
+        skillId = newSkillDocRef.id;
+
         batch.set(newSkillDocRef, {
+            id: skillId,
             name: skillName,
-            description: `A new skill discovered by a Pioneer.`,
+            description: `A new skill discovered by ${userData.userName}.`,
             category: category,
             pioneerUserId: user.uid,
             xp: 0,
@@ -125,7 +129,21 @@ export function LogActivityForm() {
             cost: cost || { category: category, points: 10 },
             innovatorAwarded: false,
         });
-        skillId = newSkillDocRef.id;
+
+        // Automatically create the corresponding Guild
+        const newGuildDocRef = doc(guildsCollectionRef);
+        const sevenDaysFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
+        batch.set(newGuildDocRef, {
+            name: `Guild of ${skillName}`,
+            skillId: skillId,
+            category: category,
+            region: userData.region || 'Global',
+            members: {},
+            challengeGoal: 1000,
+            challengeProgress: 0,
+            challengeEndsAt: sevenDaysFromNow,
+            isBuffActive: false,
+        });
         
         // Grant Pioneer Trait
         if (!userData.traits?.pioneer) {
@@ -157,8 +175,6 @@ export function LogActivityForm() {
       if (userData?.momentumFlameActive) {
         xpGained = Math.round(xpGained * 1.5);
       }
-
-      // We will handle Guild Buffs after fetching them.
       
       const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
@@ -185,7 +201,7 @@ export function LogActivityForm() {
         userId: user.uid,
         skillId: skillId,
         timestamp: Date.now(),
-        xp: xpGained, // Store base XP, buffs will be applied before adding to user total
+        xp: xpGained,
         verificationPhotoUrl: proofUrl,
         isVerified: !hasProof,
       });
@@ -210,36 +226,28 @@ export function LogActivityForm() {
       // Step 7: Update Guild Challenge scores and apply buffs
       if (userData.guilds) {
         const guildIds = Object.keys(userData.guilds);
-        const guildRefs = guildIds.map(id => doc(firestore, 'guilds', id));
-        const guildDocs = await Promise.all(guildRefs.map(ref => getDoc(ref)));
-
-        let finalXpGained = xpGained;
-        let buffApplied = false;
-
-        guildDocs.forEach((guildDoc) => {
-            if (guildDoc.exists()) {
+        
+        for (const guildId of guildIds) {
+            const guildRef = doc(firestore, 'guilds', guildId);
+            const guildDoc = await getDoc(guildRef);
+            if(guildDoc.exists()) {
                 const guildData = guildDoc.data() as Guild;
-                // Apply buff if active
-                if (guildData.isBuffActive && !buffApplied) {
-                    finalXpGained = Math.round(finalXpGained * 1.25);
-                    buffApplied = true; // Ensure buff is applied only once
+                 // Apply buff if active
+                if (guildData.isBuffActive) {
+                    xpGained = Math.round(xpGained * 1.25);
                 }
-                // Contribute to progress
-                if (guildData.challengeEndsAt > Date.now()) {
-                    batch.update(guildDoc.ref, { challengeProgress: increment(xpGained) });
+                // Contribute to progress if guild is for the logged skill
+                if (guildData.skillId === skillId && guildData.challengeEndsAt > Date.now()) {
+                    batch.update(guildRef, { challengeProgress: increment(xpGained) });
                 }
             }
-        });
-        // Update the log with the buffed XP
-        batch.update(newLogRef, { xp: finalXpGained });
-
-        if (!hasProof) {
-            userStatUpdate.xp = increment(finalXpGained);
         }
-      } else {
-         if (!hasProof) {
-            userStatUpdate.xp = increment(xpGained);
-        }
+      }
+      
+      // Update the log with the final buffed XP
+      batch.update(newLogRef, { xp: xpGained });
+      if (!hasProof) {
+          userStatUpdate.xp = increment(xpGained);
       }
       
       // Step 8: Check for and award new traits
@@ -251,7 +259,6 @@ export function LogActivityForm() {
           creative: userData.creativeStat,
       };
       
-      // Specialist Trait
       if (isSkillUnlocked) {
         const categoryStatName = `${category.toLowerCase()}Stat` as keyof typeof currentStats;
         const newCategoryValue = (currentStats[categoryStatName] || 0) + 10;
@@ -261,7 +268,6 @@ export function LogActivityForm() {
         }
       }
 
-      // Jack of All Trades Trait
       const statsValues = Object.values(currentStats);
       const minStat = Math.min(...statsValues);
       const maxStat = Math.max(...statsValues);
@@ -272,15 +278,15 @@ export function LogActivityForm() {
       
       batch.update(userRef, userStatUpdate);
       
-      // Innovator Trait check (must happen after batch commits user stat updates)
-      const skillDoc = await getDoc(skillRef);
-      if (skillDoc.exists()) {
-        const skillData = skillDoc.data() as Skill;
-        const newSkillXp = (skillData.xp || 0) + xpGained;
+      // This part needs to be outside the batch as it reads data that the batch might have just written.
+      // Innovator Trait check
+      const skillDocForInnovator = await getDoc(skillRef);
+      if (skillDocForInnovator.exists()) {
+        const skillData = skillDocForInnovator.data() as Skill;
+        const newSkillXp = (userData.userSkills?.[skillId]?.xp || 0) + xpGained; // Check against user's view of XP
         
         if (skillData.pioneerUserId && !skillData.innovatorAwarded && newSkillXp >= INNOVATOR_THRESHOLD) {
             const pioneerRef = doc(firestore, 'users', skillData.pioneerUserId);
-            // Award Innovator trait and gems for their popular skill
             updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true, gems: increment(50) });
             updateDocumentNonBlocking(skillRef, { innovatorAwarded: true });
             
@@ -299,7 +305,6 @@ export function LogActivityForm() {
       
       await batch.commit();
 
-
       // Step 9: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
       let toastDescription = `Your '${skillName}' activity was logged as <strong>${category}</strong>.`;
@@ -314,7 +319,6 @@ export function LogActivityForm() {
        if (!isSkillUnlocked) {
           toastDescription += `<br>Unlock this skill in the Nebula to start earning stat points!`;
       }
-
 
       toast({
         title: "Activity Logged!",
@@ -383,5 +387,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    

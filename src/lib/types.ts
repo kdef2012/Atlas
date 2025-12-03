@@ -98,9 +98,10 @@ export interface Message {
 export interface Guild {
     id: string;
     name: string;
+    skillId: string; // The skill this guild is for
     category: SkillCategory;
-    region: string;
-    ownerId: string;
+    region: string; // Region of origin
+    ownerId?: string; // Pioneer user, but not an owner in the traditional sense
     members: Record<string, boolean>;
     challengeGoal: number;
     challengeProgress: number;
@@ -157,5 +158,3 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     hermit: PersonStanding,
     mentor: BookOpen,
 };
-
-    

@@ -49,6 +49,8 @@ function MemberList({ guild }: { guild: Guild }) {
             {[...Array(3)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
     }
+    
+    const guildOwnerId = members?.find(member => member.id === guild.ownerId)?.id;
 
     return (
         <TooltipProvider>
@@ -63,10 +65,10 @@ function MemberList({ guild }: { guild: Guild }) {
                             <div className="flex-1">
                                 <span className="font-semibold text-sm flex items-center">
                                     {member.userName}
-                                    {member.id === guild.ownerId && 
+                                    {member.id === guildOwnerId && 
                                         <Tooltip>
                                             <TooltipTrigger><Crown className="w-4 h-4 text-yellow-400 ml-1" /></TooltipTrigger>
-                                            <TooltipContent>Guild Owner</TooltipContent>
+                                            <TooltipContent>Guild Founder</TooltipContent>
                                         </Tooltip>
                                     }
                                 </span>
@@ -158,5 +160,3 @@ export default function GuildDetailsPage() {
     </div>
   );
 }
-
-    
