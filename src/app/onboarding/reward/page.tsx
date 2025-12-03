@@ -102,6 +102,9 @@ export default function RewardPage({}: RewardPageProps) {
         const userDoc = await getDoc(userRef);
         
         if (userDoc.exists() && userDoc.data().level === 0) {
+          const audio = new Audio('https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Flevel_up.mp3?alt=media&token=e937d363-231a-4c28-86d3-9f899a7384a2');
+          audio.play().catch(error => console.error("Audio play failed:", error));
+          
           const updates = { 
             level: 1, 
             xp: 50,

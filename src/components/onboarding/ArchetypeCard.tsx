@@ -18,7 +18,7 @@ interface ArchetypeCardProps {
 export function ArchetypeCard({ name, description, bonus, icon, onSelect }: ArchetypeCardProps) {
   const handleSelect = () => {
     const audio = new Audio('https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Funsheath.mp3?alt=media&token=26231998-0c30-4e92-8889-de953e5e40ca');
-    audio.play();
+    audio.play().catch(error => console.error("Audio play failed:", error));
     onSelect(name);
   };
   

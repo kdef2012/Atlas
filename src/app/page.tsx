@@ -65,6 +65,7 @@ export default function LandingPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-black text-white overflow-hidden">
+      
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
