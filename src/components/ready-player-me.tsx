@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface ReadyPlayerMeProps {
   onAvatarCreated: (avatarUrl: string) => void;
@@ -20,35 +21,51 @@ export function ReadyPlayerMeCreator({
   className = '',
 }: ReadyPlayerMeProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const iframe = iframeRef.current;
     if (!iframe) return;
 
     const handleMessage = (event: MessageEvent) => {
-      // Only accept messages from Ready Player Me
-      if (!event.origin.includes('readyplayer.me')) return;
-
       try {
+        // Only accept messages from Ready Player Me
+        if (!event.origin.includes('readyplayer.me')) return;
+
         const data = JSON.parse(event.data);
-         // Avatar export completed
+
+        // Avatar export completed - this is what we want!
         if (data.eventName === 'v1.avatar.exported') {
-            const avatarUrl = data.data.url as string; // Full 3D model URL (.glb)
-            
-            console.log('Avatar GLB created:', avatarUrl);
-            onAvatarCreated(avatarUrl);
+          const avatarUrl = data.data.url; // Full 3D model URL
+          // The creator returns a .glb model, but we want a .png portrait for display
+          const imageUrl = avatarUrl.replace('.glb', '.png') + '?scene=fullbody-portrait-v1';
+          onAvatarCreated(imageUrl);
+        }
+
+        // Frame is ready to use
+        if (data.eventName === 'v1.frame.ready') {
+          setIsLoading(false);
+          // Optional: send config to the creator
+          iframe.contentWindow?.postMessage(
+            JSON.stringify({
+              target: 'readyplayerme',
+              type: 'subscribe',
+              eventName: 'v1.**',
+            }),
+            '*'
+          );
         }
 
         // User cancelled
         if (data.eventName === 'v1.user.cancelled' && onCancel) {
-            onCancel();
+          onCancel();
         }
-
+        
       } catch (error) {
-          // Ignore non-JSON messages
+        // This can happen if the message is not JSON, we can ignore it.
       }
     };
-
+    
     window.addEventListener('message', handleMessage);
 
     return () => {
@@ -57,10 +74,19 @@ export function ReadyPlayerMeCreator({
   }, [onAvatarCreated, onCancel]);
 
   // Build the iframe URL with configuration
-  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&bodyType=fullbody&clearCache`;
+  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&clearCache&bodyType=fullbody`;
 
   return (
     <div className={`relative w-full ${className}`}>
+      {isLoading && (
+        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading avatar creator...</p>
+          </div>
+        </div>
+      )}
+      
       <iframe
         ref={iframeRef}
         src={iframeUrl}
