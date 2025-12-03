@@ -19,7 +19,8 @@
  * Key Security Decisions:
  * - User data is strictly private. All documents and subcollections under /users/{userId} are
  *   accessible only by the authenticated user whose UID matches {userId}.
- * - User listing is disabled. To protect user privacy, it is not possible to query the top-level /users collection.
+ * - User listing is allowed for counting but not reading individual docs. To protect user privacy,
+ *   it is not possible to get a document from the top-level /users collection unless you are the owner.
  * - Public data write access is restricted. Anyone can read /skills, /fireteams and /territories, but creating
  *   or modifying them requires specific permissions.
  * - Default posture is deny-all. Access is only granted through explicit `allow` statements.
@@ -38,7 +39,7 @@
  * Structural Segregation:
  * - The ruleset leverages a clear separation between private and public data. User-specific,
  *   private data (`users`, `logs`, `quests`) is nested under a user-owned path. Publicly accessible data
- *   (`skills`, `fireteams`, `territories`, `traits`) is stored in top-level collections, which is more secure and performant
+ *   (`skills`, `fireteams`, `territories`, `traits`, `guilds`) is stored in top-level collections, which is more secure and performant
  *   for public list operations.
  */
 rules_version = '2';
@@ -95,7 +96,7 @@ service cloud.firestore {
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      // Allow list only for server-side checks on user existence for guild membership
+      // Allow listing for the public user count, but do not allow reading individual documents.
       allow list: if isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       // Allow updates by the owner. Also allow specific fields to be updated by server-side logic (represented by allowing writes when not owned).
@@ -180,20 +181,21 @@ service cloud.firestore {
     }
     
     /**
-     * @description   Guilds are public communities. Anyone can read them.
-     *                Creation is open to any signed-in user. Updates are restricted.
+     * @description   Guilds are public communities, automatically created when a new skill is pioneered.
+     *                Anyone can read them. Updates are restricted.
      * @path          /guilds/{guildId}
-     * @allow         (create) Any authenticated user can create a guild, becoming its owner.
-     * @allow         (update) The guild owner or a member can update the member list.
-     * @principle     Public read, with restricted, logical writes.
+     * @allow         (update) A member can update their own membership status.
+     * @principle     Public read, with restricted, logical writes. Creation is handled server-side.
      */
     match /guilds/{guildId} {
         allow get: if isSignedIn();
         allow list: if isSignedIn();
-        allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-        // Allow owner to update the guild, and members to update their own membership status.
-        allow update: if isOwner(resource.data.ownerId) || isGuildMember(guildId);
-        allow delete: if isOwner(resource.data.ownerId);
+        // Disallow client-side creation. This is handled when a new skill is pioneered.
+        allow create: if false; 
+        // Allow members to update their own membership status or for server-side logic to update challenges.
+        allow update: if isGuildMember(guildId) || request.resource.data.keys().hasAny(['challengeProgress', 'isBuffActive', 'challengeEndsAt']);
+        // Disallow client-side deletion.
+        allow delete: if false;
         
         /**
          * @description   Guild chat messages. Only members of the guild can read and write.
@@ -235,5 +237,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
