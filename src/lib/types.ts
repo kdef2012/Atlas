@@ -182,3 +182,5 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     hermit: PersonStanding,
     mentor: BookOpen,
 };
+
+    
