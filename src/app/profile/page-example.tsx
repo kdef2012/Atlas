@@ -1,103 +1,248 @@
-
 'use client';
 
-import { Suspense } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { TwinskieAvatar } from "@/components/dashboard/TwinskieAvatar";
-import { StatsRadarChart, StatsRadarChartSkeleton } from "@/components/dashboard/StatsRadarChart";
-import { TraitBadges } from "@/components/dashboard/TraitBadges";
-import { useDoc, useUser, useMemoFirebase } from '@/firebase';
+import { TwinskieAvatar } from '@/components/twinskie-avatar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useUser, useDocument, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
-import { Skeleton } from '@/components/ui/skeleton';
-import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
-import { FireteamStatus } from '@/components/dashboard/FireteamStatus';
+import { COSMETIC_ITEMS } from '@/lib/avatar-system';
+import { Loader2, ShoppingBag, Check, Lock } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
-function ProfilePageContent() {
+export default function ProfilePage() {
+  const { user: authUser } = useUser();
   const firestore = useFirestore();
-  const { user: authUser, isUserLoading: isAuthLoading } = useUser();
-  
-  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+  const { toast } = useToast();
+  const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
 
-  const isLoading = isAuthLoading || isUserDocLoading;
+  const userDocRef = authUser ? doc(firestore, 'users', authUser.uid) : null;
+  const { data: userData, isLoading } = useDocument<User>(userDocRef);
 
-  if (isLoading || !user) {
+  if (isLoading || !userData || !authUser) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-            <div className="md:col-span-1 space-y-6">
-                <Card className="flex flex-col items-center justify-center text-center p-6">
-                  <CardHeader className="p-0 mb-4">
-                    <Skeleton className="h-8 w-48" />
-                    <Skeleton className="h-4 w-32 mt-2" />
-                  </CardHeader>
-                   <Skeleton className="w-48 h-48 rounded-lg" />
-                   <Skeleton className="h-10 w-full mt-4" />
-                </Card>
-                <Skeleton className="h-40 w-full" />
-            </div>
-            <div className="md:col-span-2 space-y-6">
-                <Skeleton className="h-96 w-full" />
-                <Skeleton className="h-56 w-full" />
-            </div>
-        </div>
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+      </div>
     );
   }
 
-  const isInactive = user.lastLogTimestamp ? (Date.now() - user.lastLogTimestamp) > (24 * 60 * 60 * 1000) : false;
+  const activeCosmetics = userData.avatarLayers || {};
+  const userGems = userData.gems || 0;
+
+  const toggleCosmetic = async (itemId: string) => {
+    if (!userDocRef) return;
+
+    const isActive = activeCosmetics[itemId];
+    
+    updateDocumentNonBlocking(userDocRef, {
+      [`avatarLayers.${itemId}`]: !isActive,
+    });
+
+    toast({
+      title: isActive ? 'Item Unequipped' : 'Item Equipped',
+      description: isActive 
+        ? 'The item has been removed from your Twinskie' 
+        : 'The item is now visible on your Twinskie',
+    });
+  };
+
+  const purchaseCosmetic = async (item: typeof COSMETIC_ITEMS[0]) => {
+    if (!userDocRef || !item.costGems) return;
+    
+    if (userGems < item.costGems) {
+      toast({
+        variant: 'destructive',
+        title: 'Insufficient Gems',
+        description: `You need ${item.costGems} gems but only have ${userGems}.`,
+      });
+      return;
+    }
+
+    setPurchasingItem(item.id);
+
+    // Deduct gems and unlock item
+    updateDocumentNonBlocking(userDocRef, {
+      gems: userGems - item.costGems,
+      [`avatarLayers.${item.id}`]: true,
+    });
+
+    setTimeout(() => {
+      toast({
+        title: 'Item Purchased!',
+        description: `${item.name} has been added to your Twinskie.`,
+      });
+      setPurchasingItem(null);
+    }, 500);
+  };
+
+  const isItemUnlocked = (item: typeof COSMETIC_ITEMS[0]): boolean => {
+    if (activeCosmetics[item.id] !== undefined) return true;
+    if (!item.requirement) return false;
+
+    // Check requirements
+    if (item.requirement.type === 'level') {
+      return userData.level >= (item.requirement.value as number);
+    }
+    if (item.requirement.type === 'trait') {
+      return userData.traits?.[item.requirement.value as string] || false;
+    }
+    
+    return false;
+  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-      {/* Left Column: Avatar and Core Info */}
-      <div className="md:col-span-1 space-y-6">
-        <Card className="flex flex-col items-center justify-center text-center p-6">
-          <CardHeader className="p-0 mb-4">
-            <CardTitle className="font-headline text-3xl">{user.userName}</CardTitle>
-            <CardDescription>{user.archetype} / Level {user.level}</CardDescription>
-          </CardHeader>
-          <TwinskieAvatar isInactive={isInactive} />
-          <TraitBadges />
-        </Card>
-        <MomentumFlame />
-      </div>
-
-      {/* Right Column: Stats and Status */}
-      <div className="md:col-span-2 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="font-headline">Core Energies</CardTitle>
-            <CardDescription>A reflection of your life's balance.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Suspense fallback={<StatsRadarChartSkeleton />}>
-              <StatsRadarChart />
-            </Suspense>
-          </CardContent>
-        </Card>
-        <FireteamStatus />
-      </div>
-    </div>
-  );
-}
-
-export default function ProfileExamplePage() {
-    return (
-        <div className="p-4 md:p-8">
-            <Suspense fallback={
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-                    <div className="md:col-span-1 space-y-6">
-                        <Skeleton className="h-96 w-full" />
-                        <Skeleton className="h-40 w-full" />
-                    </div>
-                    <div className="md:col-span-2 space-y-6">
-                        <Skeleton className="h-96 w-full" />
-                        <Skeleton className="h-56 w-full" />
-                    </div>
+    <main className="container mx-auto p-4 md:p-8 max-w-7xl">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Left Column - Twinskie Display */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader className="text-center">
+              <CardTitle className="font-headline text-3xl">{userData.userName}</CardTitle>
+              <CardDescription>
+                Level {userData.level} {userData.archetype}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <TwinskieAvatar user={userData} size="xl" />
+              
+              <div className="mt-6 w-full space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">XP Progress</span>
+                  <span className="font-bold">{userData.xp} / {(userData.level + 1) * 100}</span>
                 </div>
-            }>
-                <ProfilePageContent />
-            </Suspense>
+                <div className="w-full bg-secondary rounded-full h-2">
+                  <div
+                    className="bg-primary h-2 rounded-full transition-all"
+                    style={{ width: `${(userData.xp / ((userData.level + 1) * 100)) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4 flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5 text-primary" />
+                <span className="text-2xl font-bold">{userGems}</span>
+                <span className="text-muted-foreground">Gems</span>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-    )
+
+        {/* Right Column - Stats & Cosmetics */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Stats Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Stats</CardTitle>
+              <CardDescription>Your skill progression across all categories</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                {[
+                  { name: 'Physical', value: userData.physicalStat, color: 'bg-red-500' },
+                  { name: 'Mental', value: userData.mentalStat, color: 'bg-blue-500' },
+                  { name: 'Social', value: userData.socialStat, color: 'bg-purple-500' },
+                  { name: 'Practical', value: userData.practicalStat, color: 'bg-green-500' },
+                  { name: 'Creative', value: userData.creativeStat, color: 'bg-yellow-500' },
+                ].map((stat) => (
+                  <div key={stat.name} className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-sm font-medium">{stat.name}</span>
+                      <span className="text-sm font-bold">{stat.value}</span>
+                    </div>
+                    <div className="w-full bg-secondary rounded-full h-2">
+                      <div
+                        className={`${stat.color} h-2 rounded-full transition-all`}
+                        style={{ width: `${Math.min((stat.value / 100) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Cosmetics Wardrobe */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Wardrobe</CardTitle>
+              <CardDescription>Customize your Twinskie with cosmetic items</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {COSMETIC_ITEMS.map((item) => {
+                  const isUnlocked = isItemUnlocked(item);
+                  const isActive = activeCosmetics[item.id] || false;
+                  const isOwned = activeCosmetics[item.id] !== undefined;
+                  const canPurchase = item.costGems && userGems >= item.costGems;
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="border rounded-lg p-4 space-y-3 hover:border-primary transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <h3 className="font-semibold">{item.name}</h3>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
+                          <Badge variant="outline" className="capitalize">
+                            {item.type}
+                          </Badge>
+                        </div>
+                      </div>
+
+                      {isOwned ? (
+                        <Button
+                          onClick={() => toggleCosmetic(item.id)}
+                          variant={isActive ? 'default' : 'outline'}
+                          className="w-full"
+                        >
+                          {isActive ? (
+                            <>
+                              <Check className="w-4 h-4 mr-2" />
+                              Equipped
+                            </>
+                          ) : (
+                            'Equip'
+                          )}
+                        </Button>
+                      ) : isUnlocked && item.requirement ? (
+                        <Button
+                          onClick={() => toggleCosmetic(item.id)}
+                          variant="secondary"
+                          className="w-full"
+                        >
+                          Unlock & Equip
+                        </Button>
+                      ) : item.costGems ? (
+                        <Button
+                          onClick={() => purchaseCosmetic(item)}
+                          disabled={!canPurchase || purchasingItem === item.id}
+                          className="w-full"
+                        >
+                          {purchasingItem === item.id ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <ShoppingBag className="w-4 h-4 mr-2" />
+                          )}
+                          {canPurchase ? `Buy ${item.costGems} gems` : `Need ${item.costGems} gems`}
+                        </Button>
+                      ) : (
+                        <Button disabled className="w-full">
+                          <Lock className="w-4 h-4 mr-2" />
+                          Locked
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </main>
+  );
 }
