@@ -47,9 +47,6 @@ export default function ClaimQuestPage() {
   const handleClaim = () => {
     // For this MVP first quest, we auto-verify instantly.
     setIsVerified(true);
-    // Play a success sound
-    const audio = new Audio('https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Flevel-up.mp3?alt=media&token=85834161-54f3-4246-8e50-48e718693899');
-    audio.play();
     
     // Redirect to the reward page after a delay to show the animation
     setTimeout(() => {
