@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,12 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2, ArrowRight, Sparkles } from 'lucide-react';
+import { Loader2, ArrowRight, Sparkles, Link as LinkIcon } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { ReadyPlayerMeCreator } from '@/components/ready-player-me';
+import { Input } from '@/components/ui/input';
 
 export default function CustomizeAvatarPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [manualUrl, setManualUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
@@ -25,10 +28,23 @@ export default function CustomizeAvatarPage() {
     console.log('Avatar URL received:', url);
     setAvatarUrl(url);
     toast({
-      title: '✨ Avatar Created!',
-      description: 'Your Twinskie looks amazing! Click Continue to proceed.',
+      title: '✨ Avatar URL Set!',
+      description: 'Your Twinskie is ready! Click Continue to proceed.',
     });
   };
+  
+  const handleManualUrlSubmit = () => {
+    if (manualUrl && (manualUrl.startsWith('http') || manualUrl.startsWith('https://'))) {
+      handleAvatarCreated(manualUrl);
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid URL',
+        description: 'Please enter a valid URL.',
+      });
+    }
+  };
+
 
   const handleProceed = async (skipped: boolean = false) => {
     if (!user) {
@@ -43,7 +59,7 @@ export default function CustomizeAvatarPage() {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please create your avatar or skip this step.',
+        description: 'Please create your avatar, provide a URL, or skip this step.',
       });
       return;
     }
@@ -92,7 +108,7 @@ export default function CustomizeAvatarPage() {
         <p className="text-muted-foreground mt-2">Create your realistic digital avatar, or skip for a default one.</p>
       </div>
       
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl space-y-4">
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="font-headline text-2xl flex items-center justify-center gap-2">
@@ -100,15 +116,29 @@ export default function CustomizeAvatarPage() {
               Avatar Creator
             </CardTitle>
             <CardDescription>
-              Customize your appearance - take a selfie or choose from options
+              Use the creator below or paste a .glb URL to generate your avatar.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="w-full" style={{ height: '600px' }}>
+            <div className="w-full" style={{ height: '500px' }}>
               <ReadyPlayerMeCreator
                 onAvatarCreated={handleAvatarCreated}
                 className="h-full"
               />
+            </div>
+             <div className="p-4 border-t">
+                <p className="text-sm font-medium text-center mb-2">Or paste an avatar URL</p>
+                <div className="flex gap-2">
+                    <Input 
+                        value={manualUrl}
+                        onChange={(e) => setManualUrl(e.target.value)}
+                        placeholder="Paste a .glb or .png avatar URL here"
+                    />
+                    <Button onClick={handleManualUrlSubmit} variant="secondary">
+                        <LinkIcon className="mr-2 h-4 w-4"/>
+                        Submit URL
+                    </Button>
+                </div>
             </div>
           </CardContent>
         </Card>

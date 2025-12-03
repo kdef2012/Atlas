@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -33,14 +34,10 @@ export function ReadyPlayerMeCreator({
 
       // Avatar export completed
       if (data.eventName === 'v1.avatar.exported') {
-        const avatarUrl = data.data.url; // Full 3D model URL
+        const avatarUrl = data.data.url as string; // Full 3D model URL (.glb)
         
-        let imageUrl = avatarUrl.replace('.glb', '.png');
-        // Correctly append query parameter
-        imageUrl += imageUrl.includes('?') ? '&scene=fullbody-portrait-v1' : '?scene=fullbody-portrait-v1';
-        
-        console.log('Avatar created:', imageUrl);
-        onAvatarCreated(imageUrl);
+        console.log('Avatar GLB created:', avatarUrl);
+        onAvatarCreated(avatarUrl);
       }
 
       // User cancelled
