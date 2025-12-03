@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
@@ -9,7 +10,7 @@ import {
 } from "@/components/ui/chart";
 import { CATEGORY_COLORS, CATEGORY_ICONS, type SkillCategory, type User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { useDoc, useUser } from "@/firebase";
+import { useDoc, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase/provider";
 
@@ -47,7 +48,7 @@ const chartConfig = {
 export function StatsRadarChart() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const userRef = user ? doc(firestore, 'users', user.uid) : null;
+  const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
   const { data: userData, isLoading } = useDoc<User>(userRef);
 
   if (isLoading || !userData) {

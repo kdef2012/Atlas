@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { TwinskieAvatar } from "@/components/twinskie-avatar";
+import { TwinskieAvatar } from "@/components/twinskie-avatar-openpeeps";
 import { StatsRadarChart } from "@/components/dashboard/StatsRadarChart";
 import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
 import { QuestCard } from "@/components/dashboard/QuestCard";

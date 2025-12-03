@@ -189,7 +189,7 @@ function GuildList() {
     );
   }
 
-  if (!guilds || guilds.length === 0 || !skills) {
+  if (!guilds || guilds.length === 0 || !skills || !user) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p>No Guilds have been established yet in ATLAS.</p>

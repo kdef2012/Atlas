@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Loader2, X } from 'lucide-react';
 import type { Log, Skill, User } from '@/lib/types';
 import { useFirestore, updateDocumentNonBlocking, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, increment } from 'firestore';
+import { doc, increment } from 'firebase/firestore';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
