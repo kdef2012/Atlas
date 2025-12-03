@@ -207,58 +207,59 @@ function OpenPeepsCharacter({
 
   return (
     <svg
-      viewBox="0 0 200 200"
+      viewBox="0 0 200 300"
       width={size}
       height={size}
       className="w-full h-full"
+      preserveAspectRatio="xMidYMid meet"
     >
-      {/* Body */}
-      <g transform="translate(100, 140)">
-        <Body pose={config.body} skinColor={skinColor} />
-      </g>
-
-      {/* Head */}
-      <g transform="translate(100, 70)">
-        <Head shape={config.head} skinColor={skinColor} />
-      </g>
-
-      {/* Hair */}
-      <g transform="translate(100, 40)">
-        <Hair style={config.hair} color={hairColor} />
-      </g>
-
-      {/* Face */}
-      <g transform="translate(100, 75)">
-        <Eyes style={config.eyes} />
-        <Eyebrows style={config.eyebrows} />
-        <Mouth style={config.mouth} />
-      </g>
-
-      {/* Facial Hair (if male and has it) */}
+      {/* Render in correct order: back to front */}
+      
+      {/* 1. Body (lowest layer) */}
+      <Body pose={config.body} skinColor={skinColor} />
+      
+      {/* 2. Hair (back of head) */}
+      <Hair style={config.hair} color={hairColor} />
+      
+      {/* 3. Head (on top of hair back) */}
+      <Head shape={config.head} skinColor={skinColor} />
+      
+      {/* 4. Face features */}
+      <Eyebrows style={config.eyebrows} />
+      <Eyes style={config.eyes} />
+      <Mouth style={config.mouth} />
+      
+      {/* 5. Facial Hair (if male) */}
       {config.gender === 'Male' && config.facialHair && config.facialHair !== 'none' && (
-        <g transform="translate(100, 90)">
-          <FacialHair style={config.facialHair} color={hairColor} />
-        </g>
+        <FacialHair style={config.facialHair} color={hairColor} />
       )}
+      
+      {/* 6. Hair (front strands) */}
+      <HairFront style={config.hair} color={hairColor} />
 
-      {/* Accessories */}
+      {/* 7. Accessories (topmost layer) */}
       {config.accessories?.map((accessory, i) => (
-        <g key={i} transform="translate(100, 70)">
-          <Accessory type={accessory} />
-        </g>
+        <Accessory key={i} type={accessory} />
       ))}
     </svg>
   );
 }
 
-// SVG Body components (simplified Open Peeps style)
+// SVG Body components (improved proportions and positioning)
 function Body({ pose, skinColor }: { pose: string; skinColor: string }) {
+  const bodyY = 150; // Start body position
+  
   if (pose === 'sitting') {
     return (
       <g>
-        <rect x="-20" y="0" width="40" height="50" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
-        <rect x="-20" y="50" width="15" height="40" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
-        <rect x="5" y="50" width="15" height="40" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Torso */}
+        <rect x="75" y={bodyY} width="50" height="70" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Arms */}
+        <rect x="55" y={bodyY + 10} width="15" height="50" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        <rect x="130" y={bodyY + 10} width="15" height="50" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Legs (bent) */}
+        <rect x="80" y={bodyY + 70} width="15" height="45" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        <rect x="105" y={bodyY + 70} width="15" height="45" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
@@ -266,70 +267,162 @@ function Body({ pose, skinColor }: { pose: string; skinColor: string }) {
   if (pose === 'arms-crossed') {
     return (
       <g>
-        <rect x="-25" y="0" width="50" height="60" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
-        <path d="M -25 20 L -40 15 L -40 40 L -25 35" fill={skinColor} stroke="#000" strokeWidth="2" />
-        <path d="M 25 20 L 40 15 L 40 40 L 25 35" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Torso */}
+        <rect x="70" y={bodyY} width="60" height="80" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Arms crossed */}
+        <path d={`M 70 ${bodyY + 30} L 50 ${bodyY + 25} L 50 ${bodyY + 50} L 70 ${bodyY + 45}`} fill={skinColor} stroke="#000" strokeWidth="2" />
+        <path d={`M 130 ${bodyY + 30} L 150 ${bodyY + 25} L 150 ${bodyY + 50} L 130 ${bodyY + 45}`} fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Legs */}
+        <rect x="80" y={bodyY + 80} width="15" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        <rect x="105" y={bodyY + 80} width="15" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
 
-  // Default standing
+  if (pose === 'hands-in-pockets') {
+    return (
+      <g>
+        {/* Torso */}
+        <rect x="75" y={bodyY} width="50" height="80" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Arms down */}
+        <rect x="60" y={bodyY + 10} width="12" height="55" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
+        <rect x="128" y={bodyY + 10} width="12" height="55" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
+        {/* Legs */}
+        <rect x="83" y={bodyY + 80} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+        <rect x="103" y={bodyY + 80} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+      </g>
+    );
+  }
+
+  // Default standing pose
   return (
     <g>
-      <rect x="-20" y="0" width="40" height="60" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
-      <rect x="-35" y="10" width="12" height="40" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
-      <rect x="23" y="10" width="12" height="40" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
-      <rect x="-15" y="60" width="12" height="40" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
-      <rect x="3" y="60" width="12" height="40" rx="6" fill={skinColor} stroke="#000" strokeWidth="2" />
+      {/* Torso */}
+      <rect x="75" y={bodyY} width="50" height="80" rx="10" fill={skinColor} stroke="#000" strokeWidth="2" />
+      {/* Arms */}
+      <rect x="58" y={bodyY + 10} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+      <rect x="128" y={bodyY + 10} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+      {/* Legs */}
+      <rect x="83" y={bodyY + 80} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
+      <rect x="103" y={bodyY + 80} width="14" height="60" rx="7" fill={skinColor} stroke="#000" strokeWidth="2" />
     </g>
   );
 }
 
 function Head({ shape, skinColor }: { shape: string; skinColor: string }) {
+  const headY = 90;
+  const headCenterX = 100;
+  
   return (
-    <ellipse cx="0" cy="0" rx="30" ry="35" fill={skinColor} stroke="#000" strokeWidth="2" />
+    <ellipse 
+      cx={headCenterX} 
+      cy={headY} 
+      rx="35" 
+      ry="40" 
+      fill={skinColor} 
+      stroke="#000" 
+      strokeWidth="2" 
+    />
   );
 }
 
 function Hair({ style, color }: { style: string; color: string }) {
+  const headY = 90;
+  const headCenterX = 100;
+  
   if (style === 'none') return null;
 
   if (style === 'bun') {
     return (
       <g>
-        <ellipse cx="0" cy="-10" rx="35" ry="20" fill={color} stroke="#000" strokeWidth="2" />
-        <circle cx="0" cy="-25" r="15" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Hair base covering top/back of head */}
+        <ellipse cx={headCenterX} cy={headY - 15} rx="38" ry="25" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Bun on top */}
+        <circle cx={headCenterX} cy={headY - 35} r="18" fill={color} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
 
   if (style === 'afro') {
     return (
-      <circle cx="0" cy="0" r="45" fill={color} stroke="#000" strokeWidth="2" />
+      <ellipse cx={headCenterX} cy={headY - 5} rx="50" ry="55" fill={color} stroke="#000" strokeWidth="2" />
     );
   }
 
   if (style === 'long1' || style === 'long2') {
     return (
       <g>
-        <ellipse cx="0" cy="0" rx="35" ry="25" fill={color} stroke="#000" strokeWidth="2" />
-        <rect x="-35" y="10" width="70" height="60" rx="10" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Top of head */}
+        <ellipse cx={headCenterX} cy={headY - 15} rx="38" ry="25" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Long hair sides */}
+        <rect x="60" y={headY} width="80" height="80" rx="15" fill={color} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
 
-  // Short hair default
+  if (style === 'curly') {
+    return (
+      <g>
+        <ellipse cx={headCenterX} cy={headY - 10} rx="40" ry="30" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Curly texture */}
+        <circle cx="75" cy={headY - 10} r="8" fill={color} stroke="#000" strokeWidth="1" />
+        <circle cx="125" cy={headY - 10} r="8" fill={color} stroke="#000" strokeWidth="1" />
+        <circle cx="90" cy={headY - 20} r="8" fill={color} stroke="#000" strokeWidth="1" />
+        <circle cx="110" cy={headY - 20} r="8" fill={color} stroke="#000" strokeWidth="1" />
+      </g>
+    );
+  }
+
+  if (style === 'dreads') {
+    return (
+      <g>
+        <ellipse cx={headCenterX} cy={headY - 15} rx="38" ry="20" fill={color} stroke="#000" strokeWidth="2" />
+        {/* Dreads */}
+        {[75, 85, 95, 105, 115, 125].map((x, i) => (
+          <rect key={i} x={x} y={headY + 10} width="6" height="40" rx="3" fill={color} stroke="#000" strokeWidth="1" />
+        ))}
+      </g>
+    );
+  }
+
+  // Short hair styles (short1, short2, short3)
   return (
-    <ellipse cx="0" cy="5" rx="35" ry="20" fill={color} stroke="#000" strokeWidth="2" />
+    <ellipse cx={headCenterX} cy={headY - 12} rx="38" ry="22" fill={color} stroke="#000" strokeWidth="2" />
   );
 }
 
+// Front hair strands (rendered on top of face)
+function HairFront({ style, color }: { style: string; color: string }) {
+  const headY = 90;
+  const headCenterX = 100;
+  
+  // Only certain styles have front hair
+  if (style === 'short2' || style === 'short3') {
+    return (
+      <g>
+        {/* Front bangs */}
+        <path 
+          d={`M ${headCenterX - 25} ${headY - 20} Q ${headCenterX} ${headY - 10} ${headCenterX + 25} ${headY - 20}`}
+          fill={color}
+          stroke="#000"
+          strokeWidth="2"
+        />
+      </g>
+    );
+  }
+  
+  return null;
+}
+
 function Eyes({ style }: { style: string }) {
+  const headY = 90;
+  const eyeY = headY + 5;
+  
   if (style === 'happy') {
     return (
       <g>
-        <path d="M -15 0 Q -10 5 -5 0" stroke="#000" strokeWidth="2" fill="none" />
-        <path d="M 5 0 Q 10 5 15 0" stroke="#000" strokeWidth="2" fill="none" />
+        <path d={`M 85 ${eyeY} Q 90 ${eyeY + 5} 95 ${eyeY}`} stroke="#000" strokeWidth="2" fill="none" />
+        <path d={`M 105 ${eyeY} Q 110 ${eyeY + 5} 115 ${eyeY}`} stroke="#000" strokeWidth="2" fill="none" />
       </g>
     );
   }
@@ -337,8 +430,35 @@ function Eyes({ style }: { style: string }) {
   if (style === 'hearts') {
     return (
       <g>
-        <text x="-15" y="5" fontSize="12">❤️</text>
-        <text x="5" y="5" fontSize="12">❤️</text>
+        <text x="85" y={eyeY + 8} fontSize="16">❤️</text>
+        <text x="105" y={eyeY + 8} fontSize="16">❤️</text>
+      </g>
+    );
+  }
+
+  if (style === 'wink') {
+    return (
+      <g>
+        <circle cx="88" cy={eyeY} r="4" fill="#000" />
+        <path d={`M 105 ${eyeY} Q 110 ${eyeY + 3} 115 ${eyeY}`} stroke="#000" strokeWidth="2" fill="none" />
+      </g>
+    );
+  }
+
+  if (style === 'squint') {
+    return (
+      <g>
+        <line x1="83" y1={eyeY} x2="93" y2={eyeY} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+        <line x1="107" y1={eyeY} x2="117" y2={eyeY} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (style === 'content') {
+    return (
+      <g>
+        <path d={`M 83 ${eyeY - 2} Q 88 ${eyeY + 2} 93 ${eyeY - 2}`} stroke="#000" strokeWidth="2" fill="none" />
+        <path d={`M 107 ${eyeY - 2} Q 112 ${eyeY + 2} 117 ${eyeY - 2}`} stroke="#000" strokeWidth="2" fill="none" />
       </g>
     );
   }
@@ -346,51 +466,99 @@ function Eyes({ style }: { style: string }) {
   // Normal eyes
   return (
     <g>
-      <circle cx="-12" cy="0" r="4" fill="#000" />
-      <circle cx="12" cy="0" r="4" fill="#000" />
+      <circle cx="88" cy={eyeY} r="4" fill="#000" />
+      <circle cx="112" cy={eyeY} r="4" fill="#000" />
     </g>
   );
 }
 
 function Eyebrows({ style }: { style: string }) {
+  const headY = 90;
+  const browY = headY - 8;
+  
+  if (style === 'down') {
+    return (
+      <g>
+        <path d={`M 80 ${browY + 2} L 95 ${browY - 2}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+        <path d={`M 105 ${browY - 2} L 120 ${browY + 2}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    );
+  }
+
+  if (style === 'leftLowered') {
+    return (
+      <g>
+        <path d={`M 80 ${browY + 3} L 95 ${browY}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+        <path d={`M 105 ${browY - 2} L 120 ${browY - 2}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+      </g>
+    );
+  }
+  
+  // Default "up" eyebrows
   return (
     <g>
-      <path d="M -20 -8 L -8 -10" stroke="#000" strokeWidth="2" strokeLinecap="round" />
-      <path d="M 8 -10 L 20 -8" stroke="#000" strokeWidth="2" strokeLinecap="round" />
+      <path d={`M 80 ${browY} L 95 ${browY - 3}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
+      <path d={`M 105 ${browY - 3} L 120 ${browY}`} stroke="#000" strokeWidth="2" strokeLinecap="round" />
     </g>
   );
 }
 
 function Mouth({ style }: { style: string }) {
+  const headY = 90;
+  const mouthY = headY + 20;
+  
   if (style === 'smile') {
-    return <path d="M -10 10 Q 0 15 10 10" stroke="#000" strokeWidth="2" fill="none" />;
+    return <path d={`M 85 ${mouthY} Q 100 ${mouthY + 8} 115 ${mouthY}`} stroke="#000" strokeWidth="2" fill="none" />;
   }
 
   if (style === 'frown') {
-    return <path d="M -10 15 Q 0 10 10 15" stroke="#000" strokeWidth="2" fill="none" />;
+    return <path d={`M 85 ${mouthY + 5} Q 100 ${mouthY} 115 ${mouthY + 5}`} stroke="#000" strokeWidth="2" fill="none" />;
   }
 
   if (style === 'surprised') {
-    return <ellipse cx="0" cy="12" rx="8" ry="10" fill="#fff" stroke="#000" strokeWidth="2" />;
+    return <ellipse cx="100" cy={mouthY} rx="10" ry="12" fill="#fff" stroke="#000" strokeWidth="2" />;
   }
 
-  // Neutral
-  return <line x1="-8" y1="12" x2="8" y2="12" stroke="#000" strokeWidth="2" strokeLinecap="round" />;
+  if (style === 'smirk') {
+    return <path d={`M 85 ${mouthY} Q 95 ${mouthY + 5} 115 ${mouthY}`} stroke="#000" strokeWidth="2" fill="none" />;
+  }
+
+  if (style === 'nervous') {
+    return (
+      <path 
+        d={`M 85 ${mouthY} L 90 ${mouthY + 2} L 95 ${mouthY} L 100 ${mouthY + 2} L 105 ${mouthY} L 110 ${mouthY + 2} L 115 ${mouthY}`}
+        stroke="#000" 
+        strokeWidth="2" 
+        fill="none" 
+      />
+    );
+  }
+
+  // Neutral line
+  return <line x1="88" y1={mouthY} x2="112" y2={mouthY} stroke="#000" strokeWidth="2" strokeLinecap="round" />;
 }
 
 function FacialHair({ style, color }: { style: string; color: string }) {
+  const headY = 90;
+  const chinY = headY + 30;
+  
   if (style === 'stubble') {
     return (
       <g opacity="0.5">
-        {Array.from({ length: 30 }).map((_, i) => (
-          <circle
-            key={i}
-            cx={(i % 6 - 2.5) * 8}
-            cy={Math.floor(i / 6) * 3 + 10}
-            r="0.5"
-            fill={color}
-          />
-        ))}
+        {Array.from({ length: 40 }).map((_, i) => {
+          const angle = (i / 40) * Math.PI;
+          const x = 100 + Math.cos(angle + Math.PI) * 30;
+          const y = chinY + Math.sin(angle + Math.PI) * 15;
+          return (
+            <circle
+              key={i}
+              cx={x}
+              cy={y}
+              r="0.8"
+              fill={color}
+            />
+          );
+        })}
       </g>
     );
   }
@@ -398,7 +566,21 @@ function FacialHair({ style, color }: { style: string; color: string }) {
   if (style === 'mediumBeard') {
     return (
       <path
-        d="M -20 10 Q -15 25 0 27 Q 15 25 20 10"
+        d={`M 70 ${chinY - 10} Q 75 ${chinY + 10} 100 ${chinY + 15} Q 125 ${chinY + 10} 130 ${chinY - 10}`}
+        fill={color}
+        stroke="#000"
+        strokeWidth="2"
+      />
+    );
+  }
+
+  if (style === 'goatee') {
+    return (
+      <ellipse
+        cx="100"
+        cy={chinY + 5}
+        rx="12"
+        ry="15"
         fill={color}
         stroke="#000"
         strokeWidth="2"
@@ -410,12 +592,15 @@ function FacialHair({ style, color }: { style: string; color: string }) {
 }
 
 function Accessory({ type }: { type: string }) {
+  const headY = 90;
+  const eyeY = headY + 5;
+  
   if (type === 'glasses') {
     return (
       <g>
-        <circle cx="-12" cy="0" r="10" fill="none" stroke="#000" strokeWidth="2" />
-        <circle cx="12" cy="0" r="10" fill="none" stroke="#000" strokeWidth="2" />
-        <line x1="-2" y1="0" x2="2" y2="0" stroke="#000" strokeWidth="2" />
+        <circle cx="88" cy={eyeY} r="12" fill="none" stroke="#000" strokeWidth="2" />
+        <circle cx="112" cy={eyeY} r="12" fill="none" stroke="#000" strokeWidth="2" />
+        <line x1="100" y1={eyeY} x2="100" y2={eyeY} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
@@ -423,18 +608,18 @@ function Accessory({ type }: { type: string }) {
   if (type === 'sunglasses') {
     return (
       <g>
-        <ellipse cx="-12" cy="0" rx="10" ry="8" fill="#333" stroke="#000" strokeWidth="2" />
-        <ellipse cx="12" cy="0" rx="10" ry="8" fill="#333" stroke="#000" strokeWidth="2" />
-        <line x1="-2" y1="0" x2="2" y2="0" stroke="#000" strokeWidth="2" />
+        <ellipse cx="88" cy={eyeY} rx="12" ry="10" fill="#333" stroke="#000" strokeWidth="2" />
+        <ellipse cx="112" cy={eyeY} rx="12" ry="10" fill="#333" stroke="#000" strokeWidth="2" />
+        <line x1="100" y1={eyeY} x2="100" y2={eyeY} stroke="#000" strokeWidth="2" />
       </g>
     );
   }
 
   if (type === 'hat') {
     return (
-      <g transform="translate(0, -40)">
-        <rect x="-30" y="0" width="60" height="10" rx="5" fill="#DC2626" stroke="#000" strokeWidth="2" />
-        <rect x="-20" y="-20" width="40" height="20" rx="5" fill="#DC2626" stroke="#000" strokeWidth="2" />
+      <g>
+        <rect x="65" y={headY - 60} width="70" height="12" rx="6" fill="#DC2626" stroke="#000" strokeWidth="2" />
+        <rect x="75" y={headY - 80} width="50" height="25" rx="6" fill="#DC2626" stroke="#000" strokeWidth="2" />
       </g>
     );
   }
