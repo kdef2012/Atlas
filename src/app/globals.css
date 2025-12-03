@@ -8,24 +8,24 @@ body {
 
 @layer base {
   :root {
-    --background: 40 50% 98%; /* Light Cream */
-    --foreground: 20 14% 4%; /* Dark Warm Gray */
-    --card: 0 0% 100%; /* White */
-    --card-foreground: 20 14% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 20 14% 4%;
+    --background: 210 20% 98%; /* Light Silver-Gray */
+    --foreground: 224 71.4% 4.1%; /* Dark Blue-Gray Text */
+    --card: 210 20% 100%; /* White */
+    --card-foreground: 224 71.4% 4.1%;
+    --popover: 210 20% 100%;
+    --popover-foreground: 224 71.4% 4.1%;
     --primary: 24 95% 53%; /* Tangerine Orange */
     --primary-foreground: 0 0% 100%;
-    --secondary: 40 50% 94%;
-    --secondary-foreground: 20 14% 4%;
-    --muted: 40 50% 94%;
-    --muted-foreground: 20 14% 45%;
+    --secondary: 210 20% 94%;
+    --secondary-foreground: 224 71.4% 4.1%;
+    --muted: 210 20% 94%;
+    --muted-foreground: 215 20.2% 65.1%;
     --accent: 180 82% 30%; /* Deep Teal */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 40 50% 90%;
-    --input: 40 50% 90%;
+    --border: 210 20% 90%;
+    --input: 210 20% 90%;
     --ring: 24 95% 53%;
     --chart-1: 24 95% 53%;
     --chart-2: 180 82% 30%;
@@ -34,34 +34,34 @@ body {
     --chart-5: 343 89% 48%;
     --radius: 0.5rem;
 
-    --sidebar-background: 40 50% 94%;
-    --sidebar-foreground: 20 14% 4%;
+    --sidebar-background: 210 20% 94%;
+    --sidebar-foreground: 224 71.4% 4.1%;
     --sidebar-primary: 24 95% 53%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 40 50% 90%;
-    --sidebar-accent-foreground: 20 14% 4%;
-    --sidebar-border: 40 50% 85%;
+    --sidebar-accent: 210 20% 90%;
+    --sidebar-accent-foreground: 224 71.4% 4.1%;
+    --sidebar-border: 210 20% 85%;
     --sidebar-ring: 24 95% 53%;
   }
   .dark {
-    --background: 20 14% 4%;
-    --foreground: 0 0% 98%;
-    --card: 20 14% 8%;
-    --card-foreground: 0 0% 98%;
-    --popover: 20 14% 4%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 24 95% 53%;
-    --primary-foreground: 20 14% 4%;
-    --secondary: 20 14% 10%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 20 14% 10%;
-    --muted-foreground: 0 0% 63%;
-    --accent: 180 82% 40%;
-    --accent-foreground: 0 0% 98%;
+    --background: 220 20% 8%; /* Dark Slate */
+    --foreground: 210 20% 98%;
+    --card: 220 20% 12%;
+    --card-foreground: 210 20% 98%;
+    --popover: 220 20% 8%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 24 95% 53%; /* Tangerine Orange */
+    --primary-foreground: 224 71.4% 4.1%;
+    --secondary: 220 20% 15%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 220 20% 15%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 180 82% 40%; /* Lighter Teal */
+    --accent-foreground: 210 20% 98%;
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 20 14% 10%;
-    --input: 20 14% 10%;
+    --destructive-foreground: 210 20% 98%;
+    --border: 220 20% 15%;
+    --input: 220 20% 15%;
     --ring: 24 95% 53%;
     --chart-1: 24 95% 53%;
     --chart-2: 180 82% 40%;
@@ -69,13 +69,13 @@ body {
     --chart-4: 221 83% 53%;
     --chart-5: 343 89% 48%;
 
-    --sidebar-background: 20 14% 6%;
-    --sidebar-foreground: 0 0% 95%;
+    --sidebar-background: 220 20% 10%;
+    --sidebar-foreground: 210 20% 95%;
     --sidebar-primary: 24 95% 53%;
-    --sidebar-primary-foreground: 20 14% 4%;
-    --sidebar-accent: 20 14% 12%;
-    --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 20 14% 12%;
+    --sidebar-primary-foreground: 224 71.4% 4.1%;
+    --sidebar-accent: 220 20% 18%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 220 20% 18%;
     --sidebar-ring: 24 95% 53%;
   }
 }
