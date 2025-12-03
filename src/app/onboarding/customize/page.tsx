@@ -7,164 +7,44 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormField, FormItem, FormLabel } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2, ArrowRight } from 'lucide-react';
+import { Loader2, ArrowRight, Sparkles, User2, Palette, Smile } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { SKIN_TONES, type BodyType, type SkinTone } from '@/lib/avatar-system';
+import { 
+  encodeAvatarConfig,
+  SKIN_TONE_COLORS,
+  HAIR_COLOR_VALUES,
+  type OpenPeepsConfig,
+  type SkinTone,
+  type HairColor,
+  type BodyPose,
+  type EyeStyle,
+  type MouthStyle,
+  type HairStyle,
+  type FacialHairStyle,
+} from '@/lib/avatar-system-openpeeps';
+import { TwinskieAvatar } from '@/components/twinskie-avatar-openpeeps';
 
 const formSchema = z.object({
-  gender: z.enum(['Female', 'Male'], {
-    required_error: 'Please select a gender.',
-  }),
-  bodyType: z.enum(['slim', 'average', 'athletic', 'plus'], {
-    required_error: 'Please select a body type.',
-  }),
-  skinTone: z.enum(['pale', 'light', 'medium', 'tan', 'deep', 'dark'], {
-    required_error: 'Please select a skin tone.',
-  }),
-  style: z.enum(['1', '2', '3'], {
-    required_error: 'Please select a style.',
-  }),
+  gender: z.enum(['Female', 'Male']),
+  skinTone: z.enum(['light', 'yellow', 'brown', 'dark', 'red', 'black']),
+  body: z.enum(['standing', 'sitting', 'arms-crossed', 'hands-in-pockets', 'pointing']),
+  head: z.enum(['default', 'round', 'square', 'long']),
+  eyes: z.enum(['normal', 'happy', 'content', 'squint', 'simple', 'dizzy', 'wink', 'hearts']),
+  eyebrows: z.enum(['up', 'down', 'eyelashesUp', 'eyelashesDown', 'left', 'leftLowered']),
+  mouth: z.enum(['frown', 'lips', 'nervous', 'pucker', 'sad', 'smile', 'smirk', 'surprised']),
+  hair: z.enum(['none', 'long1', 'long2', 'short1', 'short2', 'short3', 'bun', 'curly', 'dreads', 'afro']),
+  hairColor: z.enum(['black', 'brown', 'blonde', 'red', 'gray', 'blue', 'pink']),
+  facialHair: z.enum(['none', 'stubble', 'mediumBeard', 'goatee']).optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
-
-function AvatarPreview({ control }: { control: any }) {
-  const gender = useWatch({ control, name: 'gender' }) as 'Male' | 'Female';
-  const bodyType = useWatch({ control, name: 'bodyType' }) as BodyType;
-  const skinTone = useWatch({ control, name: 'skinTone' }) as SkinTone;
-  const style = useWatch({ control, name: 'style' });
-
-  const skinColor = SKIN_TONES[skinTone || 'medium'];
-  
-  // Body width based on body type
-  const bodyWidth = {
-    slim: 35,
-    average: 45,
-    athletic: 50,
-    plus: 60,
-  }[bodyType || 'average'];
-
-  // Hair styles
-  const hairColors = ['#8B4513', '#FFD700', '#000000'];
-  const hairColor = hairColors[parseInt(style || '1') - 1];
-
-  return (
-    <Card className="w-full max-w-sm shrink-0">
-      <CardHeader className="text-center">
-        <CardTitle className="font-headline text-2xl">Your Twinskie</CardTitle>
-        <CardDescription>This is your starting vessel. It will evolve as you do.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex items-center justify-center p-4">
-        <svg
-          width="240"
-          height="360"
-          viewBox="0 0 200 300"
-          className="rounded-lg border-2 border-primary shadow-lg bg-background"
-        >
-          {/* Simple preview - same structure as main component */}
-          <g>
-            {/* Torso */}
-            <rect
-              x={100 - bodyWidth / 2}
-              y="120"
-              width={bodyWidth}
-              height="120"
-              rx="10"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            
-            {/* Arms */}
-            <rect
-              x={100 - bodyWidth / 2 - 15}
-              y="130"
-              width="12"
-              height="90"
-              rx="6"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <rect
-              x={100 + bodyWidth / 2 + 3}
-              y="130"
-              width="12"
-              height="90"
-              rx="6"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-
-            {/* Legs */}
-            <rect
-              x="75"
-              y="240"
-              width="18"
-              height="55"
-              rx="9"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-            <rect
-              x="107"
-              y="240"
-              width="18"
-              height="55"
-              rx="9"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-
-            {/* Head */}
-            <circle
-              cx="100"
-              cy="90"
-              r="35"
-              fill={skinColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-
-            {/* Hair */}
-            <ellipse
-              cx="100"
-              cy="70"
-              rx="38"
-              ry="25"
-              fill={hairColor}
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-
-            {/* Eyes */}
-            <circle cx="88" cy="88" r="4" fill="currentColor" />
-            <circle cx="112" cy="88" r="4" fill="currentColor" />
-
-            {/* Mouth */}
-            <line
-              x1="92"
-              y1="105"
-              x2="108"
-              y2="105"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </g>
-        </svg>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function CustomizeAvatarPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -179,11 +59,52 @@ export default function CustomizeAvatarPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       gender: 'Female',
-      bodyType: 'average',
-      skinTone: 'medium',
-      style: '1',
+      skinTone: 'brown',
+      body: 'standing',
+      head: 'default',
+      eyes: 'normal',
+      eyebrows: 'up',
+      mouth: 'smile',
+      hair: 'short1',
+      hairColor: 'brown',
+      facialHair: 'none',
     },
   });
+
+  const currentGender = form.watch('gender');
+
+  // Create preview user object
+  const previewUser = {
+    id: 'preview',
+    userName: 'Preview',
+    level: 1,
+    xp: 0,
+    archetype: archetype || 'Sage',
+    email: null,
+    avatarStyle: encodeAvatarConfig({
+      gender: form.watch('gender'),
+      skinTone: form.watch('skinTone'),
+      body: form.watch('body'),
+      head: form.watch('head'),
+      eyes: form.watch('eyes'),
+      eyebrows: form.watch('eyebrows'),
+      mouth: form.watch('mouth'),
+      hair: form.watch('hair'),
+      hairColor: form.watch('hairColor'),
+      facialHair: form.watch('facialHair'),
+    } as OpenPeepsConfig),
+    physicalStat: 10,
+    mentalStat: 10,
+    socialStat: 10,
+    practicalStat: 10,
+    creativeStat: 10,
+    lastLogTimestamp: Date.now(),
+    createdAt: Date.now(),
+    userSkills: {},
+    momentumFlameActive: true,
+    gems: 0,
+    streakFreezes: 0,
+  } as any;
 
   async function onSubmit(values: FormValues) {
     if (!user) {
@@ -198,18 +119,28 @@ export default function CustomizeAvatarPage() {
 
     const userRef = doc(firestore, 'users', user.uid);
     
-    // Create avatar style string: gender-bodyType-skinTone-style
-    const avatarStyle = `${values.gender.toLowerCase()}-${values.bodyType}-${values.skinTone}-${values.style}`;
+    const avatarConfig: OpenPeepsConfig = {
+      gender: values.gender,
+      skinTone: values.skinTone,
+      body: values.body,
+      head: values.head,
+      eyes: values.eyes,
+      eyebrows: values.eyebrows,
+      mouth: values.mouth,
+      hair: values.hair,
+      hairColor: values.hairColor,
+      facialHair: values.facialHair,
+    };
     
     updateDocumentNonBlocking(userRef, {
       gender: values.gender,
-      avatarStyle,
+      avatarStyle: encodeAvatarConfig(avatarConfig),
     });
 
     setTimeout(() => {
       toast({
-        title: 'Avatar Forged!',
-        description: 'Your digital self has been born.',
+        title: '✨ Twinskie Forged!',
+        description: 'Your digital soul has been born. Welcome to ATLAS.',
       });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
       setIsLoading(false);
@@ -229,172 +160,346 @@ export default function CustomizeAvatarPage() {
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-center p-4 md:p-8 bg-gradient-to-br from-background via-background to-primary/5">
       <div className="text-center mb-8">
-        <h1 className="font-headline text-4xl md:text-5xl font-bold">Design Your Twinskie</h1>
-        <p className="text-muted-foreground mt-2">Your digital soul awaits...</p>
+        <h1 className="font-headline text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+          Design Your Twinskie
+        </h1>
+        <p className="text-muted-foreground mt-2">Create your digital soul - make it uniquely yours</p>
       </div>
       
-      <div className="flex flex-col lg:flex-row items-start justify-center gap-8 w-full max-w-6xl">
-        <AvatarPreview control={form.control} />
+      <div className="flex flex-col lg:flex-row items-start justify-center gap-8 w-full max-w-7xl">
+        {/* Preview */}
+        <Card className="w-full max-w-sm shrink-0">
+          <CardHeader className="text-center">
+            <CardTitle className="font-headline text-2xl flex items-center justify-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Live Preview
+            </CardTitle>
+            <CardDescription>Your Twinskie will evolve as you grow</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center justify-center p-4">
+            <TwinskieAvatar 
+              user={previewUser}
+              size="lg"
+              showEvolutionBadge={false}
+            />
+          </CardContent>
+        </Card>
 
-        <Card className="w-full max-w-md">
+        {/* Customization Form */}
+        <Card className="w-full max-w-2xl">
           <CardContent className="p-6">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Gender */}
-                <FormField
-                  control={form.control}
-                  name="gender"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Gender</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex space-x-4"
-                        >
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Female" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">Female</FormLabel>
-                          </FormItem>
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <RadioGroupItem value="Male" />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">Male</FormLabel>
-                          </FormItem>
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <Tabs defaultValue="basics" className="w-full">
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="basics">
+                      <User2 className="w-4 h-4 mr-2" />
+                      Basics
+                    </TabsTrigger>
+                    <TabsTrigger value="face">
+                      <Smile className="w-4 h-4 mr-2" />
+                      Face
+                    </TabsTrigger>
+                    <TabsTrigger value="style">
+                      <Palette className="w-4 h-4 mr-2" />
+                      Style
+                    </TabsTrigger>
+                  </TabsList>
 
-                {/* Body Type */}
-                <FormField
-                  control={form.control}
-                  name="bodyType"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Body Type</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="grid grid-cols-2 gap-3"
-                        >
-                          {(['slim', 'average', 'athletic', 'plus'] as const).map((type) => (
-                            <FormItem key={type} className="flex items-center space-x-2 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value={type} />
-                              </FormControl>
-                              <FormLabel className="font-normal cursor-pointer capitalize">
-                                {type}
-                              </FormLabel>
-                            </FormItem>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  {/* Basics Tab */}
+                  <TabsContent value="basics" className="space-y-6 mt-6">
+                    {/* Gender */}
+                    <FormField
+                      control={form.control}
+                      name="gender"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Gender</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-2 gap-4"
+                            >
+                              {['Female', 'Male'].map((gender) => (
+                                <div key={gender}>
+                                  <RadioGroupItem value={gender} id={`gender-${gender}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`gender-${gender}`}
+                                    className={cn(
+                                      "flex items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === gender
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="font-medium">{gender}</span>
+                                  </label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
 
-                {/* Skin Tone */}
-                <FormField
-                  control={form.control}
-                  name="skinTone"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Skin Tone</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex gap-2 flex-wrap"
-                        >
-                          {(Object.keys(SKIN_TONES) as SkinTone[]).map((tone) => (
-                            <FormItem key={tone} className="flex items-center space-x-0 space-y-0">
-                              <FormControl>
-                                <RadioGroupItem value={tone} className="sr-only" />
-                              </FormControl>
-                              <FormLabel
-                                className={cn(
-                                  'cursor-pointer w-12 h-12 rounded-full border-2 transition-all',
-                                  field.value === tone
-                                    ? 'border-primary ring-2 ring-primary scale-110'
-                                    : 'border-border hover:scale-105'
-                                )}
-                                style={{ backgroundColor: SKIN_TONES[tone] }}
-                                title={tone}
-                              />
-                            </FormItem>
-                          ))}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {/* Style */}
-                <FormField
-                  control={form.control}
-                  name="style"
-                  render={({ field }) => (
-                    <FormItem className="space-y-3">
-                      <FormLabel>Hair Style</FormLabel>
-                      <FormControl>
-                        <RadioGroup
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          className="flex gap-3"
-                        >
-                          {['1', '2', '3'].map((styleNum) => {
-                            const colors = ['#8B4513', '#FFD700', '#000000'];
-                            return (
-                              <FormItem
-                                key={styleNum}
-                                className="flex items-center space-x-0 space-y-0"
-                              >
-                                <FormControl>
-                                  <RadioGroupItem value={styleNum} className="sr-only" />
-                                </FormControl>
-                                <FormLabel
-                                  className={cn(
-                                    'cursor-pointer w-16 h-16 rounded-md border-2 transition-all flex items-center justify-center',
-                                    field.value === styleNum
-                                      ? 'border-primary ring-2 ring-primary'
-                                      : 'border-border'
-                                  )}
-                                >
-                                  <div
-                                    className="w-12 h-12 rounded-full"
-                                    style={{ backgroundColor: colors[parseInt(styleNum) - 1] }}
+                    {/* Skin Tone */}
+                    <FormField
+                      control={form.control}
+                      name="skinTone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Skin Tone</FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-6 gap-3">
+                              {(Object.keys(SKIN_TONE_COLORS) as SkinTone[]).map((tone) => (
+                                <div key={tone}>
+                                  <RadioGroupItem value={tone} id={`skin-${tone}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`skin-${tone}`}
+                                    className={cn(
+                                      "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === tone
+                                        ? "border-primary ring-2 ring-primary scale-110"
+                                        : "border-border hover:scale-105"
+                                    )}
+                                    style={{ backgroundColor: SKIN_TONE_COLORS[tone] }}
+                                    title={tone}
                                   />
-                                </FormLabel>
-                              </FormItem>
-                            );
-                          })}
-                        </RadioGroup>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Body Pose */}
+                    <FormField
+                      control={form.control}
+                      name="body"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Pose</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-2 gap-3"
+                            >
+                              {(['standing', 'sitting', 'arms-crossed', 'hands-in-pockets'] as BodyPose[]).map((pose) => (
+                                <div key={pose}>
+                                  <RadioGroupItem value={pose} id={`pose-${pose}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`pose-${pose}`}
+                                    className={cn(
+                                      "flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === pose
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="text-sm capitalize">{pose.replace('-', ' ')}</span>
+                                  </label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+
+                  {/* Face Tab */}
+                  <TabsContent value="face" className="space-y-6 mt-6">
+                    {/* Eyes */}
+                    <FormField
+                      control={form.control}
+                      name="eyes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Eyes</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-4 gap-3"
+                            >
+                              {(['normal', 'happy', 'content', 'squint', 'wink', 'hearts'] as EyeStyle[]).map((eye) => (
+                                <div key={eye}>
+                                  <RadioGroupItem value={eye} id={`eye-${eye}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`eye-${eye}`}
+                                    className={cn(
+                                      "flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === eye
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="text-xs capitalize">{eye}</span>
+                                  </label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Mouth */}
+                    <FormField
+                      control={form.control}
+                      name="mouth"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Mouth</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-4 gap-3"
+                            >
+                              {(['smile', 'frown', 'lips', 'smirk', 'surprised', 'nervous'] as MouthStyle[]).map((mouth) => (
+                                <div key={mouth}>
+                                  <RadioGroupItem value={mouth} id={`mouth-${mouth}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`mouth-${mouth}`}
+                                    className={cn(
+                                      "flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === mouth
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="text-xs capitalize">{mouth}</span>
+                                  </label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Facial Hair (Male only) */}
+                    {currentGender === 'Male' && (
+                      <FormField
+                        control={form.control}
+                        name="facialHair"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-base font-semibold">Facial Hair</FormLabel>
+                            <FormControl>
+                              <RadioGroup
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                                className="grid grid-cols-4 gap-3"
+                              >
+                                {(['none', 'stubble', 'mediumBeard', 'goatee'] as FacialHairStyle[]).map((fh) => (
+                                  <div key={fh}>
+                                    <RadioGroupItem value={fh} id={`fh-${fh}`} className="sr-only" />
+                                    <label
+                                      htmlFor={`fh-${fh}`}
+                                      className={cn(
+                                        "flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                        field.value === fh
+                                          ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                          : "border-border hover:border-primary/50"
+                                      )}
+                                    >
+                                      <span className="text-xs capitalize">{fh === 'mediumBeard' ? 'Beard' : fh}</span>
+                                    </label>
+                                  </div>
+                                ))}
+                              </RadioGroup>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </TabsContent>
+
+                  {/* Style Tab */}
+                  <TabsContent value="style" className="space-y-6 mt-6">
+                    {/* Hair Style */}
+                    <FormField
+                      control={form.control}
+                      name="hair"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Hair Style</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-3 gap-3"
+                            >
+                              {(['none', 'short1', 'short2', 'short3', 'long1', 'long2', 'bun', 'curly', 'afro'] as HairStyle[]).map((hair) => (
+                                <div key={hair}>
+                                  <RadioGroupItem value={hair} id={`hair-${hair}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`hair-${hair}`}
+                                    className={cn(
+                                      "flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === hair
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="text-xs capitalize">{hair}</span>
+                                  </label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Hair Color */}
+                    <FormField
+                      control={form.control}
+                      name="hairColor"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-base font-semibold">Hair Color</FormLabel>
+                          <FormControl>
+                            <div className="grid grid-cols-7 gap-3">
+                              {(Object.keys(HAIR_COLOR_VALUES) as HairColor[]).map((color) => (
+                                <div key={color}>
+                                  <RadioGroupItem value={color} id={`color-${color}`} className="sr-only" />
+                                  <label
+                                    htmlFor={`color-${color}`}
+                                    className={cn(
+                                      "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === color
+                                        ? "border-primary ring-2 ring-primary scale-110"
+                                        : "border-border hover:scale-105"
+                                    )}
+                                    style={{ backgroundColor: HAIR_COLOR_VALUES[color] }}
+                                    title={color}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </TabsContent>
+                </Tabs>
 
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full font-bold group"
+                  className="w-full font-bold group text-lg py-6"
                 >
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
                   Forge My Twinskie
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </form>
             </Form>
