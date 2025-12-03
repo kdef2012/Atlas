@@ -11,12 +11,8 @@ interface TwinskieAvatarProps {
   isInactive: boolean;
 }
 
-const LAYER_MAP: Record<SkillCategory, string> = {
-    Physical: 'avatar-layer-physical',
-    Mental: 'avatar-layer-mental',
-    Social: 'avatar-layer-social',
-    Practical: 'avatar-layer-practical',
-    Creative: 'avatar-layer-creative',
+const LAYER_MAP: Record<string, string> = {
+    newbie_sweatband: 'avatar-layer-newbie-sweatband'
 };
 
 const BASE_AVATAR_MAP: Record<string, string> = {
@@ -82,18 +78,13 @@ export function TwinskieAvatar({ isInactive }: TwinskieAvatarProps) {
   const getVisibleLayers = () => {
     if (!user || !user.avatarLayers) return [];
     
-    const layers: ImagePlaceholder[] = [];
-    
-    // Check for explicit true flags in avatarLayers
-    for (const [category, layerId] of Object.entries(LAYER_MAP)) {
-      if (user.avatarLayers[category as SkillCategory]) {
-        const layerData = PlaceHolderImages.find(p => p.id === layerId);
-        if (layerData) {
-          layers.push(layerData);
-        }
-      }
-    }
-    return layers;
+    return Object.keys(user.avatarLayers)
+        .filter(layerKey => user.avatarLayers?.[layerKey as keyof typeof user.avatarLayers] === true)
+        .map(layerKey => {
+            const layerId = LAYER_MAP[layerKey];
+            return PlaceHolderImages.find(p => p.id === layerId);
+        })
+        .filter((l): l is ImagePlaceholder => !!l);
   };
 
   const visibleLayers = getVisibleLayers();
