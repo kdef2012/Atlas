@@ -605,8 +605,22 @@
             "description": "Stores data for large, user-run communities (Guilds).",
             "params": [{ "name": "guildId", "description": "The unique identifier for the Guild." }]
         }
+      },
+      {
+        "path": "/guilds/{guildId}/messages/{messageId}",
+        "definition": {
+          "entityName": "Message",
+          "schema": { "$ref": "#/backend/entities/Message" },
+          "description": "Stores chat messages for a specific Guild.",
+          "params": [
+            { "name": "guildId", "description": "The unique identifier for the guild." },
+            { "name": "messageId", "description": "The unique identifier for the message." }
+          ]
+        }
       }
     ],
-    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering. This structure supports required QAPs, such as listing skills by user (using a collection group query with the `userId` field in Logs), and listing Fireteams by region (using a composite index on `region` and `state`).\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
+    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering.\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
   }
 }
+
+    

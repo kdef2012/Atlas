@@ -2,10 +2,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
-import { Building2, PlusCircle, Zap } from "lucide-react";
+import { Building2, PlusCircle, Zap, MessageSquare } from "lucide-react";
 import { useUser, useDoc, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc, writeBatch, getDocs, collection } from "firebase/firestore";
@@ -137,6 +137,16 @@ export function GuildStatus() {
                     </div>
                 )}
             </CardContent>
+             {guild && (
+                <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/guilds/${guild.id}`}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Open Guild Hall
+                        </Link>
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }

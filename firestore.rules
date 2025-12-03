@@ -189,6 +189,17 @@ service cloud.firestore {
         allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
         allow update: if isOwner(resource.data.ownerId) || isGuildMember();
         allow delete: if isOwner(resource.data.ownerId);
+        
+        /**
+         * @description   Guild chat messages. Only members of the guild can read and write.
+         * @path          /guilds/{guildId}/messages/{messageId}
+         * @allow         (read, write) A user who is a member of the parent guild document.
+         * @deny          (all) Any user who is not a member of the guild.
+         * @principle     Scoped access based on a parent document's data using `get()`.
+         */
+        match /messages/{messageId} {
+            allow read, write: if isSignedIn() && get(/databases/$(database)/documents/guilds/$(guildId)).data.members[request.auth.uid] == true;
+        }
     }
     
     /**
@@ -219,3 +230,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
