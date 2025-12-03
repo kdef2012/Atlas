@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -58,8 +57,7 @@ export function ReadyPlayerMeCreator({
   }, [onAvatarCreated, onCancel]);
 
   // Build the iframe URL with configuration
-  // The `token` parameter is a placeholder to bypass the license agreement screen.
-  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&bodyType=fullbody&clearCache&token=placeholder-token`;
+  const iframeUrl = `https://${subdomain}.readyplayer.me/avatar?frameApi&bodyType=fullbody&clearCache`;
 
   return (
     <div className={`relative w-full ${className}`}>
