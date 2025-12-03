@@ -28,7 +28,7 @@ export default function CustomizeAvatarPage() {
     console.log('Avatar URL received:', url);
     setAvatarUrl(url);
     toast({
-      title: '✨ Avatar URL Set!',
+      title: '✨ Twinskie Forged!',
       description: 'Your Twinskie is ready! Click Continue to proceed.',
     });
   };
