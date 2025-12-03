@@ -3,9 +3,9 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCollection, useMemoFirebase } from "@/firebase";
+import { useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import type { Skill } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export function SkillList() {
     const firestore = useFirestore();
+    const { toast } = useToast();
     const skillsCollection = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
     const { data: skills, isLoading } = useCollection<Skill>(skillsCollection);
+
+    const handleDelete = (skill: Skill) => {
+        const skillRef = doc(firestore, 'skills', skill.id);
+        deleteDocumentNonBlocking(skillRef);
+        toast({
+            title: "Skill Deleted",
+            description: `The skill "${skill.name}" has been permanently removed.`,
+        });
+    };
 
     return (
         <Card>
@@ -75,7 +86,7 @@ export function SkillList() {
                                     </Button>
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-destructive" disabled>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
                                         </AlertDialogTrigger>
@@ -88,7 +99,7 @@ export function SkillList() {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                <AlertDialogAction onClick={() => handleDelete(skill)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
