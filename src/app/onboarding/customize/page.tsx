@@ -140,8 +140,8 @@ export default function CustomizeAvatarPage() {
 
     setTimeout(() => {
       toast({
-        title: '✨ Twinskie Forged!',
-        description: 'Your digital soul has been born. Welcome to ATLAS.',
+        title: '✨ Twinskie Created!',
+        description: 'Your digital twin is ready for adventure. Welcome to ATLAS.',
       });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
       setIsLoading(false);
@@ -166,7 +166,7 @@ export default function CustomizeAvatarPage() {
         <h1 className="font-headline text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Design Your Twinskie
         </h1>
-        <p className="text-muted-foreground mt-2">Create your digital soul - make it uniquely yours</p>
+        <p className="text-muted-foreground mt-2">Create your digital twin - make it uniquely yours</p>
       </div>
       
       <div className="flex flex-col lg:flex-row items-start justify-center gap-8 w-full max-w-7xl">
@@ -225,11 +225,11 @@ export default function CustomizeAvatarPage() {
                               className="grid grid-cols-2 gap-4"
                             >
                               {['Female', 'Male'].map((gender) => (
-                                <FormItem key={gender} className="flex items-center space-x-2">
+                                <FormItem key={gender}>
                                   <FormControl>
                                       <RadioGroupItem value={gender} id={`gender-${gender}`} className="sr-only" />
                                   </FormControl>
-                                  <label
+                                  <Label
                                     htmlFor={`gender-${gender}`}
                                     className={cn(
                                       "w-full flex items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-all",
@@ -239,7 +239,7 @@ export default function CustomizeAvatarPage() {
                                     )}
                                   >
                                     <span className="font-medium">{gender}</span>
-                                  </label>
+                                  </Label>
                                 </FormItem>
                               ))}
                             </RadioGroup>
@@ -255,32 +255,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Skin Tone</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-6 gap-3"
-                            >
-                              {(Object.keys(SKIN_TONE_COLORS) as SkinTone[]).map((tone) => (
-                                <FormItem key={tone} className="flex items-center space-x-2">
-                                  <FormControl>
-                                    <RadioGroupItem value={tone} id={`skin-${tone}`} className="sr-only" />
-                                  </FormControl>
-                                  <label
-                                    htmlFor={`skin-${tone}`}
-                                    className={cn(
-                                      "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === tone
-                                        ? "border-primary ring-2 ring-primary scale-110"
-                                        : "border-border hover:scale-105"
-                                    )}
-                                    style={{ backgroundColor: SKIN_TONE_COLORS[tone] }}
-                                    title={tone}
-                                  />
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-6 gap-3"
+                          >
+                            {(Object.keys(SKIN_TONE_COLORS) as SkinTone[]).map((tone) => (
+                              <FormItem key={tone}>
+                                <FormControl>
+                                  <RadioGroupItem value={tone} id={`skin-${tone}`} className="sr-only" />
+                                </FormControl>
+                                <Label
+                                  htmlFor={`skin-${tone}`}
+                                  className={cn(
+                                    "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === tone
+                                      ? "border-primary ring-2 ring-primary scale-110"
+                                      : "border-border hover:scale-105"
+                                  )}
+                                  style={{ backgroundColor: SKIN_TONE_COLORS[tone] }}
+                                  title={tone}
+                                />
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -292,32 +290,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Pose</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-2 gap-3"
-                            >
-                              {(['standing', 'sitting', 'arms-crossed', 'hands-in-pockets'] as BodyPose[]).map((pose) => (
-                                <FormItem key={pose} className="flex items-center space-x-2">
-                                  <FormControl>
-                                    <RadioGroupItem value={pose} id={`pose-${pose}`} className="sr-only" />
-                                  </FormControl>
-                                  <label
-                                    htmlFor={`pose-${pose}`}
-                                    className={cn(
-                                      "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === pose
-                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                                        : "border-border hover:border-primary/50"
-                                    )}
-                                  >
-                                    <span className="text-sm capitalize">{pose.replace('-', ' ')}</span>
-                                  </label>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-2 gap-3"
+                          >
+                            {(['standing', 'sitting', 'arms-crossed', 'hands-in-pockets'] as BodyPose[]).map((pose) => (
+                              <FormItem key={pose}>
+                                <FormControl>
+                                  <RadioGroupItem value={pose} id={`pose-${pose}`} className="sr-only" />
+                                </FormControl>
+                                <Label
+                                  htmlFor={`pose-${pose}`}
+                                  className={cn(
+                                    "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === pose
+                                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <span className="text-sm capitalize">{pose.replace('-', ' ')}</span>
+                                </Label>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -332,32 +328,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Eyes</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-4 gap-3"
-                            >
-                              {(['normal', 'happy', 'content', 'squint', 'wink', 'hearts'] as EyeStyle[]).map((eye) => (
-                                <FormItem key={eye} className="flex items-center space-x-2">
-                                  <FormControl>
-                                    <RadioGroupItem value={eye} id={`eye-${eye}`} className="sr-only" />
-                                  </FormControl>
-                                  <label
-                                    htmlFor={`eye-${eye}`}
-                                    className={cn(
-                                      "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === eye
-                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                                        : "border-border hover:border-primary/50"
-                                    )}
-                                  >
-                                    <span className="text-xs capitalize">{eye}</span>
-                                  </label>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-4 gap-3"
+                          >
+                            {(['normal', 'happy', 'content', 'squint', 'wink', 'hearts'] as EyeStyle[]).map((eye) => (
+                              <FormItem key={eye}>
+                                <FormControl>
+                                  <RadioGroupItem value={eye} id={`eye-${eye}`} className="sr-only" />
+                                </FormControl>
+                                <Label
+                                  htmlFor={`eye-${eye}`}
+                                  className={cn(
+                                    "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === eye
+                                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <span className="text-xs capitalize">{eye}</span>
+                                </Label>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -369,32 +363,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Mouth</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-4 gap-3"
-                            >
-                              {(['smile', 'frown', 'lips', 'smirk', 'surprised', 'nervous'] as MouthStyle[]).map((mouth) => (
-                                <FormItem key={mouth} className="flex items-center space-x-2">
-                                    <FormControl>
-                                        <RadioGroupItem value={mouth} id={`mouth-${mouth}`} className="sr-only" />
-                                    </FormControl>
-                                  <label
-                                    htmlFor={`mouth-${mouth}`}
-                                    className={cn(
-                                      "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === mouth
-                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                                        : "border-border hover:border-primary/50"
-                                    )}
-                                  >
-                                    <span className="text-xs capitalize">{mouth}</span>
-                                  </label>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-4 gap-3"
+                          >
+                            {(['smile', 'frown', 'lips', 'smirk', 'surprised', 'nervous'] as MouthStyle[]).map((mouth) => (
+                              <FormItem key={mouth}>
+                                  <FormControl>
+                                      <RadioGroupItem value={mouth} id={`mouth-${mouth}`} className="sr-only" />
+                                  </FormControl>
+                                <Label
+                                  htmlFor={`mouth-${mouth}`}
+                                  className={cn(
+                                    "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === mouth
+                                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <span className="text-xs capitalize">{mouth}</span>
+                                </Label>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -407,32 +399,30 @@ export default function CustomizeAvatarPage() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="text-base font-semibold">Facial Hair</FormLabel>
-                            <FormControl>
-                              <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="grid grid-cols-4 gap-3"
-                              >
-                                {(['none', 'stubble', 'mediumBeard', 'goatee'] as FacialHairStyle[]).map((fh) => (
-                                  <FormItem key={fh} className="flex items-center space-x-2">
-                                    <FormControl>
-                                        <RadioGroupItem value={fh} id={`fh-${fh}`} className="sr-only" />
-                                    </FormControl>
-                                    <label
-                                      htmlFor={`fh-${fh}`}
-                                      className={cn(
-                                        "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
-                                        field.value === fh
-                                          ? "border-primary bg-primary/10 ring-2 ring-primary"
-                                          : "border-border hover:border-primary/50"
-                                      )}
-                                    >
-                                      <span className="text-xs capitalize">{fh === 'mediumBeard' ? 'Beard' : fh}</span>
-                                    </label>
-                                  </FormItem>
-                                ))}
-                              </RadioGroup>
-                            </FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-4 gap-3"
+                            >
+                              {(['none', 'stubble', 'mediumBeard', 'goatee'] as FacialHairStyle[]).map((fh) => (
+                                <FormItem key={fh}>
+                                  <FormControl>
+                                      <RadioGroupItem value={fh} id={`fh-${fh}`} className="sr-only" />
+                                  </FormControl>
+                                  <Label
+                                    htmlFor={`fh-${fh}`}
+                                    className={cn(
+                                      "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                      field.value === fh
+                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                        : "border-border hover:border-primary/50"
+                                    )}
+                                  >
+                                    <span className="text-xs capitalize">{fh === 'mediumBeard' ? 'Beard' : fh}</span>
+                                  </Label>
+                                </FormItem>
+                              ))}
+                            </RadioGroup>
                           </FormItem>
                         )}
                       />
@@ -448,32 +438,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Hair Style</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              defaultValue={field.value}
-                              className="grid grid-cols-3 gap-3"
-                            >
-                              {(['none', 'short1', 'short2', 'short3', 'long1', 'long2', 'bun', 'curly', 'afro'] as HairStyle[]).map((hair) => (
-                                <FormItem key={hair} className="flex items-center space-x-2">
-                                    <FormControl>
-                                        <RadioGroupItem value={hair} id={`hair-${hair}`} className="sr-only" />
-                                    </FormControl>
-                                  <label
-                                    htmlFor={`hair-${hair}`}
-                                    className={cn(
-                                      "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === hair
-                                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                                        : "border-border hover:border-primary/50"
-                                    )}
-                                  >
-                                    <span className="text-xs capitalize">{hair}</span>
-                                  </label>
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                            className="grid grid-cols-3 gap-3"
+                          >
+                            {(['none', 'short1', 'short2', 'short3', 'long1', 'long2', 'bun', 'curly', 'afro'] as HairStyle[]).map((hair) => (
+                              <FormItem key={hair}>
+                                  <FormControl>
+                                      <RadioGroupItem value={hair} id={`hair-${hair}`} className="sr-only" />
+                                  </FormControl>
+                                <Label
+                                  htmlFor={`hair-${hair}`}
+                                  className={cn(
+                                    "w-full flex items-center justify-center p-3 rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === hair
+                                      ? "border-primary bg-primary/10 ring-2 ring-primary"
+                                      : "border-border hover:border-primary/50"
+                                  )}
+                                >
+                                  <span className="text-xs capitalize">{hair}</span>
+                                </Label>
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -485,32 +473,30 @@ export default function CustomizeAvatarPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="text-base font-semibold">Hair Color</FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                                className="grid grid-cols-7 gap-3"
-                            >
-                              {(Object.keys(HAIR_COLOR_VALUES) as HairColor[]).map((color) => (
-                                <FormItem key={color} className="flex items-center space-x-2">
-                                  <FormControl>
-                                    <RadioGroupItem value={color} id={`color-${color}`} className="sr-only" />
-                                  </FormControl>
-                                  <label
-                                    htmlFor={`color-${color}`}
-                                    className={cn(
-                                      "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
-                                      field.value === color
-                                        ? "border-primary ring-2 ring-primary scale-110"
-                                        : "border-border hover:scale-105"
-                                    )}
-                                    style={{ backgroundColor: HAIR_COLOR_VALUES[color] }}
-                                    title={color}
-                                  />
-                                </FormItem>
-                              ))}
-                            </RadioGroup>
-                          </FormControl>
+                          <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="grid grid-cols-7 gap-3"
+                          >
+                            {(Object.keys(HAIR_COLOR_VALUES) as HairColor[]).map((color) => (
+                              <FormItem key={color}>
+                                <FormControl>
+                                  <RadioGroupItem value={color} id={`color-${color}`} className="sr-only" />
+                                </FormControl>
+                                <Label
+                                  htmlFor={`color-${color}`}
+                                  className={cn(
+                                    "block w-full aspect-square rounded-lg border-2 cursor-pointer transition-all",
+                                    field.value === color
+                                      ? "border-primary ring-2 ring-primary scale-110"
+                                      : "border-border hover:scale-105"
+                                  )}
+                                  style={{ backgroundColor: HAIR_COLOR_VALUES[color] }}
+                                  title={color}
+                                />
+                              </FormItem>
+                            ))}
+                          </RadioGroup>
                         </FormItem>
                       )}
                     />
@@ -523,7 +509,7 @@ export default function CustomizeAvatarPage() {
                   className="w-full font-bold group text-lg py-6"
                 >
                   {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-                  Forge My Twinskie
+                  Create My Twinskie
                   <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
                 </Button>
               </form>
