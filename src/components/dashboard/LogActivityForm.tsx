@@ -111,7 +111,6 @@ export function LogActivityForm() {
       
       const batch = writeBatch(firestore);
       let userStatUpdate: any = {
-        [`${category.toLowerCase()}Stat`]: increment(10),
         lastLogTimestamp: Date.now(),
         momentumFlameActive: true,
       };
@@ -136,6 +135,13 @@ export function LogActivityForm() {
           userStatUpdate['traits.pioneer'] = true;
           toast({ title: "Trait Unlocked: Pioneer!", description: "You've discovered a new skill and expanded the ATLAS!" });
         }
+      }
+      
+      const isSkillUnlocked = userData.userSkills?.[skillId]?.isUnlocked;
+
+      // Users only gain stat points from activities related to skills they have UNLOCKED.
+      if (isSkillUnlocked) {
+          userStatUpdate[`${category.toLowerCase()}Stat`] = increment(10);
       }
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
@@ -187,6 +193,10 @@ export function LogActivityForm() {
 
       // Step 5: Update user stats
       userStatUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
+      if (!isSkillUnlocked) {
+        userStatUpdate[`userSkills.${skillId}.isUnlocked`] = false; // Mark as interacted but not unlocked
+      }
+
       if (!hasProof) {
         userStatUpdate.xp = increment(xpGained);
       }
@@ -216,11 +226,13 @@ export function LogActivityForm() {
       };
       
       // Specialist Trait
-      const categoryStatName = `${category.toLowerCase()}Stat` as keyof typeof currentStats;
-      const newCategoryValue = (currentStats[categoryStatName] || 0) + 10;
-      if (newCategoryValue >= SPECIALIST_THRESHOLD && !userData.traits?.specialist) {
-          userStatUpdate['traits.specialist'] = true;
-          toast({ title: "Trait Unlocked: Specialist!", description: `You've shown deep focus in the ${category} category.` });
+      if (isSkillUnlocked) {
+        const categoryStatName = `${category.toLowerCase()}Stat` as keyof typeof currentStats;
+        const newCategoryValue = (currentStats[categoryStatName] || 0) + 10;
+        if (newCategoryValue >= SPECIALIST_THRESHOLD && !userData.traits?.specialist) {
+            userStatUpdate['traits.specialist'] = true;
+            toast({ title: "Trait Unlocked: Specialist!", description: `You've shown deep focus in the ${category} category.` });
+        }
       }
 
       // Jack of All Trades Trait
@@ -272,6 +284,10 @@ export function LogActivityForm() {
       if (isNewSkill) {
           toastDescription += `<br><strong>Pioneer Bonus!</strong> You discovered a new skill!`;
       }
+       if (!isSkillUnlocked) {
+          toastDescription += `<br>Unlock this skill in the Nebula to start earning stat points!`;
+      }
+
 
       toast({
         title: "Activity Logged!",
@@ -340,5 +356,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    
