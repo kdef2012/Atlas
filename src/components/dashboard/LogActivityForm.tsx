@@ -18,7 +18,7 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Paperclip } from "lucide-react";
+import { Loader2, Paperclip, HeartPulse } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
@@ -36,9 +36,20 @@ const SPECIALIST_THRESHOLD = 500;
 const JACK_OF_ALL_TRADES_THRESHOLD = 150;
 const JACK_OF_ALL_TRADES_RANGE = 50;
 
+const fitnessActivities = [
+    "Ran 5.2 km",
+    "Cycled for 45 minutes",
+    "Completed a 30-minute HIIT workout",
+    "Swam 1500 meters",
+    "Lifted weights for 1 hour",
+    "Walked 10,000 steps",
+    "Did a 20-minute yoga session"
+];
+
 
 export function LogActivityForm() {
   const [isLoading, setIsLoading] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
@@ -67,6 +78,21 @@ export function LogActivityForm() {
   });
   
   const fileRef = form.register("proof");
+
+
+  const handleSyncDevice = () => {
+    setIsSyncing(true);
+    const randomActivity = fitnessActivities[Math.floor(Math.random() * fitnessActivities.length)];
+    
+    setTimeout(() => {
+        form.setValue('skill', randomActivity);
+        toast({
+            title: "Device Synced!",
+            description: `Synced activity: "${randomActivity}"`
+        });
+        setIsSyncing(false);
+    }, 1500);
+  };
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -284,22 +310,28 @@ export function LogActivityForm() {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="proof"
-          render={({ field }) => (
-            <FormItem>
-               <FormLabel className="sr-only">Proof of Work</FormLabel>
-              <FormControl>
-                <div className="relative">
-                   <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input type="file" className="pl-10" {...fileRef} />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-2">
+            <FormField
+            control={form.control}
+            name="proof"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel className="sr-only">Proof of Work</FormLabel>
+                <FormControl>
+                    <div className="relative">
+                    <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input type="file" className="pl-10" {...fileRef} />
+                    </div>
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <Button type="button" variant="outline" onClick={handleSyncDevice} disabled={isSyncing}>
+                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HeartPulse className="mr-2 h-4 w-4 text-red-500" />}
+                Sync Device
+            </Button>
+        </div>
         <Button type="submit" disabled={isLoading || !user || !allSkills} className="w-full font-bold">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
           Log XP
