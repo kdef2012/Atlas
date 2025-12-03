@@ -23,7 +23,7 @@ import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/l
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, getDoc, writeBatch, getDocs, serverTimestamp } from "firebase/firestore";
+import { collection, doc, increment, getDoc, writeBatch } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -67,6 +67,7 @@ export function LogActivityForm() {
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
   const { data: allTerritories } = useCollection<Territory>(territoriesCollectionRef);
+  const { data: allGuilds } = useCollection<Guild>(guildsCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -94,7 +95,7 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection || !allSkills || !userRef || !userData) return;
+    if (!user || !userLogsCollection || !allSkills || !userRef || !userData || !allGuilds) return;
 
     setIsLoading(true);
     try {
@@ -176,6 +177,15 @@ export function LogActivityForm() {
         xpGained = Math.round(xpGained * 1.5);
       }
       
+      // Apply Guild buffs
+      const userGuilds = userData.guilds ? Object.keys(userData.guilds) : [];
+      for (const guildId of userGuilds) {
+          const guild = allGuilds.find(g => g.id === guildId);
+          if (guild?.isBuffActive) {
+              xpGained = Math.round(xpGained * 1.25); // 25% XP Buff
+          }
+      }
+
       const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
       let proofUrl = '';
@@ -223,29 +233,14 @@ export function LogActivityForm() {
           }
       }
       
-      // Step 7: Update Guild Challenge scores and apply buffs
-      if (userData.guilds) {
-        const guildIds = Object.keys(userData.guilds);
-        
-        for (const guildId of guildIds) {
-            const guildRef = doc(firestore, 'guilds', guildId);
-            const guildDoc = await getDoc(guildRef);
-            if(guildDoc.exists()) {
-                const guildData = guildDoc.data() as Guild;
-                 // Apply buff if active
-                if (guildData.isBuffActive) {
-                    xpGained = Math.round(xpGained * 1.25);
-                }
-                // Contribute to progress if guild is for the logged skill
-                if (guildData.skillId === skillId && guildData.challengeEndsAt > Date.now()) {
-                    batch.update(guildRef, { challengeProgress: increment(xpGained) });
-                }
-            }
-        }
+      // Step 7: Update Guild Challenge scores
+      const guildForSkill = allGuilds.find(g => g.skillId === skillId);
+      if (guildForSkill && guildForSkill.challengeEndsAt > Date.now()) {
+          const guildRef = doc(firestore, 'guilds', guildForSkill.id);
+          batch.update(guildRef, { challengeProgress: increment(xpGained) });
       }
       
-      // Update the log with the final buffed XP
-      batch.update(newLogRef, { xp: xpGained });
+      // Grant XP to user if no proof required
       if (!hasProof) {
           userStatUpdate.xp = increment(xpGained);
       }
@@ -278,6 +273,8 @@ export function LogActivityForm() {
       
       batch.update(userRef, userStatUpdate);
       
+      await batch.commit();
+
       // This part needs to be outside the batch as it reads data that the batch might have just written.
       // Innovator Trait check
       const skillDocForInnovator = await getDoc(skillRef);
@@ -302,8 +299,6 @@ export function LogActivityForm() {
       
       // Always increment the total XP on the skill itself.
       updateDocumentNonBlocking(skillRef, { xp: increment(xpGained) });
-      
-      await batch.commit();
 
       // Step 9: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];

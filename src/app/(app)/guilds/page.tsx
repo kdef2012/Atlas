@@ -1,7 +1,6 @@
 
 'use client';
 
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useCollection, useDoc, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
@@ -9,12 +8,13 @@ import { collection, doc, writeBatch, deleteField } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { Guild, User, Skill } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Users, Loader2, CheckCircle, Building2, LogOut, Lock } from 'lucide-react';
+import { Users, Loader2, LogOut, Lock, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { CATEGORY_ICONS } from '@/lib/types';
 import { Progress } from '@/components/ui/progress';
+import { useRouter } from 'next/navigation';
 
 const GUILD_LIMIT = 3;
 const UNLOCK_XP_THRESHOLD = 1000;
@@ -40,15 +40,24 @@ function GuildCard({
   canJoinMore: boolean,
   isUpdating: boolean
 }) {
+  const router = useRouter();
   const Icon = CATEGORY_ICONS[guild.category];
   const memberCount = Object.keys(guild.members).length;
   const userSkillXP = user.userSkills?.[guild.skillId]?.xp || 0;
   const progress = Math.min((userSkillXP / UNLOCK_XP_THRESHOLD) * 100, 100);
 
+  const handleClick = () => {
+    if (isMember) {
+      router.push(`/guilds/${guild.id}`);
+    }
+  };
+
   return (
-    <Card className={cn("flex flex-col transition-all duration-300", 
-      isMember ? "border-primary shadow-primary/20" : "hover:border-primary/80",
-      isLocked && "bg-secondary/30 border-dashed"
+    <Card 
+        onClick={handleClick}
+        className={cn("flex flex-col transition-all duration-300", 
+        isMember ? "border-primary shadow-primary/20 cursor-pointer" : "hover:border-primary/80",
+        isLocked && "bg-secondary/30 border-dashed"
     )}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -78,12 +87,12 @@ function GuildCard({
             Locked
           </Button>
         ) : isMember ? (
-          <Button variant="destructive" onClick={() => onLeave(guild)} disabled={isUpdating} className="w-full">
+          <Button variant="destructive" onClick={(e) => { e.stopPropagation(); onLeave(guild); }} disabled={isUpdating} className="w-full">
             {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOut className="mr-2 h-4 w-4" />}
             Leave Guild
           </Button>
         ) : canJoinMore ? (
-          <Button onClick={() => onJoin(guild)} disabled={isUpdating} className="w-full">
+          <Button onClick={(e) => { e.stopPropagation(); onJoin(guild); }} disabled={isUpdating} className="w-full">
             {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Join Guild
           </Button>
@@ -255,7 +264,7 @@ export default function GuildsPage() {
             <Building2 className="w-8 h-8 text-primary" />
             Guild Directory
           </CardTitle>
-          <CardDescription>Earn your place in up to {GUILD_LIMIT} communities by mastering their core skill.</CardDescription>
+          <CardDescription>Earn your place in up to {GUILD_LIMIT} communities by mastering their core skill ({UNLOCK_XP_THRESHOLD} XP required).</CardDescription>
         </div>
       </CardHeader>
       <CardContent>

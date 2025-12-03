@@ -5,29 +5,21 @@ import { useParams } from 'next/navigation';
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, doc, query, where } from 'firebase/firestore';
-import type { Guild, User, Trait } from '@/lib/types';
+import type { Guild, User, Trait, Skill } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { ShieldOff, Crown, User as UserIcon } from 'lucide-react';
+import { ShieldOff, User as UserIcon } from 'lucide-react';
 import { GuildChat } from '@/components/guilds/GuildChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TRAIT_ICONS } from '@/lib/types';
+import { TRAIT_ICONS, CATEGORY_ICONS } from '@/lib/types';
 
-function MemberList({ guild }: { guild: Guild }) {
+function MemberList({ guild, members }: { guild: Guild, members: User[] }) {
     const firestore = useFirestore();
-    const memberIds = Object.keys(guild.members);
-    const membersQuery = useMemoFirebase(() => {
-        if (memberIds.length === 0) return null;
-        // Firestore 'in' queries are limited to 30 elements. For larger guilds, pagination would be needed.
-        return query(collection(firestore, 'users'), where('id', 'in', memberIds.slice(0, 30)));
-    }, [firestore, JSON.stringify(memberIds.slice(0, 30))]);
-
-    const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
     
     const traitsCollectionRef = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
     const { data: allTraits, isLoading: areTraitsLoading } = useCollection<Trait>(traitsCollectionRef);
@@ -44,13 +36,11 @@ function MemberList({ guild }: { guild: Guild }) {
         }).filter((t): t is Trait => !!t).slice(0, 3); // Show max 3 traits
     }
     
-    if (areMembersLoading || areTraitsLoading) {
+    if (areTraitsLoading) {
         return <div className="space-y-2">
             {[...Array(3)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
     }
-    
-    const guildOwnerId = members?.find(member => member.id === guild.ownerId)?.id;
 
     return (
         <TooltipProvider>
@@ -65,12 +55,6 @@ function MemberList({ guild }: { guild: Guild }) {
                             <div className="flex-1">
                                 <span className="font-semibold text-sm flex items-center">
                                     {member.userName}
-                                    {member.id === guildOwnerId && 
-                                        <Tooltip>
-                                            <TooltipTrigger><Crown className="w-4 h-4 text-yellow-400 ml-1" /></TooltipTrigger>
-                                            <TooltipContent>Guild Founder</TooltipContent>
-                                        </Tooltip>
-                                    }
                                 </span>
                                 <div className="flex gap-1 mt-1">
                                      {getEarnedTraits(member).map(trait => {
@@ -102,11 +86,21 @@ export default function GuildDetailsPage() {
 
   const guildRef = useMemoFirebase(() => doc(firestore, 'guilds', guildId), [firestore, guildId]);
   const { data: guild, isLoading: isGuildLoading } = useDoc<Guild>(guildRef);
+  
+  const skillRef = useMemoFirebase(() => guild ? doc(firestore, 'skills', guild.skillId) : null, [firestore, guild]);
+  const { data: skill, isLoading: isSkillLoading } = useDoc<Skill>(skillRef);
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
+  
+  const memberIds = guild?.members ? Object.keys(guild.members) : [];
+  const membersQuery = useMemoFirebase(() => {
+    if (!guild || memberIds.length === 0) return null;
+    return query(collection(firestore, 'users'), where('id', 'in', memberIds.slice(0, 30)));
+  }, [firestore, guild, JSON.stringify(memberIds.slice(0, 30))]);
+  const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
 
-  const isLoading = isGuildLoading || isUserLoading;
+  const isLoading = isGuildLoading || isUserLoading || isSkillLoading || areMembersLoading;
 
   if (isLoading) {
     return (
@@ -117,7 +111,7 @@ export default function GuildDetailsPage() {
     );
   }
 
-  if (!guild) {
+  if (!guild || !skill) {
     return (
       <Alert variant="destructive">
         <ShieldOff className="h-4 w-4" />
@@ -139,18 +133,19 @@ export default function GuildDetailsPage() {
   }
 
   const memberCount = Object.keys(guild.members).length;
+  const CategoryIcon = CATEGORY_ICONS[guild.category];
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-2xl">{guild.name}</CardTitle>
-            <CardDescription>{guild.region} Chapter</CardDescription>
+            <CardTitle className="font-headline text-2xl flex items-center gap-2"><CategoryIcon className="w-6 h-6"/>{guild.name}</CardTitle>
+            <CardDescription>A global community dedicated to mastering "{skill.name}".</CardDescription>
           </CardHeader>
           <CardContent>
              <h4 className="font-bold mb-2 flex items-center gap-2"><UserIcon className="w-4 h-4"/> Members ({memberCount})</h4>
-             <MemberList guild={guild} />
+             <MemberList guild={guild} members={members || []} />
           </CardContent>
         </Card>
       </div>

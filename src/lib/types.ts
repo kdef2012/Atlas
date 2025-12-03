@@ -101,7 +101,6 @@ export interface Guild {
     skillId: string; // The skill this guild is for
     category: SkillCategory;
     region: string; // Region of origin
-    ownerId?: string; // Pioneer user, but not an owner in the traditional sense
     members: Record<string, boolean>;
     challengeGoal: number;
     challengeProgress: number;
