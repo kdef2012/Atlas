@@ -94,6 +94,10 @@ export interface Guild {
     region: string;
     ownerId: string;
     members: Record<string, boolean>;
+    challengeGoal: number;
+    challengeProgress: number;
+    challengeEndsAt: number;
+    isBuffActive: boolean;
 }
 
 export interface Territory {
@@ -136,3 +140,5 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     soul_sworn: HeartHandshake,
     state_best: Trophy,
 };
+
+    

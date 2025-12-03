@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip } from "lucide-react";
-import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -49,6 +49,9 @@ export function LogActivityForm() {
   const fireteamRef = useMemoFirebase(() => userData?.fireteamId ? doc(firestore, 'fireteams', userData.fireteamId) : null, [firestore, userData]);
   const { data: fireteamData } = useDoc<Fireteam>(fireteamRef);
   
+  const guildRef = useMemoFirebase(() => userData?.guildId ? doc(firestore, 'guilds', userData.guildId) : null, [firestore, userData]);
+  const { data: guildData } = useDoc<Guild>(guildRef);
+
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
@@ -120,6 +123,11 @@ export function LogActivityForm() {
       if (userData?.momentumFlameActive) {
         xpGained = Math.round(xpGained * 1.5);
       }
+
+      // Apply Guild buff if active
+      if (guildData?.isBuffActive) {
+        xpGained = Math.round(xpGained * 1.25);
+      }
       
       const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
@@ -166,6 +174,10 @@ export function LogActivityForm() {
               const territoryRef = doc(firestore, 'territories', activeChallenge.id);
               batch.update(territoryRef, { [`scores.${userData.fireteamId}`]: increment(xpGained) });
           }
+      }
+       // Step 6.5: Update Guild Challenge score
+      if (guildRef && guildData && guildData.challengeEndsAt > Date.now()) {
+          batch.update(guildRef, { challengeProgress: increment(xpGained) });
       }
       
       // Step 7: Check for and award new traits
@@ -296,3 +308,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    

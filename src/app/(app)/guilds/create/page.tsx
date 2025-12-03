@@ -56,12 +56,18 @@ export default function CreateGuildPage() {
 
     setIsLoading(true);
     
+    const sevenDaysFromNow = Date.now() + 7 * 24 * 60 * 60 * 1000;
+    
     const guildData = {
       ...values,
       ownerId: user.id,
       members: {
         [user.id]: true,
       },
+      challengeGoal: 1000, // Starts with a goal for 1 member
+      challengeProgress: 0,
+      challengeEndsAt: sevenDaysFromNow,
+      isBuffActive: false,
     };
     
     const guildsCollection = collection(firestore, 'guilds');
@@ -168,3 +174,5 @@ export default function CreateGuildPage() {
     </Card>
   );
 }
+
+    

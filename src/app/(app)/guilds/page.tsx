@@ -41,8 +41,13 @@ function GuildList() {
     const guildRef = doc(firestore, 'guilds', guild.id);
     const userDocRef = doc(firestore, 'users', authUser.uid);
     const updatedMembers = { ...guild.members, [authUser.uid]: true };
+    const memberCount = Object.keys(updatedMembers).length;
     
-    updateDocumentNonBlocking(guildRef, { members: updatedMembers });
+    // Update guild members and adjust the challenge goal for the new member count
+    updateDocumentNonBlocking(guildRef, { 
+        members: updatedMembers,
+        challengeGoal: memberCount * 1000,
+    });
     updateDocumentNonBlocking(userDocRef, { guildId: guild.id });
 
     setTimeout(() => {
@@ -156,3 +161,5 @@ export default function GuildsPage() {
     </Card>
   );
 }
+
+    
