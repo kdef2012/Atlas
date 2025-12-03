@@ -11,20 +11,17 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ShieldOff, User as UserIcon } from 'lucide-react';
 import { GuildChat } from '@/components/guilds/GuildChat';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TRAIT_ICONS, CATEGORY_ICONS } from '@/lib/types';
+import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
 
 function MemberList({ guild, members }: { guild: Guild, members: User[] }) {
     const firestore = useFirestore();
     
     const traitsCollectionRef = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
     const { data: allTraits, isLoading: areTraitsLoading } = useCollection<Trait>(traitsCollectionRef);
-    
-    const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
     
     const getEarnedTraits = (user: User) => {
         const earnedTraitIds = user.traits ? Object.keys(user.traits).filter(traitId => user.traits?.[traitId] === true) : [];
@@ -48,10 +45,7 @@ function MemberList({ guild, members }: { guild: Guild, members: User[] }) {
                 <div className="space-y-2">
                     {members?.map(member => (
                         <div key={member.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
-                             <Avatar className="h-8 w-8">
-                                <AvatarImage src={avatarData?.imageUrl} data-ai-hint={avatarData?.imageHint} />
-                                <AvatarFallback>{member.userName?.charAt(0) || 'U'}</AvatarFallback>
-                            </Avatar>
+                             <TwinskieAvatarCompact user={member} size={32} showLevel />
                             <div className="flex-1">
                                 <span className="font-semibold text-sm flex items-center">
                                     {member.userName}

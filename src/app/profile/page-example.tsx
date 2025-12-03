@@ -1,25 +1,29 @@
+
 'use client';
 
 import { TwinskieAvatar } from '@/components/twinskie-avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useUser, useDocument, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useDoc, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { COSMETIC_ITEMS } from '@/lib/avatar-system';
 import { Loader2, ShoppingBag, Check, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
+import { useMemoFirebase } from '@/firebase/provider';
 
 export default function ProfilePage() {
-  const { user: authUser } = useUser();
+  const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
   const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
 
-  const userDocRef = authUser ? doc(firestore, 'users', authUser.uid) : null;
-  const { data: userData, isLoading } = useDocument<User>(userDocRef);
+  const userDocRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: userData, isLoading: isDocLoading } = useDoc<User>(userDocRef);
+
+  const isLoading = isAuthLoading || isDocLoading;
 
   if (isLoading || !userData || !authUser) {
     return (

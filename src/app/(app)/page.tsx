@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { TwinskieAvatar } from "@/components/dashboard/TwinskieAvatar";
+import { TwinskieAvatar } from "@/components/twinskie-avatar";
 import { StatsRadarChart } from "@/components/dashboard/StatsRadarChart";
 import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
 import { QuestCard } from "@/components/dashboard/QuestCard";
@@ -19,6 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
+import { isUserInactive } from '@/lib/avatar-system';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -41,7 +42,7 @@ function DashboardPageContent() {
                     <Skeleton className="h-8 w-48" />
                     <Skeleton className="h-4 w-32 mt-2" />
                   </CardHeader>
-                   <Skeleton className="w-48 h-48 rounded-full" />
+                   <Skeleton className="w-48 h-72" />
                    <Skeleton className="h-10 w-full mt-4" />
                 </Card>
                 <Skeleton className="h-56 w-full" />
@@ -66,8 +67,6 @@ function DashboardPageContent() {
         </div>
     );
   }
-
-  const isInactive = user.lastLogTimestamp ? (Date.now() - user.lastLogTimestamp) > (24 * 60 * 60 * 1000) : false;
   
   const activeQuests = quests?.filter(q => !q.isCompleted).slice(0, 2) || [];
 
@@ -79,7 +78,7 @@ function DashboardPageContent() {
             <CardTitle className="font-headline text-3xl">The Twinskie</CardTitle>
             <CardDescription>Your digital self.</CardDescription>
           </CardHeader>
-          <TwinskieAvatar isInactive={isInactive} />
+          <TwinskieAvatar user={user} size="lg" />
           <TraitBadges />
         </Card>
         <MomentumFlame />
@@ -157,5 +156,3 @@ export default function DashboardPage() {
         </Suspense>
     )
 }
-
-    

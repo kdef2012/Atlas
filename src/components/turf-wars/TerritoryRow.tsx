@@ -1,16 +1,14 @@
 
 'use client';
 
-import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { Shield, Trophy } from "lucide-react";
-import type { Territory, Fireteam, SkillCategory } from "@/lib/types";
+import type { Territory, Fireteam, SkillCategory, User } from "@/lib/types";
 import { useDoc, useMemoFirebase, useFirestore } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
 
 interface TerritoryRowProps {
     territory: Territory;
@@ -32,15 +30,19 @@ export function TerritoryRow({ territory, isPast = false }: TerritoryRowProps) {
     const fireteamRef = useMemoFirebase(() => 
         leadingTeamId ? doc(firestore, 'fireteams', leadingTeamId) : null, 
     [firestore, leadingTeamId]);
+    const { data: fireteam, isLoading: isFireteamLoading } = useDoc<Fireteam>(fireteamRef);
     
-    const { data: fireteam, isLoading } = useDoc<Fireteam>(fireteamRef);
+    const ownerRef = useMemoFirebase(() =>
+        fireteam ? doc(firestore, 'users', fireteam.ownerId) : null,
+    [firestore, fireteam]);
+    const { data: owner, isLoading: isOwnerLoading } = useDoc<User>(ownerRef);
 
+    const isLoading = (leadingTeamId && isFireteamLoading) || (fireteam && isOwnerLoading);
     const FactionIcon = CATEGORY_ICONS[territory.faction];
     const factionColor = CATEGORY_COLORS[territory.faction];
-    const teamAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
     const endsDate = new Date(territory.endsAt).toLocaleDateString();
 
-    if (isLoading && leadingTeamId) {
+    if (isLoading) {
         return <Skeleton className="h-20 w-full" />;
     }
 
@@ -59,14 +61,11 @@ export function TerritoryRow({ territory, isPast = false }: TerritoryRowProps) {
             </div>
             
             <div className="flex flex-col items-center justify-center w-32 text-center">
-                {fireteam && leadingTeamId ? (
+                {fireteam && owner ? (
                     <>
                         {isPast ? <p className="text-xs font-bold text-yellow-400 flex items-center gap-1"><Trophy className="w-3 h-3"/> WINNER</p> : <p className="text-xs font-bold text-accent">LEADING</p> }
-                        <Avatar className="mt-1">
-                            <AvatarImage src={teamAvatar?.imageUrl} data-ai-hint={teamAvatar?.imageHint} />
-                            <AvatarFallback>{fireteam.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <p className="text-xs font-bold mt-1">{fireteam.name}</p>
+                        <TwinskieAvatarCompact user={owner} size={40} />
+                        <p className="text-xs font-bold mt-1 truncate w-full">{fireteam.name}</p>
                         <p className="text-xs text-muted-foreground"> {leadingTeamEntry?.[1]} pts</p>
                     </>
                 ) : (

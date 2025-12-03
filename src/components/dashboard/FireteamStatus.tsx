@@ -4,25 +4,23 @@
 
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Link as LinkIcon, Shield, Users, Crown, PlusCircle, MessageSquare } from "lucide-react";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { doc, collection, query, where, writeBatch } from "firebase/firestore";
+import { doc, collection, query, where, writeBatch, increment } from "firebase/firestore";
 import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
 
 const SOUL_SWORN_THRESHOLD_DAYS = 7;
 
 function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
-    const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
     const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
     const isActive = member.lastLogTimestamp > twentyFourHoursAgo;
     const tooltipText = `${member.userName} - ${isActive ? 'Active' : 'Inactive'}`;
@@ -31,12 +29,8 @@ function MemberAvatar({ member, isOwner }: { member: User, isOwner: boolean }) {
         <Tooltip>
             <TooltipTrigger asChild>
                 <div className="relative">
-                    <Avatar className="border-2 border-background">
-                        <AvatarImage src={avatarData?.imageUrl} data-ai-hint={avatarData?.imageHint} />
-                        <AvatarFallback>{member.userName?.charAt(0) || 'U'}</AvatarFallback>
-                    </Avatar>
-                    <div className={cn("absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background", isActive ? "bg-green-500" : "bg-gray-500")}></div>
-                    {isOwner && (
+                    <TwinskieAvatarCompact user={member} size={40} />
+                     {isOwner && (
                         <Crown className="absolute -top-2 -right-2 w-4 h-4 text-yellow-400 rotate-12" style={{ filter: 'drop-shadow(0 0 2px black)'}}/>
                     )}
                 </div>
@@ -72,9 +66,6 @@ function FireteamMembers({ fireteam }: { fireteam: Fireteam }) {
                 {members?.map(member => (
                     <MemberAvatar key={member.id} member={member} isOwner={member.id === fireteam.ownerId} />
                 ))}
-                 <Avatar className="border-2 border-dashed border-muted-foreground">
-                    <AvatarFallback>+</AvatarFallback>
-                </Avatar>
             </div>
         </TooltipProvider>
     );

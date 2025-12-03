@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { User } from '@/lib/types';
@@ -54,7 +55,7 @@ export function TwinskieAvatarCompact({
       </svg>
 
       {/* Level Badge */}
-      {showLevel && (
+      {showLevel && user.level > 0 && (
         <div className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
           {user.level}
         </div>

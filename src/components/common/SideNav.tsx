@@ -24,14 +24,13 @@ import {
   Building2,
   Store,
 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { TwinskieAvatarCompact } from "@/components/twinskie-avatar-compact";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -49,7 +48,6 @@ export function SideNav() {
   const pathname = usePathname();
   const router = useRouter();
   const auth = useAuth();
-  const userAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
   const { user: authUser } = useUser();
   const firestore = useFirestore();
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
@@ -93,10 +91,7 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           <Avatar>
-              <AvatarImage src={userAvatar?.imageUrl} data-ai-hint={userAvatar?.imageHint} />
-              <AvatarFallback>{user?.userName?.charAt(0) || 'U'}</AvatarFallback>
-            </Avatar>
+           {user && <TwinskieAvatarCompact user={user} showLevel={false} />}
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>

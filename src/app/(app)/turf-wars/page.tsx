@@ -15,8 +15,7 @@ import { Loader2, Plus, Trophy } from 'lucide-react';
 import { generateFactionChallenges } from '@/ai/flows/generate-faction-challenges';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
 
 function Leaderboard({ territory }: { territory: Territory }) {
   const firestore = useFirestore();
@@ -37,7 +36,16 @@ function Leaderboard({ territory }: { territory: Territory }) {
   }, [firestore, user?.region, JSON.stringify(fireteamIds)]); // Stringify to memoize array
 
   const { data: fireteams, isLoading } = useCollection<Fireteam>(fireteamsQuery);
-  const teamAvatar = PlaceHolderImages.find(p => p.id === 'avatar');
+  
+  const fireteamUsersQuery = useMemoFirebase(() => {
+      if (!fireteams) return null;
+      const allMemberIds = fireteams.flatMap(ft => Object.keys(ft.members));
+      if (allMemberIds.length === 0) return null;
+      return query(collection(firestore, 'users'), where('__name__', 'in', allMemberIds));
+  }, [firestore, fireteams]);
+  
+  const { data: allMembers } = useCollection<User>(fireteamUsersQuery);
+
 
   if (isLoading) {
     return <div className="space-y-2 p-4">
@@ -45,28 +53,29 @@ function Leaderboard({ territory }: { territory: Territory }) {
     </div>
   }
 
-  if (!fireteams || fireteams.length === 0) {
+  if (!fireteams || fireteams.length === 0 || !allMembers) {
     return <p className="text-center text-sm text-muted-foreground p-4">No fireteams from your region have participated in this challenge yet.</p>
   }
   
   const sortedTeams = fireteams.sort((a, b) => (territory.scores[b.id] || 0) - (territory.scores[a.id] || 0));
+  const membersMap = new Map(allMembers.map(m => [m.id, m]));
 
   return (
     <div className="space-y-2 p-4 bg-black/10 rounded-b-md">
       <h4 className="font-bold text-center text-sm mb-2">{user?.region} Leaderboard</h4>
-      {sortedTeams.map((team, index) => (
-        <div key={team.id} className="flex items-center gap-4 p-2 rounded-md bg-card/50">
-            <span className="font-bold w-4 text-lg">
-                {index === 0 ? <Trophy className="w-5 h-5 text-yellow-400"/> : index + 1}
-            </span>
-            <Avatar className="h-8 w-8">
-                <AvatarImage src={teamAvatar?.imageUrl} data-ai-hint={teamAvatar?.imageHint} />
-                <AvatarFallback>{team.name.charAt(0)}</AvatarFallback>
-            </Avatar>
-            <span className="flex-1 font-semibold text-sm">{team.name}</span>
-            <span className="font-mono text-sm">{territory.scores[team.id] || 0} pts</span>
-        </div>
-      ))}
+      {sortedTeams.map((team, index) => {
+        const owner = membersMap.get(team.ownerId);
+        return (
+          <div key={team.id} className="flex items-center gap-4 p-2 rounded-md bg-card/50">
+              <span className="font-bold w-4 text-lg">
+                  {index === 0 ? <Trophy className="w-5 h-5 text-yellow-400"/> : index + 1}
+              </span>
+              {owner ? <TwinskieAvatarCompact user={owner} size={32} /> : <Skeleton className="w-8 h-8 rounded-full" />}
+              <span className="flex-1 font-semibold text-sm">{team.name}</span>
+              <span className="font-mono text-sm">{territory.scores[team.id] || 0} pts</span>
+          </div>
+        )
+      })}
     </div>
   )
 }
