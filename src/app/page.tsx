@@ -40,7 +40,7 @@ function UserCounter() {
   }, [users]);
 
   if (isLoading || displayCount === 0) {
-    return <span className="h-6 w-24 bg-white/10 inline-block animate-pulse rounded-md" />;
+    return <span className="h-6 w-24 bg-foreground/10 inline-block animate-pulse rounded-md" />;
   }
 
   return (
@@ -64,7 +64,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-black text-white overflow-hidden">
+    <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background text-foreground overflow-hidden">
       
       <motion.div
         initial={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export default function LandingPage() {
         </p>
         <motion.button
           onClick={handleStart}
-          className="font-headline text-xl bg-transparent border border-white rounded-md px-8 py-3 text-white transition-all duration-300 hover:bg-white hover:text-black focus:outline-none focus:ring-2 focus:ring-white"
+          className="font-headline text-xl bg-transparent border border-foreground rounded-md px-8 py-3 text-foreground transition-all duration-300 hover:bg-foreground hover:text-background focus:outline-none focus:ring-2 focus:ring-foreground"
           style={{ fontFamily: '"Courier New", Courier, monospace' }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -89,7 +89,7 @@ export default function LandingPage() {
           [PRESS START]
         </motion.button>
       </motion.div>
-      <div className="absolute inset-0 z-0 opacity-5" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+      <div className="absolute inset-0 z-0 opacity-5" style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
     </main>
   );
 }
