@@ -183,7 +183,7 @@ export function FireteamStatus() {
                 }
             }
         }
-    }, [members, fireteamRef, fireteam, firestore, toast]);
+    }, [members, fireteamRef, fireteam?.streakActive, fireteam?.streakStartDate, firestore, toast]);
 
     useEffect(() => {
         const prevStreakStatus = prevStreakStatusRef.current;

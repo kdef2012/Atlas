@@ -89,7 +89,7 @@ export default function LandingPage() {
         </motion.button>
       </motion.div>
       <div className="absolute inset-0 z-0 opacity-5" style={{ background: 'radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-      <audio autoPlay loop>
+      <audio loop>
         <source src="https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fthrum.mp3?alt=media&token=2ab4f4df-a82b-4752-921c-91ede4f686c5" type="audio/mpeg" />
       </audio>
     </main>
