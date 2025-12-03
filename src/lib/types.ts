@@ -6,9 +6,8 @@ export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
 export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Creative';
 
-export type Gender = 'Male' | 'Female' | 'Non-binary';
-export type BodyType = 'Slim' | 'Athletic' | 'Muscular';
-export type SkinTone = 'Light' | 'Medium' | 'Dark';
+export type Gender = 'Male' | 'Female';
+export type AvatarStyle = string;
 
 
 export interface UserSkillData {
@@ -29,8 +28,8 @@ export interface User {
   email: string | null;
   userName: string;
   gender?: Gender;
-  bodyType?: BodyType;
-  skinTone?: SkinTone;
+  avatarStyle?: AvatarStyle;
+  avatarUrl?: string;
   physicalStat: number;
   mentalStat: number;
   socialStat: number;

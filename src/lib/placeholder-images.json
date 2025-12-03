@@ -7,28 +7,40 @@
       "imageHint": "futuristic avatar"
     },
     {
-      "id": "avatar-female-athletic-light",
-      "description": "Female, Athletic, Light Skin",
-      "imageUrl": "https://images.unsplash.com/photo-1588691523629-5ae6c1175517?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhdGhsZXRpYyUyMHdvbWFufGVufDB8fHx8MTc2NTU1ODk3Mnww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "athletic woman"
+      "id": "avatar-female-style1",
+      "description": "Female character with dark hair and tech gear.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ffemale_style_1.png?alt=media&token=487a5ff2-a8c9-4a94-bd8d-69973f7a6f23",
+      "imageHint": "female character illustration"
     },
     {
-      "id": "avatar-female-athletic-medium",
-      "description": "Female, Athletic, Medium Skin",
-      "imageUrl": "https://images.unsplash.com/photo-1542385152-d26533f8886f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxmaXRuZXNzJTIwd29tYW58ZW58MHx8fHwxNzY1NTU5MjIxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "fitness woman"
+      "id": "avatar-female-style2",
+      "description": "Female character with blonde hair in a ponytail.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ffemale_style_2.png?alt=media&token=9635b719-74d1-4a1c-aa49-f0275a59333a",
+      "imageHint": "female character portrait"
     },
     {
-      "id": "avatar-female-athletic-dark",
-      "description": "Female, Athletic, Dark Skin",
-      "imageUrl": "https://images.unsplash.com/photo-1594882046422-7f54a86b5952?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMGZpdG5lc3MlMjB3b21hbnxlbnwwfHx8fDE3NjU1NTkzNDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "black fitness woman"
+      "id": "avatar-female-style3",
+      "description": "Female character with short pink hair and glasses.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ffemale_style_3.png?alt=media&token=3b313c54-4e43-42e1-8848-8120e363b841",
+      "imageHint": "anime girl character"
     },
     {
-      "id": "avatar-male-muscular-dark",
-      "description": "Male, Muscular, Dark Skin",
-      "imageUrl": "https://images.unsplash.com/photo-1541534401786-204c386a1d1f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxibGFjayUyMG11c2N1bGFyJTIwbWFufGVufDB8fHx8MTc2NTU1OTUwNHww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "black muscular man"
+      "id": "avatar-male-style1",
+      "description": "Male character with dark hair and a confident expression.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fmale_style_1.png?alt=media&token=8014526d-a7f4-4a47-9204-74e1a0678d4a",
+      "imageHint": "male character illustration"
+    },
+    {
+      "id": "avatar-male-style2",
+      "description": "Male character with blonde hair and a futuristic suit.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fmale_style_2.png?alt=media&token=7c1b18c0-c081-4560-8451-9e7b36f7cb14",
+      "imageHint": "male character portrait"
+    },
+    {
+      "id": "avatar-male-style3",
+      "description": "Male character with silver hair and a thoughtful look.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fmale_style_3.png?alt=media&token=8f828a2a-463e-468e-b5f7-4144e59d9c79",
+      "imageHint": "anime boy character"
     },
     {
       "id": "twinskie-physical",

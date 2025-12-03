@@ -1,5 +1,4 @@
 
-
 {
   "entities": {
     "User": {
@@ -27,18 +26,16 @@
         },
         "gender": {
           "type": "string",
-          "enum": ["Male", "Female", "Non-binary"],
+          "enum": ["Male", "Female"],
           "description": "The user's selected gender identity."
         },
-        "bodyType": {
+        "avatarStyle": {
           "type": "string",
-          "enum": ["Slim", "Athletic", "Muscular"],
-          "description": "The user's selected starting body type."
+          "description": "The user's selected avatar style."
         },
-        "skinTone": {
+        "avatarUrl": {
             "type": "string",
-            "enum": ["Light", "Medium", "Dark"],
-            "description": "The user's selected skin tone."
+            "description": "The URL for the user's selected avatar portrait."
         },
         "physicalStat": {
           "type": "number",
