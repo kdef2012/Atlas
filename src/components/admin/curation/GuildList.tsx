@@ -9,7 +9,7 @@ import { collection, doc } from "firebase/firestore";
 import type { Guild } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/types";
 import {
   AlertDialog,
@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { useToast } from "@/hooks/use-toast";
+import { EditGuildDialog } from "./EditGuildDialog";
 
 
 export function GuildList() {
@@ -78,9 +79,7 @@ export function GuildList() {
                                 </TableCell>
                                 <TableCell>{Object.keys(guild.members || {}).length}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" disabled>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    <EditGuildDialog guild={guild} />
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">

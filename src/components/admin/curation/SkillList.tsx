@@ -9,7 +9,7 @@ import { collection, doc } from "firebase/firestore";
 import type { Skill } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { CATEGORY_COLORS } from "@/lib/types";
 import {
   AlertDialog,
@@ -23,6 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { EditSkillDialog } from "./EditSkillDialog";
 
 export function SkillList() {
     const firestore = useFirestore();
@@ -81,9 +82,7 @@ export function SkillList() {
                                 <TableCell>{skill.xp || 0}</TableCell>
                                 <TableCell className="text-xs text-muted-foreground">{skill.pioneerUserId}</TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon" disabled>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
+                                    <EditSkillDialog skill={skill} />
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
