@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -129,8 +129,18 @@ export interface Suggestion {
   isArchived: boolean;
 }
 
+export interface GlobalEvent {
+  id: string;
+  title: string;
+  description: string;
+  startAt: number;
+  endAt: number;
+  xpMultiplier?: number;
+  isActive: boolean;
+}
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Suggestion', React.ComponentType<{ className?: string }>> = {
+
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Suggestion' | 'Events', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -143,6 +153,7 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Guilds: Building2,
   Store: Store,
   Suggestion: MessageSquare,
+  Events: Megaphone,
 };
 
 export const CATEGORY_COLORS: Record<SkillCategory, string> = {

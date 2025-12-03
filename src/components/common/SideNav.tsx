@@ -26,6 +26,7 @@ import {
   User as UserIcon,
   Shield,
   Palette,
+  Megaphone,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -51,6 +52,7 @@ const navItems = [
 const adminNavItems = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/curation", label: "Curation", icon: Palette },
+    { href: "/admin/events", label: "Events", icon: Megaphone },
 ]
 
 export function SideNav() {

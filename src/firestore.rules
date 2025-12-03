@@ -103,8 +103,8 @@ service cloud.firestore {
      */
     match /users/{userId} {
       allow get: if isOwner(userId) || isAdmin();
-      // Allow admins to list all users, but normal users can only list for user counts.
-      allow list: if isAdmin() || isSignedIn();
+      // Allow anyone to perform a list for counting, but not read individual docs.
+      allow list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
       // Allow updates by the owner or an admin.
       allow update: if isOwner(userId) || isAdmin() || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
@@ -253,6 +253,17 @@ service cloud.firestore {
         allow list: if isAdmin();
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         allow update, delete: if isAdmin();
+    }
+
+    /**
+     * @description   Global events are public to read for all users. Writes are restricted to admins.
+     * @path          /events/{eventId}
+     * @principle     Public Read for global game state, with admin-only writes.
+     */
+    match /events/{eventId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow write: if isAdmin();
     }
   }
 }

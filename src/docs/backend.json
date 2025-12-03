@@ -471,6 +471,22 @@
             "isArchived": { "type": "boolean" }
         },
         "required": ["id", "userId", "userName", "suggestion", "timestamp", "isArchived"]
+    },
+    "GlobalEvent": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Global Event",
+      "type": "object",
+      "description": "Represents a limited-time global event for all users.",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the event." },
+        "title": { "type": "string", "description": "The name of the event." },
+        "description": { "type": "string", "description": "A brief explanation of the event." },
+        "startAt": { "type": "number", "description": "The Unix timestamp when the event starts." },
+        "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." },
+        "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." },
+        "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." }
+      },
+      "required": ["id", "title", "description", "startAt", "endAt", "isActive"]
     }
   },
   "auth": {
@@ -652,6 +668,15 @@
             "schema": { "$ref": "#/backend/entities/Suggestion" },
             "description": "Stores user-submitted suggestions for improving the app.",
             "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }]
+        }
+      },
+      {
+        "path": "/events/{eventId}",
+        "definition": {
+            "entityName": "GlobalEvent",
+            "schema": { "$ref": "#/backend/entities/GlobalEvent" },
+            "description": "Stores global, limited-time events for all users.",
+            "params": [{ "name": "eventId", "description": "The unique identifier for the event." }]
         }
       }
     ],
