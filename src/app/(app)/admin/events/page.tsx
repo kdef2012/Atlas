@@ -49,7 +49,6 @@ function EventList() {
         toast({
             title: "Event Deleted",
             description: `The event "${event.title}" has been removed.`,
-            variant: 'destructive',
         });
     }
 
@@ -315,5 +314,3 @@ export default function EventsPage() {
         </div>
     )
 }
-
-    

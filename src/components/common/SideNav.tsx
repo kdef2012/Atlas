@@ -34,7 +34,7 @@ import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { TwinskieAvatarCompact } from "@/components/twinskie-avatar-compact";
+import { TwinskieAvatar } from "@/components/twinskie-avatar";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -123,7 +123,7 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           {user && <TwinskieAvatarCompact user={user} showLevel={false} />}
+           {user && <TwinskieAvatar user={user} size="sm" showInactiveLabel={false} />}
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
