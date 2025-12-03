@@ -24,41 +24,36 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { CATEGORY_ICONS } from '@/lib/types';
+import storeItemsData from '@/lib/store-items.json';
 
+// A map to dynamically select icons
+const iconMap = {
+    RectangleHorizontal,
+    Glasses,
+    Shield,
+};
 
-const STORE_ITEMS = [
-    {
-        id: 'cosmetic_shadow_cloak',
-        name: 'Shadow Cloak',
-        description: 'A mysterious cloak that billows with ethereal energy.',
-        price: 10,
-        icon: RectangleHorizontal,
-        layerKey: 'cosmetic_shadow_cloak',
-    },
-    {
-        id: 'cosmetic_arcane_goggles',
-        name: 'Arcane Goggles',
-        description: 'Lenses crafted to see the flow of raw data in the world.',
-        price: 8,
-        icon: Glasses,
-        layerKey: 'cosmetic_arcane_goggles',
-    },
-    {
-        id: 'cosmetic_titans_pauldrons',
-        name: 'Titan\'s Pauldrons',
-        description: 'Heavy shoulder plates, signifying immense physical power.',
-        price: 12,
-        icon: Shield,
-        layerKey: 'cosmetic_titans_pauldrons',
-    }
-]
+// Define a more specific type for our store items
+interface StoreItem {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    icon: keyof typeof iconMap;
+    layerKey: string;
+}
 
-function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: typeof STORE_ITEMS[0], userGems: number, userLayers: Record<string, boolean>, onPurchase: (item: any) => void }) {
+const STORE_ITEMS: StoreItem[] = storeItemsData.items as StoreItem[];
+
+function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: StoreItem, userGems: number, userLayers: Record<string, boolean>, onPurchase: (item: any) => void }) {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const { toast } = useToast();
 
     const hasItem = userLayers[item.layerKey];
     const canAfford = userGems >= item.price;
+    
+    const ItemIcon = iconMap[item.icon] || Store;
+
 
     const handlePurchase = () => {
         setIsPurchasing(true);
@@ -78,7 +73,7 @@ function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: typeo
         <Card className={cn("flex flex-col", hasItem && "bg-secondary/50")}>
             <CardHeader className="text-center">
                 <div className="mx-auto p-4 rounded-full bg-primary/10 text-primary w-fit mb-2">
-                    <item.icon className="w-10 h-10" />
+                    <ItemIcon className="w-10 h-10" />
                 </div>
                 <CardTitle>{item.name}</CardTitle>
                 <CardDescription>{item.description}</CardDescription>
@@ -129,7 +124,7 @@ export default function StorePage() {
 
     const isLoading = isAuthLoading || isUserDocLoading;
 
-    const handlePurchase = (item: typeof STORE_ITEMS[0]) => {
+    const handlePurchase = (item: StoreItem) => {
         if (!userRef || !user) return;
 
         const updates = {
