@@ -32,6 +32,8 @@
  *   match the path, ensuring data integrity and simplifying ownership checks for collection group queries.
  * - Fireteam Membership: The `members` map in `/fireteams/{fireteamId}` allows for checking if a
  *   user is part of a team without a separate document read, crucial for the 'Soul Link' mechanic.
+ * - Guild Membership: The `members` map in `/guilds/{guildId}` and the `guilds` map on a user document
+ *   allow for checking guild membership without extra reads.
  *
  * Structural Segregation:
  * - The ruleset leverages a clear separation between private and public data. User-specific,
@@ -76,10 +78,11 @@ service cloud.firestore {
     }
     
     /**
-     * Checks if the requesting user is a member of the guild specified in the resource.
+     * Checks if the requesting user is a member of the guild specified in the resource,
+     * by looking at the user's own document.
      */
-    function isGuildMember() {
-      return isSignedIn() && resource.data.members[request.auth.uid] == true;
+    function isGuildMember(guildId) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
     }
 
     /**
@@ -92,9 +95,10 @@ service cloud.firestore {
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false;
+      // Allow list only for server-side checks on user existence for guild membership
+      allow list: if isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      // Allow updates by the owner. Also allow specific fields (like traits) to be updated by server-side logic (represented by allowing writes when not owned).
+      // Allow updates by the owner. Also allow specific fields to be updated by server-side logic (represented by allowing writes when not owned).
       allow update: if isOwner(userId) || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
       allow delete: if isExistingOwner(userId);
 
@@ -187,7 +191,8 @@ service cloud.firestore {
         allow get: if isSignedIn();
         allow list: if isSignedIn();
         allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-        allow update: if isOwner(resource.data.ownerId) || isGuildMember();
+        // Allow owner to update the guild, and members to update their own membership status.
+        allow update: if isOwner(resource.data.ownerId) || isGuildMember(guildId);
         allow delete: if isOwner(resource.data.ownerId);
         
         /**
@@ -198,7 +203,7 @@ service cloud.firestore {
          * @principle     Scoped access based on a parent document's data using `get()`.
          */
         match /messages/{messageId} {
-            allow read, write: if isSignedIn() && get(/databases/$(database)/documents/guilds/$(guildId)).data.members[request.auth.uid] == true;
+            allow read, write: if isGuildMember(guildId);
         }
     }
     

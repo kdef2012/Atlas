@@ -78,7 +78,7 @@ export default function CreateGuildPage() {
         }
 
         const userDocRef = doc(firestore, 'users', user.id);
-        updateDocumentNonBlocking(userDocRef, { guildId: newGuildDoc.id });
+        updateDocumentNonBlocking(userDocRef, { [`guilds.${newGuildDoc.id}`]: true });
 
         toast({
             title: 'Guild Founded!',
@@ -163,7 +163,7 @@ export default function CreateGuildPage() {
                 </FormItem>
               )}
             />
-            <p className="text-sm text-muted-foreground">Your Guild will be founded in this region. Only users from this region will be able to see and join it initially.</p>
+            <p className="text-sm text-muted-foreground">Your Guild will be founded in this region. This helps other local players find you.</p>
             <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Building2 className="mr-2 h-4 w-4" />}
               Found Guild

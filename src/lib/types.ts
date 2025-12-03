@@ -38,7 +38,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
-  guildId?: string;
+  guilds?: Record<string, boolean>; // Changed from guildId
   userSkills: Record<string, UserSkillData>;
   avatarLayers?: Partial<Record<string, boolean>>;
   momentumFlameActive: boolean;

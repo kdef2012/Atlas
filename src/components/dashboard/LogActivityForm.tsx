@@ -23,7 +23,7 @@ import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/l
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, getDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, increment, getDoc, writeBatch, getDocs } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -60,9 +60,6 @@ export function LogActivityForm() {
   const fireteamRef = useMemoFirebase(() => userData?.fireteamId ? doc(firestore, 'fireteams', userData.fireteamId) : null, [firestore, userData]);
   const { data: fireteamData } = useDoc<Fireteam>(fireteamRef);
   
-  const guildRef = useMemoFirebase(() => userData?.guildId ? doc(firestore, 'guilds', userData.guildId) : null, [firestore, userData]);
-  const { data: guildData } = useDoc<Guild>(guildRef);
-
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
@@ -161,10 +158,7 @@ export function LogActivityForm() {
         xpGained = Math.round(xpGained * 1.5);
       }
 
-      // Apply Guild buff if active
-      if (guildData?.isBuffActive) {
-        xpGained = Math.round(xpGained * 1.25);
-      }
+      // We will handle Guild Buffs after fetching them.
       
       const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
@@ -191,7 +185,7 @@ export function LogActivityForm() {
         userId: user.uid,
         skillId: skillId,
         timestamp: Date.now(),
-        xp: xpGained,
+        xp: xpGained, // Store base XP, buffs will be applied before adding to user total
         verificationPhotoUrl: proofUrl,
         isVerified: !hasProof,
       });
@@ -202,11 +196,7 @@ export function LogActivityForm() {
         userStatUpdate[`userSkills.${skillId}.isUnlocked`] = false; // Mark as interacted but not unlocked
       }
 
-      if (!hasProof) {
-        userStatUpdate.xp = increment(xpGained);
-      }
-      
-      // Step 6: Update Faction Challenge score
+       // Step 6: Update Faction Challenge score
       if (userData.fireteamId && allTerritories) {
           const now = Date.now();
           const activeChallenge = allTerritories.find(t => t.faction === category && t.endsAt > now);
@@ -216,12 +206,43 @@ export function LogActivityForm() {
               batch.update(territoryRef, { [`scores.${userData.fireteamId}`]: increment(xpGained) });
           }
       }
-       // Step 6.5: Update Guild Challenge score
-      if (guildRef && guildData && guildData.challengeEndsAt > Date.now()) {
-          batch.update(guildRef, { challengeProgress: increment(xpGained) });
+      
+      // Step 7: Update Guild Challenge scores and apply buffs
+      if (userData.guilds) {
+        const guildIds = Object.keys(userData.guilds);
+        const guildRefs = guildIds.map(id => doc(firestore, 'guilds', id));
+        const guildDocs = await Promise.all(guildRefs.map(ref => getDoc(ref)));
+
+        let finalXpGained = xpGained;
+        let buffApplied = false;
+
+        guildDocs.forEach((guildDoc) => {
+            if (guildDoc.exists()) {
+                const guildData = guildDoc.data() as Guild;
+                // Apply buff if active
+                if (guildData.isBuffActive && !buffApplied) {
+                    finalXpGained = Math.round(finalXpGained * 1.25);
+                    buffApplied = true; // Ensure buff is applied only once
+                }
+                // Contribute to progress
+                if (guildData.challengeEndsAt > Date.now()) {
+                    batch.update(guildDoc.ref, { challengeProgress: increment(xpGained) });
+                }
+            }
+        });
+        // Update the log with the buffed XP
+        batch.update(newLogRef, { xp: finalXpGained });
+
+        if (!hasProof) {
+            userStatUpdate.xp = increment(finalXpGained);
+        }
+      } else {
+         if (!hasProof) {
+            userStatUpdate.xp = increment(xpGained);
+        }
       }
       
-      // Step 7: Check for and award new traits
+      // Step 8: Check for and award new traits
       const currentStats = {
           physical: userData.physicalStat,
           mental: userData.mentalStat,
@@ -279,7 +300,7 @@ export function LogActivityForm() {
       await batch.commit();
 
 
-      // Step 8: Show feedback toast
+      // Step 9: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
       let toastDescription = `Your '${skillName}' activity was logged as <strong>${category}</strong>.`;
       if (!hasProof) {
@@ -362,3 +383,5 @@ export function LogActivityForm() {
     </Form>
   );
 }
+
+    

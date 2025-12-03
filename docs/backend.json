@@ -58,9 +58,14 @@
           "type": "string",
           "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)"
         },
-        "guildId": {
-            "type": "string",
-            "description": "Reference to the Guild this user belongs to."
+        "guilds": {
+            "type": "object",
+            "description": "A map of Guild IDs this user belongs to. Keys are guild IDs, values are true.",
+            "patternProperties": {
+                "^[a-zA-Z0-9_]+$": {
+                    "type": "boolean"
+                }
+            }
         },
         "lastLogTimestamp": {
           "type": "number",

@@ -19,7 +19,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
-import { GuildStatus } from '@/components/dashboard/GuildStatus';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -85,7 +84,6 @@ function DashboardPageContent() {
         </Card>
         <MomentumFlame />
         <FireteamStatus />
-        <GuildStatus />
       </div>
 
       <div className="lg:col-span-2 space-y-6">

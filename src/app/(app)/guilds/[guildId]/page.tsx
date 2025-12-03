@@ -23,8 +23,9 @@ function MemberList({ guild }: { guild: Guild }) {
     const memberIds = Object.keys(guild.members);
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
-        return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, JSON.stringify(memberIds)]);
+        // Firestore 'in' queries are limited to 30 elements. For larger guilds, pagination would be needed.
+        return query(collection(firestore, 'users'), where('id', 'in', memberIds.slice(0, 30)));
+    }, [firestore, JSON.stringify(memberIds.slice(0, 30))]);
 
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
     
@@ -124,7 +125,8 @@ export default function GuildDetailsPage() {
     );
   }
   
-  if (user?.guildId !== guildId) {
+  // Updated check for multi-guild membership
+  if (!user?.guilds?.[guildId]) {
       return (
         <Alert variant="destructive">
             <ShieldOff className="h-4 w-4" />
@@ -156,3 +158,5 @@ export default function GuildDetailsPage() {
     </div>
   );
 }
+
+    
