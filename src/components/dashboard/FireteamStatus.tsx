@@ -98,7 +98,7 @@ export function FireteamStatus() {
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, JSON.stringify(memberIds)]);
+    }, [firestore, memberIds]);
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
     
     const prevStreakStatusRef = useRef<boolean | undefined>(fireteam?.streakActive);
@@ -125,7 +125,7 @@ export function FireteamStatus() {
                 const memberRef = doc(firestore, 'users', member.id);
                 // Only take a freeze from one person (the one clicking)
                 if (member.id === authUser?.uid) {
-                    batch.update(memberRef, { streakFreezes: -1 });
+                    batch.update(memberRef, { streakFreezes: increment(-1) });
                 }
             });
 
@@ -140,8 +140,8 @@ export function FireteamStatus() {
         }
     };
     
-    const memoizedMembers = useMemo(() => members, [JSON.stringify(members)]);
-    const memoizedFireteam = useMemo(() => fireteam, [JSON.stringify(fireteam)]);
+    const memoizedMembers = useMemo(() => members, [members]);
+    const memoizedFireteam = useMemo(() => fireteam, [fireteam]);
 
 
     useEffect(() => {

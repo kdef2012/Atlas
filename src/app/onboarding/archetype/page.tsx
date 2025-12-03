@@ -78,7 +78,7 @@ export default function ArchetypeSelectionPage() {
         },
         { merge: true }
       );
-      router.push(`/onboarding/welcome?archetype=${archetype}`);
+      router.push(`/onboarding/customize?archetype=${archetype}`);
     }
   };
 
