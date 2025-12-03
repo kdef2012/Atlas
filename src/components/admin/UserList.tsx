@@ -13,6 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
+import { GiftGemsDialog } from "./GiftGemsDialog";
 
 export function UserList() {
     const firestore = useFirestore();
@@ -48,9 +49,9 @@ export function UserList() {
                         <TableRow>
                             <TableHead>User</TableHead>
                             <TableHead>Level</TableHead>
-                            <TableHead>Archetype</TableHead>
                             <TableHead>Last Active</TableHead>
-                            <TableHead className="text-right">Admin</TableHead>
+                            <TableHead>Admin</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -58,9 +59,9 @@ export function UserList() {
                             <TableRow key={i}>
                                 <TableCell><Skeleton className="h-8 w-48" /></TableCell>
                                 <TableCell><Skeleton className="h-8 w-12" /></TableCell>
-                                <TableCell><Skeleton className="h-8 w-24" /></TableCell>
                                 <TableCell><Skeleton className="h-8 w-32" /></TableCell>
-                                <TableCell><Skeleton className="h-8 w-16 ml-auto" /></TableCell>
+                                <TableCell><Skeleton className="h-8 w-16" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                             </TableRow>
                         ))}
                         {users?.map(user => (
@@ -72,15 +73,17 @@ export function UserList() {
                                     </div>
                                 </TableCell>
                                 <TableCell>{user.level}</TableCell>
-                                <TableCell>{user.archetype}</TableCell>
                                 <TableCell>{formatDistanceToNow(user.lastLogTimestamp, { addSuffix: true })}</TableCell>
-                                <TableCell className="text-right">
+                                <TableCell>
                                     <Switch
-                                        checked={user.isAdmin}
+                                        checked={!!user.isAdmin}
                                         onCheckedChange={() => handleAdminToggle(user)}
                                         disabled={user.id === authUser?.uid}
                                         aria-label={`Toggle admin status for ${user.userName}`}
                                     />
+                                </TableCell>
+                                 <TableCell className="text-right">
+                                    <GiftGemsDialog user={user} />
                                 </TableCell>
                             </TableRow>
                         ))}
