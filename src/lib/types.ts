@@ -87,6 +87,14 @@ export interface Fireteam {
   streakStartDate?: number;
 }
 
+export interface Message {
+  id: string;
+  text: string;
+  timestamp: number;
+  userId: string;
+  userName: string;
+}
+
 export interface Guild {
     id: string;
     name: string;
@@ -140,5 +148,3 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     soul_sworn: HeartHandshake,
     state_best: Trophy,
 };
-
-    

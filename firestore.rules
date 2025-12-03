@@ -10,6 +10,7 @@
  * - /users/{userId}/logs/{logId} - A subcollection storing a user's private activity logs.
  * - /skills/{skillId} - A top-level collection of all skills, which are public to read.
  * - /fireteams/{fireteamId} - A top-level collection of all fireteams, which are public to read.
+ * - /fireteams/{fireteamId}/messages/{messageId} - A subcollection for fireteam chat messages.
  * - /users/{userId}/quests/{questId} - A subcollection storing a user's private quests.
  * - /territories/{territoryId} - A top-level collection of all territories, which are public to read.
  * - /traits/{traitId} - A top-level collection for global trait definitions.
@@ -161,6 +162,17 @@ service cloud.firestore {
       // Allow owner or members to update (for streak logic)
       allow update: if isExistingOwner(resource.data.ownerId) || isFireteamMember();
       allow delete: if isExistingOwner(resource.data.ownerId);
+
+      /**
+       * @description   Fireteam chat messages. Only members of the fireteam can read and write.
+       * @path          /fireteams/{fireteamId}/messages/{messageId}
+       * @allow         (read, write) A user who is a member of the parent fireteam document.
+       * @deny          (all) Any user who is not a member of the fireteam.
+       * @principle     Scoped access based on a parent document's data using `get()`.
+       */
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+      }
     }
     
     /**
@@ -207,5 +219,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

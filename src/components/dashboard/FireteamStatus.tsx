@@ -3,11 +3,11 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
-import { Link as LinkIcon, Shield, Users, Crown, PlusCircle } from "lucide-react";
+import { Link as LinkIcon, Shield, Users, Crown, PlusCircle, MessageSquare } from "lucide-react";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
 import { useUser, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -219,8 +219,16 @@ export function FireteamStatus() {
                     </div>
                 )}
             </CardContent>
+             {fireteam && (
+                <CardFooter>
+                    <Button asChild variant="outline" className="w-full">
+                        <Link href={`/fireteams/${fireteam.id}`}>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Open Fireteam HQ
+                        </Link>
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }
-
-    
