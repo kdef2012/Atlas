@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, doc, query, where } from 'firebase/firestore';
@@ -72,9 +71,8 @@ function MemberList({ guild, members }: { guild: Guild, members: User[] }) {
     )
 }
 
-export default function GuildDetailsPage() {
-  const params = useParams();
-  const guildId = params.guildId as string;
+export default function GuildDetailsPage({ params }: { params: { guildId: string } }) {
+  const { guildId } = params;
   const firestore = useFirestore();
   const { user: authUser } = useUser();
 

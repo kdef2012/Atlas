@@ -1,7 +1,6 @@
 
 'use client';
 
-import { useParams } from 'next/navigation';
 import { useDoc, useUser, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { doc } from 'firebase/firestore';
@@ -12,9 +11,8 @@ import { FireteamChat } from '@/components/fireteams/FireteamChat';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { ShieldOff } from 'lucide-react';
 
-export default function FireteamDetailsPage() {
-  const params = useParams();
-  const fireteamId = params.fireteamId as string;
+export default function FireteamDetailsPage({ params }: { params: { fireteamId: string } }) {
+  const { fireteamId } = params;
   const firestore = useFirestore();
   const { user: authUser } = useUser();
 
