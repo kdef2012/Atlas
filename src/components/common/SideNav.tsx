@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   Building2,
   Store,
+  User as UserIcon,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -34,6 +35,7 @@ import { TwinskieAvatarCompact } from "@/components/twinskie-avatar-compact";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/store", label: "Store", icon: Store },
