@@ -146,6 +146,11 @@ export function LogActivityForm() {
       
       let xpGained = isNewSkill ? 150 : 100; // Bonus XP for pioneers
 
+      // Apply bonuses from Traits
+      if (isNewSkill && userData.traits?.pioneer) {
+        xpGained = Math.round(xpGained * 1.1); // 10% Pioneer XP Bonus
+      }
+
       // Apply Soul Link bonus if active
       if (fireteamData?.streakActive) {
         xpGained = Math.round(xpGained * 1.2);
@@ -254,15 +259,16 @@ export function LogActivityForm() {
         
         if (skillData.pioneerUserId && !skillData.innovatorAwarded && newSkillXp >= INNOVATOR_THRESHOLD) {
             const pioneerRef = doc(firestore, 'users', skillData.pioneerUserId);
-            updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true });
+            // Award Innovator trait and gems for their popular skill
+            updateDocumentNonBlocking(pioneerRef, { 'traits.innovator': true, gems: increment(50) });
             updateDocumentNonBlocking(skillRef, { innovatorAwarded: true });
             
-            // Check if we need to notify the pioneer
             const pioneerDoc = await getDoc(pioneerRef);
-            if (pioneerDoc.exists() && pioneerDoc.data().id !== user.uid) { // Don't notify if you are the pioneer
-              toast({ title: `Your skill '${skillData.name}' became popular!`, description: `User ${pioneerDoc.data().userName} has been awarded the Innovator trait.` });
-            } else if (pioneerDoc.exists() && pioneerDoc.data().id === user.uid) {
-                toast({ title: "Trait Unlocked: Innovator!", description: `Your skill '${skillData.name}' has become a cornerstone of the ATLAS!` });
+            if (pioneerDoc.exists()) {
+                 toast({ 
+                    title: `Your skill '${skillData.name}' is an ATLAS hit!`,
+                    description: `${pioneerDoc.data()?.userName} has been awarded the Innovator trait and 50 Gems!`
+                });
             }
         }
       }
@@ -356,5 +362,3 @@ export function LogActivityForm() {
     </Form>
   );
 }
-
-    

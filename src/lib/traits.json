@@ -1,0 +1,95 @@
+
+{
+  "traits": [
+    {
+      "id": "pioneer",
+      "name": "Pioneer",
+      "description": "You are the first to discover and chart a new skill in the ATLAS.",
+      "icon": "pioneer"
+    },
+    {
+      "id": "innovator",
+      "name": "Innovator",
+      "description": "A skill you pioneered has become popular, with over 1000 total XP logged by the community.",
+      "icon": "innovator"
+    },
+    {
+      "id": "specialist",
+      "name": "Specialist",
+      "description": "You have achieved a high level of mastery (500+ stat points) in a single skill category.",
+      "icon": "specialist"
+    },
+    {
+      "id": "jack_of_all_trades",
+      "name": "Jack of All Trades",
+      "description": "You have maintained a balanced profile, with all stats above 150 and within 50 points of each other.",
+      "icon": "jack_of_all_trades"
+    },
+    {
+      "id": "vindicator",
+      "name": "Vindicator",
+      "description": "You have proven your sharp judgment by verifying over 50 community submissions.",
+      "icon": "vindicator"
+    },
+    {
+      "id": "soul_sworn",
+      "name": "Soul-Sworn",
+      "description": "Your Fireteam has maintained a Soul Link streak for 7 consecutive days.",
+      "icon": "soul_sworn"
+    },
+    {
+      "id": "state_best",
+      "name": "State Best",
+      "description": "Your state was the top performer in a recent Faction Challenge.",
+      "icon": "state_best"
+    },
+    {
+      "id": "night_owl",
+      "name": "Night Owl",
+      "description": "Frequently active between 10 PM and 6 AM.",
+      "icon": "night_owl"
+    },
+    {
+      "id": "early_bird",
+      "name": "Early Bird",
+      "description": "Frequently active between 5 AM and 9 AM.",
+      "icon": "early_bird"
+    },
+    {
+      "id": "focused",
+      "name": "Focused",
+      "description": "Logs activities in the same skill category multiple times in a row.",
+      "icon": "focused"
+    },
+    {
+      "id": "polymath",
+      "name": "Polymath",
+      "description": "Frequently switches between different skill categories.",
+      "icon": "polymath"
+    },
+    {
+      "id": "streaker",
+      "name": "Streaker",
+      "description": "Maintains a personal Momentum Flame for over 14 days.",
+      "icon": "streaker"
+    },
+    {
+      "id": "socialite",
+      "name": "Socialite",
+      "description": "Logs a high number of social activities.",
+      "icon": "socialite"
+    },
+    {
+      "id": "hermit",
+      "name": "Hermit",
+      "description": "Logs a high number of solo activities (Mental, Creative).",
+      "icon": "hermit"
+    },
+    {
+      "id": "mentor",
+      "name": "Mentor",
+      "description": "The skills you've pioneered have been unlocked by other users.",
+      "icon": "mentor"
+    }
+  ]
+}

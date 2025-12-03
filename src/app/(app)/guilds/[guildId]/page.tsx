@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, doc, query, where } from 'firebase/firestore';
-import type { Guild, User } from '@/lib/types';
+import type { Guild, User, Trait } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -14,6 +14,9 @@ import { GuildChat } from '@/components/guilds/GuildChat';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TRAIT_ICONS } from '@/lib/types';
 
 function MemberList({ guild }: { guild: Guild }) {
     const firestore = useFirestore();
@@ -21,32 +24,70 @@ function MemberList({ guild }: { guild: Guild }) {
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, memberIds]);
+    }, [firestore, JSON.stringify(memberIds)]);
 
-    const { data: members, isLoading } = useCollection<User>(membersQuery);
+    const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
+    
+    const traitsCollectionRef = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
+    const { data: allTraits, isLoading: areTraitsLoading } = useCollection<Trait>(traitsCollectionRef);
+    
     const avatarData = PlaceHolderImages.find(p => p.id === 'avatar');
-
-    if (isLoading) {
+    
+    const getEarnedTraits = (user: User) => {
+        const earnedTraitIds = user.traits ? Object.keys(user.traits).filter(traitId => user.traits?.[traitId] === true) : [];
+        return earnedTraitIds.map(traitId => {
+            if (traitId === 'state_best') {
+                return { id: 'state_best', name: 'State Best', icon: 'state_best' };
+            }
+            return allTraits?.find(t => t.id === traitId);
+        }).filter((t): t is Trait => !!t).slice(0, 3); // Show max 3 traits
+    }
+    
+    if (areMembersLoading || areTraitsLoading) {
         return <div className="space-y-2">
-            {[...Array(3)].map((_,i) => <Skeleton key={i} className="h-10 w-full" />)}
+            {[...Array(3)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
         </div>
     }
 
     return (
-        <ScrollArea className="h-96">
-            <div className="space-y-2">
-                {members?.map(member => (
-                    <div key={member.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
-                         <Avatar className="h-8 w-8">
-                            <AvatarImage src={avatarData?.imageUrl} data-ai-hint={avatarData?.imageHint} />
-                            <AvatarFallback>{member.userName?.charAt(0) || 'U'}</AvatarFallback>
-                        </Avatar>
-                        <span className="flex-1 font-semibold text-sm">{member.userName}</span>
-                        {member.id === guild.ownerId && <Crown className="w-4 h-4 text-yellow-400" />}
-                    </div>
-                ))}
-            </div>
-        </ScrollArea>
+        <TooltipProvider>
+            <ScrollArea className="h-96">
+                <div className="space-y-2">
+                    {members?.map(member => (
+                        <div key={member.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                             <Avatar className="h-8 w-8">
+                                <AvatarImage src={avatarData?.imageUrl} data-ai-hint={avatarData?.imageHint} />
+                                <AvatarFallback>{member.userName?.charAt(0) || 'U'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                                <span className="font-semibold text-sm flex items-center">
+                                    {member.userName}
+                                    {member.id === guild.ownerId && 
+                                        <Tooltip>
+                                            <TooltipTrigger><Crown className="w-4 h-4 text-yellow-400 ml-1" /></TooltipTrigger>
+                                            <TooltipContent>Guild Owner</TooltipContent>
+                                        </Tooltip>
+                                    }
+                                </span>
+                                <div className="flex gap-1 mt-1">
+                                     {getEarnedTraits(member).map(trait => {
+                                        const Icon = TRAIT_ICONS[trait.icon as keyof typeof TRAIT_ICONS];
+                                        return (
+                                            <Tooltip key={trait.id}>
+                                                <TooltipTrigger>
+                                                    <Badge variant="secondary" className="px-1.5 py-0.5"><Icon className="w-3 h-3 text-yellow-400"/></Badge>
+                                                </TooltipTrigger>
+                                                <TooltipContent>{trait.name}</TooltipContent>
+                                            </Tooltip>
+                                        )
+                                     })}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </ScrollArea>
+        </TooltipProvider>
     )
 }
 
@@ -115,5 +156,3 @@ export default function GuildDetailsPage() {
     </div>
   );
 }
-
-    

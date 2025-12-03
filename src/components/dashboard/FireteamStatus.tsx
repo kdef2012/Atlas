@@ -16,7 +16,7 @@ import type { Fireteam, User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { cn } from '@/lib/utils';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 const SOUL_SWORN_THRESHOLD_DAYS = 7;
@@ -56,7 +56,7 @@ function FireteamMembers({ fireteam }: { fireteam: Fireteam }) {
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, memberIds]);
+    }, [firestore, JSON.stringify(memberIds)]); // Memoize based on stringified IDs
 
     const { data: members, isLoading } = useCollection<User>(membersQuery);
 
@@ -85,6 +85,7 @@ export function FireteamStatus() {
     const firestore = useFirestore();
     const { user: authUser } = useUser();
     const { toast } = useToast();
+    const [isRestoring, setIsRestoring] = useState(false);
     
     const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
@@ -97,10 +98,47 @@ export function FireteamStatus() {
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, memberIds]);
+    }, [firestore, JSON.stringify(memberIds)]);
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
     
     const prevStreakStatusRef = useRef<boolean | undefined>(fireteam?.streakActive);
+
+    const handleRestoreStreak = () => {
+        if (!fireteamRef || !fireteam || !user || user.streakFreezes <= 0) return;
+
+        // Soul-Sworn trait allows one free restore per week (not implemented, but this is where it would go)
+        if (user.traits?.soul_sworn) {
+            toast({ title: "Soul-Sworn Grace", description: "Your bond is strong! This would be a free restore." });
+            // In a full implementation, you'd track the last use time.
+            // For now, we'll just show the message and proceed with normal logic.
+        }
+
+        if (user.streakFreezes > 0) {
+            setIsRestoring(true);
+            const batch = writeBatch(firestore);
+
+            // Restore the streak
+            batch.update(fireteamRef, { streakActive: true, streakStartDate: Date.now() });
+
+            // Use a streak freeze
+            members?.forEach(member => {
+                const memberRef = doc(firestore, 'users', member.id);
+                // Only take a freeze from one person (the one clicking)
+                if (member.id === authUser?.uid) {
+                    batch.update(memberRef, { streakFreezes: -1 });
+                }
+            });
+
+            batch.commit().then(() => {
+                toast({ title: "Soul Link Restored!", description: "A streak freeze was used to mend the bond." });
+            }).catch(error => {
+                console.error(error);
+                toast({ variant: 'destructive', title: "Error", description: "Could not restore the streak." });
+            }).finally(() => {
+                setIsRestoring(false);
+            });
+        }
+    };
 
     useEffect(() => {
         if (fireteamRef && members && members.length > 0 && fireteam) {
@@ -203,9 +241,15 @@ export function FireteamStatus() {
                             {isStreakActive ? "1.2x" : "1.0x"}
                         </span></p>
                         <p className="text-xs mt-1">
-                            {isStreakActive ? "The Soul Link is strong! Keep the streak alive." : "A member has been inactive. Log an activity to rebuild the link!"}
+                            {isStreakActive ? "The Soul Link is strong! Keep the streak alive." : "A member has been inactive. Log an activity or use a freeze to rebuild the link!"}
                         </p>
                     </div>
+                     {!isStreakActive && user && user.streakFreezes > 0 && (
+                        <Button onClick={handleRestoreStreak} disabled={isRestoring} size="sm" variant="outline" className="w-full mt-4">
+                            {isRestoring ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shield className="mr-2 h-4 w-4" />}
+                            Use Streak Freeze ({user.streakFreezes})
+                        </Button>
+                    )}
                 </>
                 ) : (
                     <div className="text-center text-muted-foreground py-4">

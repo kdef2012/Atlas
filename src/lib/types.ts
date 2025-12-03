@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -148,6 +148,14 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     vindicator: ShieldCheck,
     soul_sworn: HeartHandshake,
     state_best: Trophy,
+    night_owl: Moon,
+    early_bird: Sunrise,
+    focused: Crosshair,
+    polymath: Sparkles,
+    streaker: Zap,
+    socialite: Handshake,
+    hermit: PersonStanding,
+    mentor: BookOpen,
 };
 
     

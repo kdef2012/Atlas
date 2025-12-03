@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Loader2, X } from 'lucide-react';
 import type { Log, Skill, User } from '@/lib/types';
 import { useFirestore, updateDocumentNonBlocking, useUser, useDoc, useMemoFirebase } from '@/firebase';
-import { doc, getDoc, increment } from 'firebase/firestore';
+import { doc, getDoc, increment } from 'firestore';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -43,6 +43,11 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
         const logRef = doc(firestore, `users/${log.userId}/logs`, log.id);
 
         try {
+            let xpForVoter = 5;
+            if (voterData?.traits?.vindicator) {
+                xpForVoter = 10; // Vindicator bonus
+            }
+
             if (isPass) {
                 // If pass, mark as verified and grant XP to the original user
                 const originalUserRef = doc(firestore, 'users', log.userId);
@@ -52,7 +57,7 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 updateDocumentNonBlocking(logRef, { isVerified: true });
                 toast({
                     title: "Vote Cast: Pass",
-                    description: `Verified "${skill.name}" for ${user.userName}. You earned 5 XP!`,
+                    description: `Verified "${skill.name}" for ${user.userName}. You earned ${xpForVoter} XP!`,
                 });
             } else {
                 // If fail, just mark as verified to remove from queue, but don't grant XP
@@ -60,13 +65,13 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
                 toast({
                     variant: 'destructive',
                     title: "Vote Cast: Fail",
-                    description: `Rejected submission from ${user.userName}. You earned 5 XP for your judgment.`,
+                    description: `Rejected submission from ${user.userName}. You earned ${xpForVoter} XP for your judgment.`,
                 });
             }
             
             // Reward the voter and check for Vindicator trait
             const voterUpdate: any = { 
-                xp: increment(5),
+                xp: increment(xpForVoter),
                 verificationVotes: increment(1) 
             };
             

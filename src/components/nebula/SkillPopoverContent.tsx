@@ -39,11 +39,20 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
   const Icon = CATEGORY_ICONS[node.category as SkillCategory];
   const color = CATEGORY_COLORS[node.category as SkillCategory] || 'gray';
   const isPioneer = node.pioneerUserId === user.id;
+  
+  // Calculate cost adjustments based on traits
+  let finalCost = node.cost?.points ?? 0;
+  if (user.traits?.specialist && node.cost?.category === user.archetype) {
+      finalCost = Math.round(finalCost * 0.9); // 10% discount
+  }
+  if (user.traits?.jack_of_all_trades) {
+      finalCost = Math.round(finalCost * 0.95); // 5% discount
+  }
 
   const isUnlocked = user.userSkills?.[node.id]?.isUnlocked === true;
   const prereqsMet = node.prerequisites?.every(prereqId => user.userSkills?.[prereqId]?.isUnlocked) ?? true;
   const userStat = user[`${node.cost?.category.toLowerCase()}Stat` as keyof User] as number || 0;
-  const hasEnoughPoints = node.cost ? userStat >= node.cost.points : true;
+  const hasEnoughPoints = node.cost ? userStat >= finalCost : true;
   const canUnlock = !isUnlocked && prereqsMet && hasEnoughPoints;
 
   const handleUnlockSkill = async () => {
@@ -52,7 +61,7 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
     setIsUnlocking(true);
     try {
       const updates = {
-        [`${node.cost.category.toLowerCase()}Stat`]: increment(-node.cost.points),
+        [`${node.cost.category.toLowerCase()}Stat`]: increment(-finalCost),
         [`userSkills.${node.id}.isUnlocked`]: true,
       };
 
@@ -109,7 +118,8 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
               <div>
                 <p className="font-bold">Cost:</p>
                 <p className={cn(hasEnoughPoints ? 'text-green-400' : 'text-red-400')}>
-                  {node.cost.points} {node.cost.category} Points (You have: {userStat})
+                  {finalCost} {node.cost.category} Points (You have: {userStat})
+                  {(finalCost < node.cost.points) && <span className="ml-2 text-accent text-xs">(Discounted!)</span>}
                 </p>
               </div>
             </div>
