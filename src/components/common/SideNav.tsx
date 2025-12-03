@@ -24,6 +24,7 @@ import {
   Building2,
   Store,
   User as UserIcon,
+  Shield,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -61,6 +62,7 @@ export function SideNav() {
     });
   }
 
+  const isAdmin = user?.isAdmin === true;
 
   return (
     <>
@@ -88,6 +90,20 @@ export function SideNav() {
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
+           {isAdmin && (
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={pathname.startsWith('/admin')}
+                tooltip={{ children: "Admin", side: "right" }}
+              >
+                <Link href="/admin">
+                  <Shield className="w-5 h-5" />
+                  <span>Admin</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
         </SidebarMenu>
       </SidebarContent>
       <SidebarSeparator />

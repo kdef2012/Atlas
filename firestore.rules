@@ -85,6 +85,13 @@ service cloud.firestore {
     function isGuildMember(guildId) {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
     }
+    
+    /**
+     * Checks if the user has the 'isAdmin' flag set to true on their user document.
+     */
+    function isAdmin() {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+    }
 
     /**
      * @description   User profile data. A user can create their own profile and has
@@ -95,13 +102,13 @@ service cloud.firestore {
      * @principle     Restricts access to a user's own data tree and prevents user enumeration.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId);
-      // Allow listing for the public user count, but do not allow reading individual documents.
-      allow list: if isSignedIn();
+      allow get: if isOwner(userId) || isAdmin();
+      // Allow admins to list all users, but normal users can only list for user counts.
+      allow list: if isAdmin() || isSignedIn();
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      // Allow updates by the owner. Also allow specific fields to be updated by server-side logic (represented by allowing writes when not owned).
-      allow update: if isOwner(userId) || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
-      allow delete: if isExistingOwner(userId);
+      // Allow updates by the owner or an admin.
+      allow update: if isOwner(userId) || isAdmin() || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
+      allow delete: if isExistingOwner(userId) || isAdmin();
 
       /**
        * @description   User activity logs. These are private and nested under the user's
@@ -112,11 +119,11 @@ service cloud.firestore {
        * @principle     Enforces document ownership for a user's private subcollections.
        */
       match /logs/{logId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+        allow update: if (isExistingOwner(userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId) || isAdmin();
       }
       
       /**
@@ -127,17 +134,17 @@ service cloud.firestore {
        * @principle     Enforces document ownership for a user's private quests.
        */
       match /quests/{questId} {
-        allow get: if isOwner(userId);
-        allow list: if isOwner(userId);
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
-        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
-        allow delete: if isExistingOwner(userId);
+        allow update: if (isExistingOwner(userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId) || isAdmin();
       }
     }
 
     /**
      * @description   Skills are public and can be read by anyone, but can only be created,
-     *                updated, or deleted by the original "pioneer" user.
+     *                updated, or deleted by the original "pioneer" user or an admin.
      * @path          /skills/{skillId}
      * @allow         (get) Any user (authenticated or not) reading a skill document.
      * @deny          (update) A user trying to modify a skill they did not create.
@@ -147,14 +154,14 @@ service cloud.firestore {
       allow get: if true;
       allow list: if true;
       allow create: if isSignedIn() && request.resource.data.pioneerUserId == request.auth.uid;
-      // Allow pioneer to update, and allow anyone to update specific fields like XP and innovatorAwarded
-      allow update: if (isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId) || (request.resource.data.keys().hasAll(['xp', 'innovatorAwarded']));
-      allow delete: if isExistingOwner(resource.data.pioneerUserId);
+      // Allow pioneer or admin to update.
+      allow update: if (isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId) || isAdmin() || (request.resource.data.keys().hasAll(['xp', 'innovatorAwarded']));
+      allow delete: if isExistingOwner(resource.data.pioneerUserId) || isAdmin();
     }
 
     /**
      * @description   Fireteams are public and can be read by anyone. Writes are restricted
-     *                to the owner.
+     *                to the owner or admins.
      * @path          /fireteams/{fireteamId}
      * @allow         (create) Any authenticated user can create a fireteam, becoming its owner.
      * @deny          (update) A user trying to modify a fireteam they do not own.
@@ -165,8 +172,8 @@ service cloud.firestore {
       allow list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       // Allow owner or members to update (for streak logic)
-      allow update: if isExistingOwner(resource.data.ownerId) || isFireteamMember();
-      allow delete: if isExistingOwner(resource.data.ownerId);
+      allow update: if isExistingOwner(resource.data.ownerId) || isFireteamMember() || isAdmin();
+      allow delete: if isExistingOwner(resource.data.ownerId) || isAdmin();
 
       /**
        * @description   Fireteam chat messages. Only members of the fireteam can read and write.
@@ -177,12 +184,12 @@ service cloud.firestore {
        */
       match /messages/{messageId} {
         allow read, write: if isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+        allow delete: if isAdmin();
       }
     }
     
     /**
-     * @description   Guilds are public communities, automatically created when a new skill is pioneered.
-     *                Anyone can read them. Updates are restricted.
+     * @description   Guilds are public communities. Anyone can read them. Updates are restricted.
      * @path          /guilds/{guildId}
      * @allow         (update) A member can update their own membership status.
      * @principle     Public read, with restricted, logical writes. Creation is handled server-side.
@@ -190,12 +197,12 @@ service cloud.firestore {
     match /guilds/{guildId} {
         allow get: if isSignedIn();
         allow list: if isSignedIn();
-        // Disallow client-side creation. This is handled when a new skill is pioneered.
-        allow create: if false; 
-        // Allow members to update their own membership status or for server-side logic to update challenges.
-        allow update: if isGuildMember(guildId) || request.resource.data.keys().hasAny(['challengeProgress', 'isBuffActive', 'challengeEndsAt']);
-        // Disallow client-side deletion.
-        allow delete: if false;
+        // Disallow client-side creation. Admins or server logic handle this.
+        allow create: if isAdmin(); 
+        // Allow members to update their own membership status or for admins to manage.
+        allow update: if isGuildMember(guildId) || isAdmin() || request.resource.data.keys().hasAny(['challengeProgress', 'isBuffActive', 'challengeEndsAt']);
+        // Only admins can delete guilds.
+        allow delete: if isAdmin();
         
         /**
          * @description   Guild chat messages. Only members of the guild can read and write.
@@ -206,24 +213,25 @@ service cloud.firestore {
          */
         match /messages/{messageId} {
             allow read, write: if isGuildMember(guildId);
+            allow delete: if isAdmin();
         }
     }
     
     /**
-     * @description   Territories are public to read for all users. Writes will be restricted in the future.
+     * @description   Territories are public to read for all users. Writes are restricted.
      * @path          /territories/{territoryId}
      * @allow         (get, list) Any authenticated user can read territory data.
-     * @deny          (write) Writes are disallowed for now.
+     * @deny          (write) Writes are admin only.
      * @principle     Public Read for a global game state feature.
      */
     match /territories/{territoryId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
     }
     
     /**
-     * @description   Global Trait definitions are public to read for all users.
+     * @description   Global Trait definitions are public to read for all users. Writes are admin only.
      * @path          /traits/{traitId}
      * @allow         (read) Any authenticated user can read trait definitions.
      * @deny          (write) Writes are disallowed to maintain integrity.
@@ -232,8 +240,19 @@ service cloud.firestore {
     match /traits/{traitId} {
       allow get: if isSignedIn();
       allow list: if isSignedIn();
-      // Allow creating traits by anyone for now to populate them. In production, this would be admin-only.
-      allow write: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    /**
+     * @description   Suggestions from users. Any signed-in user can submit one. Admins manage them.
+     * @path          /suggestions/{suggestionId}
+     * @principle     Allow public write for feedback, but restrict read/update/delete to admins.
+     */
+    match /suggestions/{suggestionId} {
+        allow get: if isAdmin();
+        allow list: if isAdmin();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+        allow update, delete: if isAdmin();
     }
   }
 }

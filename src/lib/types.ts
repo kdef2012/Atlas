@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -49,6 +49,7 @@ export interface User {
   traits?: Partial<Record<string, boolean>>;
   verificationVotes?: number;
   region?: string;
+  isAdmin?: boolean; // <-- ADDED
 }
 
 export interface Skill {
@@ -119,16 +120,17 @@ export interface Territory {
   awarded?: boolean; // New field to track if State Best trait has been awarded
 }
 
+export interface Suggestion {
+  id: string;
+  userId: string;
+  userName: string;
+  suggestion: string;
+  timestamp: number;
+  isArchived: boolean;
+}
 
-export const CATEGORY_COLORS: Record<SkillCategory, string> = {
-  Physical: 'hsl(var(--chart-5))', // red
-  Mental: 'hsl(var(--chart-2))',   // blue
-  Social: 'hsl(var(--chart-1))',   // purple
-  Practical: 'hsl(var(--chart-3))', // green
-  Creative: 'hsl(var(--chart-4))',  // yellow
-};
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Suggestion', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -140,7 +142,17 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Verify: ShieldCheck,
   Guilds: Building2,
   Store: Store,
+  Suggestion: MessageSquare,
 };
+
+export const CATEGORY_COLORS: Record<SkillCategory, string> = {
+  Physical: 'hsl(var(--chart-5))', // red
+  Mental: 'hsl(var(--chart-2))',   // blue
+  Social: 'hsl(var(--chart-1))',   // purple
+  Practical: 'hsl(var(--chart-3))', // green
+  Creative: 'hsl(var(--chart-4))',  // yellow
+};
+
 
 export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
     pioneer: Crown,
