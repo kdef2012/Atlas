@@ -3,19 +3,38 @@
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCollection, useMemoFirebase } from "@/firebase";
+import { useCollection, useMemoFirebase, useUser, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
+import { Switch } from "@/components/ui/switch";
+import { useToast } from "@/hooks/use-toast";
 
 export function UserList() {
     const firestore = useFirestore();
+    const { user: authUser } = useUser();
+    const { toast } = useToast();
+
     const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
     const { data: users, isLoading } = useCollection<User>(usersCollection);
+    
+    const handleAdminToggle = (userToUpdate: User) => {
+        if (!authUser || authUser.uid === userToUpdate.id) return;
+        
+        const userRef = doc(firestore, 'users', userToUpdate.id);
+        const newAdminStatus = !userToUpdate.isAdmin;
+
+        updateDocumentNonBlocking(userRef, { isAdmin: newAdminStatus });
+
+        toast({
+            title: "Permissions Updated",
+            description: `${userToUpdate.userName} has been ${newAdminStatus ? 'promoted to' : 'demoted from'} admin.`,
+        });
+    }
 
     return (
         <Card>
@@ -56,7 +75,12 @@ export function UserList() {
                                 <TableCell>{user.archetype}</TableCell>
                                 <TableCell>{formatDistanceToNow(user.lastLogTimestamp, { addSuffix: true })}</TableCell>
                                 <TableCell className="text-right">
-                                    {user.isAdmin && <Badge>Admin</Badge>}
+                                    <Switch
+                                        checked={user.isAdmin}
+                                        onCheckedChange={() => handleAdminToggle(user)}
+                                        disabled={user.id === authUser?.uid}
+                                        aria-label={`Toggle admin status for ${user.userName}`}
+                                    />
                                 </TableCell>
                             </TableRow>
                         ))}
