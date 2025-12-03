@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
+import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -41,9 +42,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <SideNav />
       </Sidebar>
       <SidebarInset>
+        <AnnouncementBanner />
         <AppHeader />
         <main className="p-4 md:p-8 flex-1">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );
 }
+
+    

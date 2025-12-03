@@ -484,7 +484,8 @@
         "startAt": { "type": "number", "description": "The Unix timestamp when the event starts." },
         "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." },
         "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." },
-        "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." }
+        "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." },
+        "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." }
       },
       "required": ["id", "title", "description", "startAt", "endAt", "isActive"]
     },

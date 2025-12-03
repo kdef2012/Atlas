@@ -33,6 +33,7 @@ const formSchema = z.object({
         to: z.date({ required_error: 'An end date is required.' }),
     }),
     xpMultiplier: z.coerce.number().min(1).max(5).default(1),
+    bannerMessage: z.string().optional(),
     isActive: z.boolean().default(true),
 });
 
@@ -109,10 +110,13 @@ function EventList() {
                                     </AlertDialogContent>
                                 </AlertDialog>
                             </CardHeader>
-                            <CardContent className="flex items-center justify-between text-sm text-muted-foreground">
-                                <span>Starts: {new Date(event.startAt).toLocaleDateString()}</span>
-                                <span>Ends: {new Date(event.endAt).toLocaleDateString()}</span>
-                                <span className="font-bold text-accent flex items-center gap-1"><Sparkles className="w-4 h-4"/> {event.xpMultiplier}x XP</span>
+                            <CardContent className="space-y-2">
+                                {event.bannerMessage && <p className="text-sm bg-blue-500/10 text-blue-300 p-2 rounded-md border border-blue-500/20">Banner: "{event.bannerMessage}"</p>}
+                                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                    <span>Starts: {new Date(event.startAt).toLocaleDateString()}</span>
+                                    <span>Ends: {new Date(event.endAt).toLocaleDateString()}</span>
+                                    {event.xpMultiplier && <span className="font-bold text-accent flex items-center gap-1"><Sparkles className="w-4 h-4"/> {event.xpMultiplier}x XP</span>}
+                                </div>
                             </CardContent>
                         </Card>
                     ))}
@@ -152,6 +156,7 @@ export default function EventsPage() {
             title: '',
             description: '',
             xpMultiplier: 1.5,
+            bannerMessage: '',
             isActive: true,
         },
     });
@@ -166,6 +171,7 @@ export default function EventsPage() {
             startAt: values.dates.from.getTime(),
             endAt: values.dates.to.getTime(),
             xpMultiplier: values.xpMultiplier,
+            bannerMessage: values.bannerMessage,
             isActive: values.isActive,
         };
 
@@ -190,13 +196,13 @@ export default function EventsPage() {
                         Global Event Broadcaster
                     </CardTitle>
                     <CardDescription>
-                        Create and manage limited-time events for the entire ATLAS community.
+                        Create and manage limited-time events and announcements for the entire ATLAS community.
                     </CardDescription>
                 </CardHeader>
             </Card>
             <Card>
                 <CardHeader>
-                    <CardTitle>Create New Event</CardTitle>
+                    <CardTitle>Create New Event or Announcement</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -228,7 +234,7 @@ export default function EventsPage() {
                                 name="dates"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                    <FormLabel>Event Dates</FormLabel>
+                                    <FormLabel>Event/Announcement Dates</FormLabel>
                                     <Popover>
                                         <PopoverTrigger asChild>
                                         <FormControl>
@@ -270,6 +276,18 @@ export default function EventsPage() {
                                     </FormItem>
                                 )}
                             />
+                            <FormField
+                                control={form.control}
+                                name="bannerMessage"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Announcement Banner (Optional)</FormLabel>
+                                        <FormControl><Input placeholder="e.g., Server maintenance tonight at 2am!" {...field} /></FormControl>
+                                        <FormDescription>This message will be displayed in a banner to all users during the event dates.</FormDescription>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
                              <FormField
                                 control={form.control}
                                 name="xpMultiplier"
@@ -277,7 +295,7 @@ export default function EventsPage() {
                                     <FormItem>
                                         <FormLabel>XP Multiplier</FormLabel>
                                         <FormControl><Input type="number" step="0.1" {...field} /></FormControl>
-                                        <FormDescription>e.g., 1.5 for a 50% XP boost.</FormDescription>
+                                        <FormDescription>e.g., 1.5 for a 50% XP boost. Leave at 1 for no boost (e.g. for an announcement-only event).</FormDescription>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -314,3 +332,5 @@ export default function EventsPage() {
         </div>
     )
 }
+
+    

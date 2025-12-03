@@ -137,6 +137,7 @@ export interface GlobalEvent {
   endAt: number;
   xpMultiplier?: number;
   isActive: boolean;
+  bannerMessage?: string;
 }
 
 export interface StoreItem {
