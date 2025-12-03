@@ -75,7 +75,6 @@ export default function RewardPage({}: RewardPageProps) {
         }
       });
       
-      // Add the new quests to Firestore without blocking UI
       aiResult.quests.forEach(quest => {
           const newQuest: Omit<Quest, 'id'> = {
               ...quest,
@@ -95,16 +94,12 @@ export default function RewardPage({}: RewardPageProps) {
     }
   }, [user, firestore, toast]);
 
-  useEffect(() => {
-    const claimReward = async () => {
+  const claimReward = useCallback(async () => {
       if (user && archetype) {
         const userRef = doc(firestore, 'users', user.uid);
         const userDoc = await getDoc(userRef);
         
         if (userDoc.exists() && userDoc.data().level === 0) {
-          const audio = new Audio('https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Flevel_up.mp3?alt=media&token=e937d363-231a-4c28-86d3-9f899a7384a2');
-          audio.play().catch(error => console.error("Audio play failed:", error));
-          
           const updates = { 
             level: 1, 
             xp: 50,
@@ -113,25 +108,23 @@ export default function RewardPage({}: RewardPageProps) {
             'avatarLayers.newbie_sweatband': true,
           };
           updateDocumentNonBlocking(userRef, updates);
-
-          // After rewards are applied, generate the first quests based on the updated user data
           const updatedUserData = { ...userDoc.data(), ...updates } as User;
           await handleQuestGeneration(updatedUserData);
         }
       }
-    };
-    
-    if (isClaimed) {
-        claimReward();
-    }
-  }, [isClaimed, user, firestore, archetype, handleQuestGeneration]);
+    }, [user, archetype, firestore, handleQuestGeneration]);
 
+  
   if (!archetype) {
     redirect('/onboarding/archetype');
   }
   
   const handleClaim = () => {
+    if (isClaimed) return;
+    const audio = new Audio('/level_up.mp3');
+    audio.play().catch(error => console.error("Audio play failed:", error));
     setIsClaimed(true);
+    claimReward();
   };
 
   return (
