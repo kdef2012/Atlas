@@ -487,6 +487,21 @@
         "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." }
       },
       "required": ["id", "title", "description", "startAt", "endAt", "isActive"]
+    },
+    "StoreItem": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Store Item",
+      "type": "object",
+      "description": "Represents an item available for purchase in the store.",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "icon": { "type": "string", "description": "The name of the lucide-react icon to display." },
+        "layerKey": { "type": "string", "description": "The key to use in the user's avatarLayers map." }
+      },
+      "required": ["id", "name", "description", "price", "icon", "layerKey"]
     }
   },
   "auth": {
@@ -678,8 +693,19 @@
             "description": "Stores global, limited-time events for all users.",
             "params": [{ "name": "eventId", "description": "The unique identifier for the event." }]
         }
+      },
+      {
+        "path": "/store-items/{itemId}",
+        "definition": {
+            "entityName": "StoreItem",
+            "schema": { "$ref": "#/backend/entities/StoreItem" },
+            "description": "Stores cosmetic and functional items available for purchase with Gems.",
+            "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }]
+        }
       }
     ],
     "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering. Suggestions are stored in a top-level collection for admins to review.\\n\\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\\n\\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
   }
 }
+
+    

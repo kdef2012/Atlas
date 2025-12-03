@@ -265,5 +265,18 @@ service cloud.firestore {
         allow list: if isSignedIn();
         allow write: if isAdmin();
     }
+
+    /**
+     * @description   Store items are public to read for all users. Writes are restricted to admins.
+     * @path          /store-items/{itemId}
+     * @principle     Public Read for store content, with admin-only writes.
+     */
+    match /store-items/{itemId} {
+        allow get: if isSignedIn();
+        allow list: if isSignedIn();
+        allow write: if isAdmin();
+    }
   }
 }
+
+    

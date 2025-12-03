@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -139,6 +139,15 @@ export interface GlobalEvent {
   isActive: boolean;
 }
 
+export interface StoreItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  icon: keyof typeof STORE_ITEM_ICONS;
+  layerKey: string;
+}
+
 
 export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Suggestion' | 'Events', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
@@ -181,6 +190,12 @@ export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: strin
     socialite: Handshake,
     hermit: PersonStanding,
     mentor: BookOpen,
+};
+
+export const STORE_ITEM_ICONS = {
+  RectangleHorizontal,
+  Glasses,
+  Shield,
 };
 
     

@@ -1,24 +1,43 @@
 
 'use client';
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Gem, Store } from "lucide-react";
-import storeItemsData from '@/lib/store-items.json';
-
-// Define a more specific type for our store items
-interface StoreItem {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    icon: string;
-    layerKey: string;
-}
-
-const items: StoreItem[] = storeItemsData.items as StoreItem[];
+import { Gem, Store, PlusCircle, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useCollection, useMemoFirebase, deleteDocumentNonBlocking } from "@/firebase";
+import { collection, doc } from 'firebase/firestore';
+import { useFirestore } from "@/firebase/provider";
+import type { StoreItem } from '@/lib/types';
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
+import { EditStoreItemDialog } from "./EditStoreItemDialog";
 
 export function StoreItemList() {
+    const firestore = useFirestore();
+    const { toast } = useToast();
+    const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
+    const { data: items, isLoading } = useCollection<StoreItem>(storeItemsCollection);
+
+    const handleDelete = (item: StoreItem) => {
+        const itemRef = doc(firestore, 'store-items', item.id);
+        deleteDocumentNonBlocking(itemRef);
+        toast({
+            title: "Item Deleted",
+            description: `The item "${item.name}" has been removed from the store.`,
+        });
+    }
 
     return (
         <Card>
@@ -37,7 +56,16 @@ export function StoreItemList() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {items.map(item => (
+                         {isLoading ? (
+                            [...Array(3)].map((_, i) => (
+                                <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-6 w-32" /></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-48" /></TableCell>
+                                    <TableCell><Skeleton className="h-6 w-16" /></TableCell>
+                                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                                </TableRow>
+                            ))
+                        ) : items?.map(item => (
                             <TableRow key={item.id}>
                                 <TableCell>
                                     <div className="font-medium">{item.name}</div>
@@ -52,13 +80,42 @@ export function StoreItemList() {
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    {/* Edit and Delete buttons will go here */}
+                                    <EditStoreItemDialog item={item} />
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will permanently delete the item "{item.name}" from the store.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
             </CardContent>
+            <CardFooter>
+                <EditStoreItemDialog>
+                    <Button variant="outline">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Add New Item
+                    </Button>
+                </EditStoreItemDialog>
+            </CardFooter>
         </Card>
     );
 }
+
+    

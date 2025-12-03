@@ -5,11 +5,11 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDoc, useUser, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
+import { useDoc, useUser, useMemoFirebase, updateDocumentNonBlocking, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
-import { doc, increment } from 'firebase/firestore';
-import type { User } from '@/lib/types';
-import { Gem, Check, Loader2, Store, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
+import { collection, doc, increment } from 'firebase/firestore';
+import type { User, StoreItem } from '@/lib/types';
+import { Gem, Check, Loader2, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -23,27 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { CATEGORY_ICONS } from '@/lib/types';
-import storeItemsData from '@/lib/store-items.json';
-
-// A map to dynamically select icons
-const iconMap = {
-    RectangleHorizontal,
-    Glasses,
-    Shield,
-};
-
-// Define a more specific type for our store items
-interface StoreItem {
-    id: string;
-    name: string;
-    description: string;
-    price: number;
-    icon: keyof typeof iconMap;
-    layerKey: string;
-}
-
-const STORE_ITEMS: StoreItem[] = storeItemsData.items as StoreItem[];
+import { CATEGORY_ICONS, STORE_ITEM_ICONS } from '@/lib/types';
 
 function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: StoreItem, userGems: number, userLayers: Record<string, boolean>, onPurchase: (item: any) => void }) {
     const [isPurchasing, setIsPurchasing] = useState(false);
@@ -52,8 +32,7 @@ function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: Store
     const hasItem = userLayers[item.layerKey];
     const canAfford = userGems >= item.price;
     
-    const ItemIcon = iconMap[item.icon] || Store;
-
+    const ItemIcon = STORE_ITEM_ICONS[item.icon] || Store;
 
     const handlePurchase = () => {
         setIsPurchasing(true);
@@ -119,10 +98,14 @@ function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: Store
 export default function StorePage() {
     const firestore = useFirestore();
     const { user: authUser, isUserLoading: isAuthLoading } = useUser();
+    
     const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
     const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-    const isLoading = isAuthLoading || isUserDocLoading;
+    const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
+    const { data: storeItems, isLoading: areItemsLoading } = useCollection<StoreItem>(storeItemsCollection);
+
+    const isLoading = isAuthLoading || isUserDocLoading || areItemsLoading;
 
     const handlePurchase = (item: StoreItem) => {
         if (!userRef || !user) return;
@@ -164,7 +147,7 @@ export default function StorePage() {
             </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {STORE_ITEMS.map(item => (
+                {storeItems?.map(item => (
                     <StoreItemCard 
                         key={item.id} 
                         item={item} 
@@ -177,3 +160,5 @@ export default function StorePage() {
         </div>
     );
 }
+
+    
