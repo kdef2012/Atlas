@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { CATEGORY_ICONS } from '@/lib/types';
 
 
 const STORE_ITEMS = [
