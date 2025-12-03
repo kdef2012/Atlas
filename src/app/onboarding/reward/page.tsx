@@ -121,8 +121,6 @@ export default function RewardPage({}: RewardPageProps) {
   
   const handleClaim = () => {
     if (isClaimed) return;
-    const audio = new Audio('/level_up.mp3');
-    audio.play().catch(error => console.error("Audio play failed:", error));
     setIsClaimed(true);
     claimReward();
   };
