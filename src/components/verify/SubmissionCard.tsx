@@ -133,5 +133,3 @@ export function SubmissionCard({ submission, onVote }: SubmissionCardProps) {
         </Card>
     );
 }
-
-    
