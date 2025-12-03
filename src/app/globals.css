@@ -8,40 +8,40 @@ body {
 
 @layer base {
   :root {
-    --background: 35 50% 96%; /* Sandy Beige */
-    --foreground: 220 15% 25%; /* Charcoal Gray */
-    --card: 35 50% 100%; /* Lighter Sand */
-    --card-foreground: 220 15% 25%;
-    --popover: 35 50% 100%;
-    --popover-foreground: 220 15% 25%;
-    --primary: 20 80% 55%; /* Terracotta */
+    --background: 30 100% 98%; /* Creamy Off-white */
+    --foreground: 20 15% 25%; /* Warm Dark Gray */
+    --card: 30 100% 100%;
+    --card-foreground: 20 15% 25%;
+    --popover: 30 100% 100%;
+    --popover-foreground: 20 15% 25%;
+    --primary: 25 95% 60%; /* Tangerine Orange */
     --primary-foreground: 0 0% 100%;
-    --secondary: 35 40% 92%; /* Slightly darker beige */
-    --secondary-foreground: 220 15% 25%;
-    --muted: 35 40% 92%;
+    --secondary: 30 50% 94%;
+    --secondary-foreground: 20 15% 25%;
+    --muted: 30 50% 94%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 220 40% 45%; /* Slate Blue */
+    --accent: 180 80% 30%; /* Deep Teal */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 35 30% 88%;
-    --input: 35 30% 88%;
-    --ring: 20 80% 55%;
-    --chart-1: 20 80% 55%;
-    --chart-2: 220 40% 45%;
+    --border: 30 30% 90%;
+    --input: 30 30% 90%;
+    --ring: 25 95% 60%;
+    --chart-1: 25 95% 60%;
+    --chart-2: 180 80% 30%;
     --chart-3: 142 76% 36%;
     --chart-4: 221 83% 53%;
     --chart-5: 343 89% 48%;
     --radius: 0.5rem;
 
-    --sidebar-background: 35 40% 92%;
-    --sidebar-foreground: 220 15% 25%;
-    --sidebar-primary: 20 80% 55%;
+    --sidebar-background: 30 50% 94%;
+    --sidebar-foreground: 20 15% 25%;
+    --sidebar-primary: 25 95% 60%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 35 30% 88%;
-    --sidebar-accent-foreground: 220 15% 25%;
-    --sidebar-border: 35 30% 85%;
-    --sidebar-ring: 20 80% 55%;
+    --sidebar-accent: 30 30% 88%;
+    --sidebar-accent-foreground: 20 15% 25%;
+    --sidebar-border: 30 30% 85%;
+    --sidebar-ring: 25 95% 60%;
   }
   .dark {
     --background: 220 20% 8%; /* Dark Slate */
