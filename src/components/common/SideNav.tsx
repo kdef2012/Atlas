@@ -22,6 +22,7 @@ import {
   ScrollText,
   ShieldCheck,
   Building2,
+  Store,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
+  { href: "/store", label: "Store", icon: Store },
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },

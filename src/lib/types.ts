@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -40,7 +40,7 @@ export interface User {
   fireteamId?: string;
   guildId?: string;
   userSkills: Record<string, UserSkillData>;
-  avatarLayers?: Partial<Record<SkillCategory, boolean>>;
+  avatarLayers?: Partial<Record<string, boolean>>;
   momentumFlameActive: boolean;
   gems: number;
   streakFreezes: number;
@@ -126,7 +126,7 @@ export const CATEGORY_COLORS: Record<SkillCategory, string> = {
   Creative: 'hsl(var(--chart-4))',  // yellow
 };
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -137,6 +137,7 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Gems: Gem,
   Verify: ShieldCheck,
   Guilds: Building2,
+  Store: Store,
 };
 
 export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

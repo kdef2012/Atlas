@@ -12,7 +12,10 @@ interface TwinskieAvatarProps {
 }
 
 const LAYER_MAP: Record<string, string> = {
-    newbie_sweatband: 'avatar-layer-newbie-sweatband'
+    newbie_sweatband: 'avatar-layer-newbie-sweatband',
+    cosmetic_shadow_cloak: 'avatar-layer-shadow-cloak',
+    cosmetic_arcane_goggles: 'avatar-layer-arcane-goggles',
+    cosmetic_titans_pauldrons: 'avatar-layer-titans-pauldrons',
 };
 
 const BASE_AVATAR_MAP: Record<string, string> = {

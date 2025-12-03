@@ -43,40 +43,28 @@
       "imageHint": "silhouette person"
     },
     {
-      "id": "avatar-layer-physical",
-      "description": "A layer showing a muscular build",
-      "imageUrl": "https://images.unsplash.com/photo-1677280953786-456bb8a71038?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtdXNjdWxhciUyMGJvZHl8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "muscular body"
-    },
-    {
-      "id": "avatar-layer-practical",
-      "description": "A layer showing a business suit",
-      "imageUrl": "https://images.unsplash.com/photo-1507679799987-c73779587ccf?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxidXNpbmVzcyUyMHN1aXR8ZW58MHx8fHwxNzY0NzAyODgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "business suit"
-    },
-    {
-      "id": "avatar-layer-creative",
-      "description": "A layer showing glowing hands with paint",
-      "imageUrl": "https://images.unsplash.com/photo-1750325449126-67937857cb34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxnbG93aW5nJTIwaGFuZHN8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "glowing hands"
-    },
-    {
-      "id": "avatar-layer-mental",
-      "description": "A layer showing a glowing brain aura",
-      "imageUrl": "https://images.unsplash.com/photo-1764053478954-4e4e3e6b16a4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Z2xvd2luZyUyMGF1cmF8ZW58MHx8fHwxNzY0Njk0NTQ1fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "glowing aura"
-    },
-    {
-      "id": "avatar-layer-social",
-      "description": "A layer showing a charismatic sparkle",
-      "imageUrl": "https://images.unsplash.com/photo-1682244759666-e017b000482d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzcGFya2xlJTIwZWZmZWN0fGVufDB8fHx8MTc2NDY5NDU0NXww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "sparkle effect"
-    },
-    {
       "id": "avatar-layer-newbie-sweatband",
       "description": "A sweatband for new players",
-      "imageUrl": "https://images.unsplash.com/photo-1590552515251-7d57184346e8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fnewbie_sweatband.png?alt=media&token=818f99a9-3c6c-4860-af63-a6162391694f",
       "imageHint": "sports sweatband"
+    },
+    {
+      "id": "avatar-layer-shadow-cloak",
+      "description": "A mysterious shadow cloak.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fshadow_cloak.png?alt=media&token=7e750e3a-0e9e-4e42-921c-529a73841a0b",
+      "imageHint": "dark cloak"
+    },
+    {
+      "id": "avatar-layer-arcane-goggles",
+      "description": "Goggles for seeing the unseen.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Farcane_goggles.png?alt=media&token=e1c6999a-3f9c-48b4-8250-93217b189736",
+      "imageHint": "steampunk goggles"
+    },
+    {
+      "id": "avatar-layer-titans-pauldrons",
+      "description": "Shoulder armor for a Titan.",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ftitans_pauldrons.png?alt=media&token=f6c4c5b3-3a8a-48a5-9a84-0a4a9c3d4a6e",
+      "imageHint": "shoulder armor"
     }
   ]
 }
