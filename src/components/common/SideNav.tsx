@@ -25,6 +25,7 @@ import {
   Store,
   User as UserIcon,
   Shield,
+  Palette,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -46,6 +47,11 @@ const navItems = [
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
+
+const adminNavItems = [
+    { href: "/admin", label: "Overview", icon: LayoutDashboard },
+    { href: "/admin/curation", label: "Curation", icon: Palette },
+]
 
 export function SideNav() {
   const pathname = usePathname();
@@ -91,18 +97,24 @@ export function SideNav() {
             </SidebarMenuItem>
           ))}
            {isAdmin && (
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith('/admin')}
-                tooltip={{ children: "Admin", side: "right" }}
-              >
-                <Link href="/admin">
-                  <Shield className="w-5 h-5" />
-                  <span>Admin</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <>
+                <SidebarSeparator className="my-2" />
+                 <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
+                {adminNavItems.map((item) => (
+                     <SidebarMenuItem key={item.href}>
+                        <SidebarMenuButton
+                            asChild
+                            isActive={pathname === item.href}
+                            tooltip={{ children: item.label, side: "right" }}
+                        >
+                            <Link href={item.href}>
+                            <item.icon className="w-5 h-5" />
+                            <span>{item.label}</span>
+                            </Link>
+                        </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
+            </>
           )}
         </SidebarMenu>
       </SidebarContent>
