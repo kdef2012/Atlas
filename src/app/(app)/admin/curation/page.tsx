@@ -6,6 +6,7 @@ import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/ca
 import { Skeleton } from '@/components/ui/skeleton';
 import { GuildList } from '@/components/admin/curation/GuildList';
 import { SkillList } from '@/components/admin/curation/SkillList';
+import { StoreItemList } from '@/components/admin/curation/StoreItemList';
 import { Palette } from 'lucide-react';
 
 function CurationDashboardContent() {
@@ -13,6 +14,7 @@ function CurationDashboardContent() {
     <div className="space-y-6">
         <SkillList />
         <GuildList />
+        <StoreItemList />
     </div>
   );
 }
@@ -27,7 +29,7 @@ export default function CurationPage() {
                         Content Curation
                     </CardTitle>
                     <CardDescription>
-                        Manage user-pioneered skills and their associated guilds to maintain a high-quality experience.
+                        Manage user-pioneered skills, guilds, and store items to maintain a high-quality experience.
                     </CardDescription>
                 </CardHeader>
             </Card>
