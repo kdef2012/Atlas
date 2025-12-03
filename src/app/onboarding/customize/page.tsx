@@ -25,7 +25,6 @@ export default function CustomizeAvatarPage() {
   const archetype = searchParams.get('archetype') as Archetype | null;
 
   const handleAvatarCreated = (url: string) => {
-    console.log('Avatar URL received:', url);
     setAvatarUrl(url);
     toast({
       title: '✨ Twinskie Forged!',
@@ -34,13 +33,21 @@ export default function CustomizeAvatarPage() {
   };
   
   const handleManualUrlSubmit = () => {
-    if (manualUrl && (manualUrl.startsWith('http') || manualUrl.startsWith('https://'))) {
-      handleAvatarCreated(manualUrl);
+    if (manualUrl && (manualUrl.startsWith('http://') || manualUrl.startsWith('https://'))) {
+        if (manualUrl.endsWith('.glb')) {
+            handleAvatarCreated(manualUrl);
+        } else {
+             toast({
+                variant: 'destructive',
+                title: 'Invalid URL',
+                description: 'The URL must end with .glb to be a valid avatar model.',
+            });
+        }
     } else {
       toast({
         variant: 'destructive',
         title: 'Invalid URL',
-        description: 'Please enter a valid URL.',
+        description: 'Please enter a valid URL starting with http:// or https://',
       });
     }
   };
@@ -58,7 +65,7 @@ export default function CustomizeAvatarPage() {
     if (!avatarUrl && !skipped) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: 'Avatar Not Set',
         description: 'Please create your avatar, provide a URL, or skip this step.',
       });
       return;
@@ -68,19 +75,23 @@ export default function CustomizeAvatarPage() {
 
     const userRef = doc(firestore, 'users', user.uid);
     const updates: { avatarUrl?: string, avatarStyle: string } = {
-        avatarStyle: skipped ? 'openpeeps' : 'readyplayerme',
+        avatarStyle: 'openpeeps-default' // Fallback style
     };
 
-    if (avatarUrl && !skipped) {
+    if (skipped) {
+        updates.avatarStyle = 'openpeeps';
+    } else if (avatarUrl) {
+        updates.avatarStyle = 'readyplayerme';
         updates.avatarUrl = avatarUrl;
     }
     
     updateDocumentNonBlocking(userRef, updates);
 
+    // Using a timeout to ensure the user sees the confirmation before navigation
     setTimeout(() => {
       toast({
-        title: '🎮 Twinskie Forged!',
-        description: 'Your Twinskie has been born. Welcome to ATLAS.',
+        title: '🎮 Welcome to ATLAS!',
+        description: 'Your Twinskie has been born.',
       });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
       setIsLoading(false);
@@ -120,23 +131,23 @@ export default function CustomizeAvatarPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="w-full" style={{ height: '500px' }}>
+            <div className="w-full h-[500px]">
               <ReadyPlayerMeCreator
                 onAvatarCreated={handleAvatarCreated}
                 className="h-full"
               />
             </div>
              <div className="p-4 border-t">
-                <p className="text-sm font-medium text-center mb-2">Or paste an avatar URL</p>
+                <p className="text-sm font-medium text-center mb-2">Or paste a .glb avatar URL</p>
                 <div className="flex gap-2">
                     <Input 
                         value={manualUrl}
                         onChange={(e) => setManualUrl(e.target.value)}
-                        placeholder="Paste a .glb or .png avatar URL here"
+                        placeholder="https://models.readyplayer.me/your-avatar.glb"
                     />
                     <Button onClick={handleManualUrlSubmit} variant="secondary">
                         <LinkIcon className="mr-2 h-4 w-4"/>
-                        Submit URL
+                        Use URL
                     </Button>
                 </div>
             </div>
@@ -165,7 +176,7 @@ export default function CustomizeAvatarPage() {
         </div>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
-          <p>💡 Tip: You can take a selfie for a personalized avatar or browse preset options</p>
+          <p>💡 Tip: Use the "take a photo" option in the creator for a personalized avatar, or browse presets.</p>
         </div>
       </div>
     </main>
