@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface ReadyPlayerMeProps {
   onAvatarCreated: (avatarUrl: string) => void;
@@ -20,7 +20,6 @@ export function ReadyPlayerMeCreator({
   className = '',
 }: ReadyPlayerMeProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const iframe = iframeRef.current;
@@ -41,11 +40,6 @@ export function ReadyPlayerMeCreator({
         onAvatarCreated(imageUrl);
       }
 
-      // User closed the creator
-      if (data.eventName === 'v1.frame.ready') {
-        setIsLoading(false);
-      }
-
       // User cancelled
       if (data.eventName === 'v1.user.cancelled' && onCancel) {
         onCancel();
@@ -64,15 +58,6 @@ export function ReadyPlayerMeCreator({
 
   return (
     <div className={`relative w-full ${className}`}>
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading avatar creator...</p>
-          </div>
-        </div>
-      )}
-      
       <iframe
         ref={iframeRef}
         src={iframeUrl}

@@ -30,12 +30,20 @@ export default function CustomizeAvatarPage() {
     });
   };
 
-  const handleContinue = async () => {
-    if (!user || !avatarUrl) {
+  const handleProceed = async (skipped: boolean = false) => {
+    if (!user) {
+      toast({
+        variant: 'destructive',
+        title: 'Authentication Error',
+        description: 'User not found. Please go back and try again.',
+      });
+      return;
+    }
+    if (!avatarUrl && !skipped) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please create your avatar first.',
+        description: 'Please create your avatar or skip this step.',
       });
       return;
     }
@@ -43,11 +51,15 @@ export default function CustomizeAvatarPage() {
     setIsLoading(true);
 
     const userRef = doc(firestore, 'users', user.uid);
+    const updates: { avatarUrl?: string, avatarStyle: string } = {
+        avatarStyle: skipped ? 'openpeeps' : 'readyplayerme',
+    };
+
+    if (avatarUrl && !skipped) {
+        updates.avatarUrl = avatarUrl;
+    }
     
-    updateDocumentNonBlocking(userRef, {
-      avatarUrl: avatarUrl,
-      avatarStyle: 'readyplayerme', // Mark as RPM avatar
-    });
+    updateDocumentNonBlocking(userRef, updates);
 
     setTimeout(() => {
       toast({
@@ -77,7 +89,7 @@ export default function CustomizeAvatarPage() {
         <h1 className="font-headline text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Design Your Twinskie
         </h1>
-        <p className="text-muted-foreground mt-2">Create your realistic digital avatar</p>
+        <p className="text-muted-foreground mt-2">Create your realistic digital avatar, or skip for a default one.</p>
       </div>
       
       <div className="w-full max-w-4xl">
@@ -101,11 +113,18 @@ export default function CustomizeAvatarPage() {
           </CardContent>
         </Card>
 
-        {avatarUrl && (
-          <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
             <Button
-              onClick={handleContinue}
+              onClick={() => handleProceed(true)}
               disabled={isLoading}
+              size="lg"
+              variant="outline"
+            >
+              Skip for Now
+            </Button>
+            <Button
+              onClick={() => handleProceed(false)}
+              disabled={isLoading || !avatarUrl}
               size="lg"
               className="font-bold group text-lg px-8"
             >
@@ -113,8 +132,7 @@ export default function CustomizeAvatarPage() {
               Continue to ATLAS
               <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
-          </div>
-        )}
+        </div>
 
         <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>💡 Tip: You can take a selfie for a personalized avatar or browse preset options</p>
