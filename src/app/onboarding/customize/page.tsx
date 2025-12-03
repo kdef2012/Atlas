@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams, redirect } from 'next/navigation';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { Loader2, ArrowRight } from 'lucide-react';
-import type { Archetype } from '@/lib/types';
+import type { Archetype, Gender, BodyType, SkinTone } from '@/lib/types';
 import { PlaceHolderImages } from '@/lib/placeholder-images';
 import Image from 'next/image';
 
@@ -25,7 +25,49 @@ const formSchema = z.object({
   bodyType: z.enum(['Slim', 'Athletic', 'Muscular'], {
     required_error: 'Please select a body type.',
   }),
+  skinTone: z.enum(['Light', 'Medium', 'Dark'], {
+      required_error: 'Please select a skin tone.'
+  })
 });
+
+function AvatarPreview({ control }: { control: any }) {
+    const gender = useWatch({ control, name: 'gender' });
+    const bodyType = useWatch({ control, name: 'bodyType' });
+    const skinTone = useWatch({ control, name: 'skinTone' });
+
+    const getAvatarUrl = () => {
+        if (gender && bodyType && skinTone) {
+            const id = `avatar-${gender.toLowerCase()}-${bodyType.toLowerCase()}-${skinTone.toLowerCase()}`;
+            const avatar = PlaceHolderImages.find(p => p.id === id);
+            return avatar?.imageUrl || PlaceHolderImages.find(p => p.id === 'twinskie-default')?.imageUrl;
+        }
+        return PlaceHolderImages.find(p => p.id === 'twinskie-default')?.imageUrl;
+    }
+
+    const imageUrl = getAvatarUrl();
+
+    return (
+        <Card className="w-full max-w-md">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">Your Avatar</CardTitle>
+                <CardDescription>This will evolve as you do.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-center">
+                 {imageUrl && (
+                    <Image
+                        src={imageUrl}
+                        alt="Avatar preview"
+                        width={200}
+                        height={200}
+                        className="rounded-full border-4 border-primary"
+                        key={imageUrl} 
+                    />
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
 
 export default function CustomizeAvatarPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -36,10 +78,13 @@ export default function CustomizeAvatarPage() {
   const searchParams = useSearchParams();
   const archetype = searchParams.get('archetype') as Archetype | null;
 
-  const baseAvatar = PlaceHolderImages.find(p => p.id === 'twinskie-default');
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+        gender: 'Female',
+        bodyType: 'Athletic',
+        skinTone: 'Medium',
+    }
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
@@ -58,9 +103,9 @@ export default function CustomizeAvatarPage() {
     updateDocumentNonBlocking(userRef, {
       gender: values.gender,
       bodyType: values.bodyType,
+      skinTone: values.skinTone,
     });
 
-    // Simulate a brief delay for the write to propagate before moving on
     setTimeout(() => {
         toast({
             title: 'Avatar Customized!',
@@ -88,23 +133,7 @@ export default function CustomizeAvatarPage() {
             <p className="text-lg text-muted-foreground mt-2">This is the starting vessel for your digital self.</p>
         </div>
         <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16 max-w-4xl">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle className="font-headline text-2xl">Your Avatar</CardTitle>
-                    <CardDescription>This will evolve as you do.</CardDescription>
-                </CardHeader>
-                <CardContent className="flex items-center justify-center">
-                    {baseAvatar && (
-                        <Image
-                            src={baseAvatar.imageUrl}
-                            alt="Default avatar"
-                            width={200}
-                            height={200}
-                            className="rounded-full border-4 border-primary"
-                        />
-                    )}
-                </CardContent>
-            </Card>
+            <AvatarPreview control={form.control} />
 
             <Card className="w-full max-w-md">
             <CardHeader>
@@ -113,37 +142,27 @@ export default function CustomizeAvatarPage() {
             </CardHeader>
             <CardContent>
                 <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FormField
                     control={form.control}
                     name="gender"
                     render={({ field }) => (
-                        <FormItem className="space-y-3">
+                        <FormItem className="space-y-2">
                         <FormLabel>Gender</FormLabel>
                         <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Male" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Male</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Female" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Female</FormLabel>
-                            </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Non-binary" />
-                                </FormControl>
-                                <FormLabel className="font-normal">Non-binary</FormLabel>
-                            </FormItem>
+                            <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value="Male" /></FormControl>
+                                    <FormLabel className="font-normal">Male</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value="Female" /></FormControl>
+                                    <FormLabel className="font-normal">Female</FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-2 space-y-0">
+                                    <FormControl><RadioGroupItem value="Non-binary" /></FormControl>
+                                    <FormLabel className="font-normal">Non-binary</FormLabel>
+                                </FormItem>
                             </RadioGroup>
                         </FormControl>
                         <FormMessage />
@@ -154,30 +173,20 @@ export default function CustomizeAvatarPage() {
                     control={form.control}
                     name="bodyType"
                     render={({ field }) => (
-                        <FormItem className="space-y-3">
+                        <FormItem className="space-y-2">
                         <FormLabel>Body Type</FormLabel>
                         <FormControl>
-                            <RadioGroup
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                            className="flex flex-col space-y-1"
-                            >
-                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Slim" />
-                                </FormControl>
+                             <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                             <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value="Slim" /></FormControl>
                                 <FormLabel className="font-normal">Slim</FormLabel>
                             </FormItem>
-                            <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Athletic" />
-                                </FormControl>
+                            <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value="Athletic" /></FormControl>
                                 <FormLabel className="font-normal">Athletic</FormLabel>
                             </FormItem>
-                             <FormItem className="flex items-center space-x-3 space-y-0">
-                                <FormControl>
-                                <RadioGroupItem value="Muscular" />
-                                </FormControl>
+                             <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl><RadioGroupItem value="Muscular" /></FormControl>
                                 <FormLabel className="font-normal">Muscular</FormLabel>
                             </FormItem>
                             </RadioGroup>
@@ -185,6 +194,32 @@ export default function CustomizeAvatarPage() {
                         <FormMessage />
                         </FormItem>
                     )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="skinTone"
+                        render={({ field }) => (
+                            <FormItem className="space-y-2">
+                            <FormLabel>Skin Tone</FormLabel>
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl><RadioGroupItem value="Light" /></FormControl>
+                                        <FormLabel className="font-normal">Light</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl><RadioGroupItem value="Medium" /></FormControl>
+                                        <FormLabel className="font-normal">Medium</FormLabel>
+                                    </FormItem>
+                                    <FormItem className="flex items-center space-x-2 space-y-0">
+                                        <FormControl><RadioGroupItem value="Dark" /></FormControl>
+                                        <FormLabel className="font-normal">Dark</FormLabel>
+                                    </FormItem>
+                                </RadioGroup>
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
                     <Button type="submit" disabled={isLoading} className="w-full font-bold group">
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

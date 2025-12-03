@@ -1,4 +1,5 @@
 
+
 {
   "entities": {
     "User": {
@@ -33,6 +34,11 @@
           "type": "string",
           "enum": ["Slim", "Athletic", "Muscular"],
           "description": "The user's selected starting body type."
+        },
+        "skinTone": {
+            "type": "string",
+            "enum": ["Light", "Medium", "Dark"],
+            "description": "The user's selected skin tone."
         },
         "physicalStat": {
           "type": "number",
@@ -431,13 +437,13 @@
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Guild",
         "type": "object",
-        "description": "Represents a large, user-run community focused on a specific skill category, with a collective weekly challenge.",
+        "description": "Represents a large, global community focused on a specific skill, with a collective weekly challenge.",
         "properties": {
             "id": { "type": "string", "description": "Unique identifier for the Guild." },
-            "name": { "type": "string", "description": "The name of the Guild." },
+            "name": { "type": "string", "description": "The name of the Guild (e.g., 'Guild of Running')." },
+            "skillId": { "type": "string", "description": "The ID of the skill this guild is associated with." },
             "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"], "description": "The skill category this Guild is focused on." },
-            "region": { "type": "string", "description": "The region (city) where the Guild is based." },
-            "ownerId": { "type": "string", "description": "The user ID of the Guild's creator." },
+            "region": { "type": "string", "description": "The region where the Guild was first founded." },
             "members": {
                 "type": "object",
                 "description": "A map of user IDs who are members of this Guild. Keys are user IDs, values are true.",
@@ -448,7 +454,7 @@
             "challengeEndsAt": { "type": "number", "description": "The Unix timestamp when the current challenge cycle ends." },
             "isBuffActive": { "type": "boolean", "description": "Whether the Guild-wide XP buff is currently active." }
         },
-        "required": ["id", "name", "category", "region", "ownerId", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"]
+        "required": ["id", "name", "skillId", "category", "region", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"]
     }
   },
   "auth": {
@@ -607,7 +613,7 @@
         "definition": {
             "entityName": "Guild",
             "schema": { "$ref": "#/backend/entities/Guild" },
-            "description": "Stores data for large, user-run communities (Guilds). Includes weekly challenge data.",
+            "description": "Stores data for large, skill-based communities (Guilds). Includes weekly challenge data.",
             "params": [{ "name": "guildId", "description": "The unique identifier for the Guild." }]
         }
       },
@@ -627,5 +633,3 @@
     "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering.\n\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\n\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
   }
 }
-
-    

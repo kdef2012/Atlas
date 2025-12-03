@@ -8,6 +8,8 @@ export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Cr
 
 export type Gender = 'Male' | 'Female' | 'Non-binary';
 export type BodyType = 'Slim' | 'Athletic' | 'Muscular';
+export type SkinTone = 'Light' | 'Medium' | 'Dark';
+
 
 export interface UserSkillData {
   isUnlocked: boolean;
@@ -28,6 +30,7 @@ export interface User {
   userName: string;
   gender?: Gender;
   bodyType?: BodyType;
+  skinTone?: SkinTone;
   physicalStat: number;
   mentalStat: number;
   socialStat: number;
