@@ -56,14 +56,16 @@ export default function LoginPage() {
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
         });
+        // After sign-up, redirect to archetype selection if they don't have a profile
+        router.push('/onboarding/archetype');
       } else {
         await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
+        // onAuthStateChanged in layout will handle redirect
       }
-      // onAuthStateChanged will redirect the user from the AppLayout
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
@@ -79,11 +81,12 @@ export default function LoginPage() {
         title: `${authMode} Failed`,
         description,
       });
-      setIsLoading(false);
+    } finally {
+        setIsLoading(false);
     }
   }
   
-  if (isUserLoading || user) {
+  if (isUserLoading) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />

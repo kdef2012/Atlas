@@ -4,12 +4,17 @@
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
 import type { Archetype, User as UserType } from '@/lib/types';
 import { Bot, Mountain, Zap } from 'lucide-react';
-import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser, useDoc, useMemoFirebase, initiateEmailSignUp } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
 import { useRouter, redirect } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { signInAnonymously } from 'firebase/auth';
+import { useAuth } from '@/firebase';
+import { useToast } from '@/hooks/use-toast';
 
 const archetypes: {
   name: Archetype;
@@ -40,55 +45,69 @@ const archetypes: {
 export default function ArchetypeSelectionPage() {
   const firestore = useFirestore();
   const router = useRouter();
+  const auth = useAuth();
+  const { toast } = useToast();
   const { user: authUser, isUserLoading } = useUser();
   
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: userDoc, isLoading: isUserDocLoading } = useDoc<UserType>(userRef);
 
   useEffect(() => {
-    // If auth has loaded and there's no one logged in, send to login page.
-    if (!isUserLoading && !authUser) {
-      redirect('/login');
-    }
     // If the user document already exists, they have completed onboarding, send to dashboard.
-    if (userDoc) {
+    if (!isUserDocLoading && userDoc) {
       redirect('/');
     }
-  }, [authUser, isUserLoading, userDoc]);
+  }, [userDoc, isUserDocLoading]);
 
-  const handleSelectArchetype = (archetype: Archetype) => {
-    if (authUser) {
-      const newUserRef = doc(firestore, 'users', authUser.uid);
-      const now = Date.now();
-      const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
-      
-      setDocumentNonBlocking(
-        newUserRef,
-        {
-          id: authUser.uid,
-          archetype: archetype,
-          email: authUser.email || null,
-          userName: userName,
-          physicalStat: 5,
-          mentalStat: 5,
-          socialStat: 5,
-          practicalStat: 5,
-          creativeStat: 5,
-          lastLogTimestamp: now,
-          createdAt: now,
-          level: 0,
-          xp: 0,
-          userSkills: {},
-          avatarLayers: {},
-          momentumFlameActive: true,
-          gems: 0,
-          streakFreezes: 0,
-          traits: {},
-        },
-        { merge: true }
-      );
-      router.push(`/onboarding/customize?archetype=${archetype}`);
+  const handleSelectArchetype = async (archetype: Archetype) => {
+    let currentAuthUser = authUser;
+    
+    // If there's no user, sign them in anonymously first.
+    if (!currentAuthUser) {
+        try {
+            const userCredential = await signInAnonymously(auth);
+            currentAuthUser = userCredential.user;
+        } catch (error) {
+            console.error("Anonymous sign-in failed:", error);
+            toast({
+                variant: 'destructive',
+                title: 'Authentication Failed',
+                description: 'Could not start your journey. Please try again.',
+            });
+            return;
+        }
     }
+      
+    const newUserRef = doc(firestore, 'users', currentAuthUser.uid);
+    const now = Date.now();
+    const userName = currentAuthUser.displayName || currentAuthUser.email?.split('@')[0] || 'Anonymous';
+    
+    setDocumentNonBlocking(
+      newUserRef,
+      {
+        id: currentAuthUser.uid,
+        archetype: archetype,
+        email: currentAuthUser.email || null,
+        userName: userName,
+        physicalStat: 5,
+        mentalStat: 5,
+        socialStat: 5,
+        practicalStat: 5,
+        creativeStat: 5,
+        lastLogTimestamp: now,
+        createdAt: now,
+        level: 0,
+        xp: 0,
+        userSkills: {},
+        avatarLayers: {},
+        momentumFlameActive: true,
+        gems: 0,
+        streakFreezes: 0,
+        traits: {},
+      },
+      { merge: true }
+    );
+    router.push(`/onboarding/customize?archetype=${archetype}`);
   };
   
   if (isUserLoading || isUserDocLoading) {
@@ -99,13 +118,18 @@ export default function ArchetypeSelectionPage() {
       )
   }
 
-  // Render only if user is authenticated but has no user document
-  return authUser && !userDoc ? (
+  return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
       <div className="text-center mb-12">
         <h1 className="font-headline text-5xl md:text-7xl font-bold text-primary mb-2 animate-fade-in-slow">
           Choose Your Origin
         </h1>
+        <p className="text-muted-foreground">
+            Already have a pilot profile?{' '}
+            <Button variant="link" asChild className="p-0 text-base">
+                <Link href="/login">Login or Sign Up</Link>
+            </Button>
+        </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
         {archetypes.map(archetype => (
@@ -126,5 +150,5 @@ export default function ArchetypeSelectionPage() {
         }
       `}</style>
     </main>
-  ) : null;
+  );
 }
