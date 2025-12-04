@@ -271,8 +271,9 @@ service cloud.firestore {
      */
     match /events/{eventId} {
         allow get: if true;
-        // Allow listing only active events to prevent fetching unnecessary data on the client.
-        allow list: if request.query.where.size() == 0 || request.query.where.isActive == true;
+        // Allow listing by anyone. The client query is responsible for filtering to only active events.
+        // This is safe because writes are admin-only.
+        allow list: if true; 
         allow write: if isAdmin();
     }
 
