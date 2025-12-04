@@ -6,28 +6,34 @@ import { useFirestore } from "@/firebase/provider";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import type { GlobalEvent } from "@/lib/types";
 import { AlertCircle, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 export function AnnouncementBanner() {
     const firestore = useFirestore();
     const [isVisible, setIsVisible] = useState(true);
 
-    const now = Date.now();
+    // Simplified query to only fetch active events with banners
     const eventsQuery = useMemoFirebase(() => 
         query(
             collection(firestore, 'events'),
             where('isActive', '==', true),
-            where('startAt', '<=', now),
-            where('endAt', '>', now),
             where('bannerMessage', '!=', null),
+            orderBy('bannerMessage'), // Firestore requires ordering by the field used in an inequality
             orderBy('startAt', 'desc'),
-            limit(1)
+            limit(5) // Fetch a few recent events to filter on client
         ),
-    [firestore, now]);
+    [firestore]);
 
     const { data: events, isLoading } = useCollection<GlobalEvent>(eventsQuery);
 
-    const activeEvent = events && events.length > 0 ? events[0] : null;
+    // Client-side filtering for the date range
+    const activeEvent = useMemo(() => {
+        if (!events) return null;
+        const now = Date.now();
+        // Find the first event that is currently active
+        return events.find(event => event.startAt <= now && event.endAt > now) || null;
+    }, [events]);
+
 
     if (isLoading || !activeEvent || !isVisible) {
         return null;
@@ -44,5 +50,3 @@ export function AnnouncementBanner() {
         </div>
     );
 }
-
-    
