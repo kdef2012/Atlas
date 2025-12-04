@@ -36,6 +36,18 @@ import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { TwinskieAvatar } from "@/components/twinskie-avatar-openpeeps";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "../ui/button";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -68,7 +80,7 @@ export function SideNav() {
 
   const handleLogout = () => {
     signOut(auth).then(() => {
-      router.push('/onboarding/archetype');
+      router.push('/login');
     });
   }
 
@@ -126,13 +138,31 @@ export function SideNav() {
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
            {user && <TwinskieAvatar user={user} size="sm" showInactiveLabel={false} />}
-            <div className="group-data-[collapsible=icon]:hidden">
+            <div className="group-data-[collapsible=icon]:hidden flex-1">
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
             </div>
-            <button onClick={handleLogout} className="ml-auto group-data-[collapsible=icon]:hidden">
-              <LogOut className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-            </button>
+             <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <button className="group-data-[collapsible=icon]:hidden text-muted-foreground hover:text-destructive">
+                        <LogOut className="w-5 h-5" />
+                    </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Your journey will be saved, but you will need to sign back in to continue.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Stay in ATLAS</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
+                        good bye atlas!
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
       </SidebarFooter>
     </>
