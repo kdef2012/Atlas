@@ -96,7 +96,7 @@ export default function ArchetypeSelectionPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
        <div className="absolute top-4 right-4 z-20">
         <Button asChild variant="ghost">
-          <Link href="/admin">
+          <Link href="/login">
             Admin Login
           </Link>
         </Button>

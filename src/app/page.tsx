@@ -71,7 +71,7 @@ export default function LandingPage() {
       
       <div className="absolute top-4 right-4 z-20">
         <Button asChild variant="ghost">
-          <Link href="/admin">
+          <Link href="/login">
             <Shield className="mr-2 h-4 w-4" />
             Admin Login
           </Link>
