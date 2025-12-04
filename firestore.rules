@@ -271,7 +271,8 @@ service cloud.firestore {
      */
     match /events/{eventId} {
         allow get: if true;
-        allow list: if true;
+        // Allow listing only active events to prevent fetching unnecessary data on the client.
+        allow list: if request.query.where.size() == 0 || request.query.where.isActive == true;
         allow write: if isAdmin();
     }
 
@@ -287,5 +288,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
