@@ -41,12 +41,6 @@ export default function LoginPage() {
     },
   });
 
-  useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
-
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
@@ -65,6 +59,7 @@ export default function LoginPage() {
           description: 'You have successfully signed in.',
         });
         // onAuthStateChanged in layout will handle redirect
+        router.push('/');
       }
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
