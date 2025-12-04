@@ -94,6 +94,13 @@ export default function ArchetypeSelectionPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
+       <div className="absolute top-4 right-4 z-20">
+        <Button asChild variant="ghost">
+          <Link href="/admin">
+            Admin Login
+          </Link>
+        </Button>
+      </div>
       <div className="text-center mb-12">
         <h1 className="font-headline text-5xl md:text-7xl font-bold text-primary mb-2 animate-fade-in-slow">
           Choose Your Origin
