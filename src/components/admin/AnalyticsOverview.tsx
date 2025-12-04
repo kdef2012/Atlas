@@ -1,10 +1,9 @@
-
 'use client';
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useCollection, useMemoFirebase } from "@/firebase";
+import { useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { collection } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import type { User, Skill, Fireteam, Guild, Suggestion } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Users, Atom, Users2, Building2, MessageSquare } from "lucide-react";
@@ -29,23 +28,71 @@ function StatCard({ title, value, icon: Icon, isLoading }: { title: string, valu
 
 export function AnalyticsOverview() {
     const firestore = useFirestore();
+    const { user: authUser } = useUser();
+    
+    // Get user document to check admin status
+    const userRef = useMemoFirebase(
+        () => authUser ? doc(firestore, 'users', authUser.uid) : null,
+        [firestore, authUser]
+    );
+    const { data: userData, isLoading: userLoading } = useDoc<User>(userRef);
 
-    const usersCollection = useMemoFirebase(() => collection(firestore, 'users'), [firestore]);
+    // ✅ Only create queries if user is admin
+    const usersCollection = useMemoFirebase(
+        () => userData?.isAdmin ? collection(firestore, 'users') : null,
+        [firestore, userData?.isAdmin]
+    );
     const { data: users, isLoading: usersLoading } = useCollection<User>(usersCollection);
 
-    const skillsCollection = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
+    const skillsCollection = useMemoFirebase(
+        () => userData?.isAdmin ? collection(firestore, 'skills') : null,
+        [firestore, userData?.isAdmin]
+    );
     const { data: skills, isLoading: skillsLoading } = useCollection<Skill>(skillsCollection);
     
-    const fireteamsCollection = useMemoFirebase(() => collection(firestore, 'fireteams'), [firestore]);
+    const fireteamsCollection = useMemoFirebase(
+        () => userData?.isAdmin ? collection(firestore, 'fireteams') : null,
+        [firestore, userData?.isAdmin]
+    );
     const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(fireteamsCollection);
     
-    const guildsCollection = useMemoFirebase(() => collection(firestore, 'guilds'), [firestore]);
+    const guildsCollection = useMemoFirebase(
+        () => userData?.isAdmin ? collection(firestore, 'guilds') : null,
+        [firestore, userData?.isAdmin]
+    );
     const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(guildsCollection);
     
-    const suggestionsCollection = useMemoFirebase(() => collection(firestore, 'suggestions'), [firestore]);
+    const suggestionsCollection = useMemoFirebase(
+        () => userData?.isAdmin ? collection(firestore, 'suggestions') : null,
+        [firestore, userData?.isAdmin]
+    );
     const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsCollection);
 
-    const isLoading = usersLoading || skillsLoading || fireteamsLoading || guildsLoading || suggestionsLoading;
+    const isLoading = userLoading || usersLoading || skillsLoading || fireteamsLoading || guildsLoading || suggestionsLoading;
+
+    // Wait for user document to load
+    if (userLoading) {
+        return (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+                {[...Array(5)].map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-4 w-4" />
+                        </CardHeader>
+                        <CardContent>
+                            <Skeleton className="h-8 w-16" />
+                        </CardContent>
+                    </Card>
+                ))}
+            </div>
+        );
+    }
+
+    // ✅ Don't render if not admin
+    if (!userData?.isAdmin) {
+        return null;
+    }
 
     return (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
