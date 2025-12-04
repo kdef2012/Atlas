@@ -44,21 +44,27 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
+      let userCredential;
       if (authMode === AuthMode.SignUp) {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
+        userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
         });
       } else {
-        await signInWithEmailAndPassword(auth, values.email, values.password);
+        userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
       }
-      // On success, redirect to the dashboard. The AppLayout will handle where to go next.
-      router.push('/dashboard');
+
+      // On success, redirect to the correct dashboard.
+      if (userCredential.user.email === 'kdef2012@gmail.com') {
+        router.push('/admin');
+      } else {
+        router.push('/dashboard');
+      }
 
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
