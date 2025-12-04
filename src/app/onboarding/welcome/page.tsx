@@ -15,9 +15,9 @@ interface WelcomePageProps {}
 function FirstQuestCard({ archetype }: { archetype: Archetype }) {
   const router = useRouter();
 
-  const handleClaim = () => {
-    // Redirect to a dedicated camera page to claim the quest
-    router.push(`/onboarding/claim-quest?quest=elixir-of-life&archetype=${archetype}`);
+  const handleComplete = () => {
+    // Directly navigate to the reward page, skipping the camera claim step.
+    router.push(`/onboarding/reward?archetype=${archetype}`);
   };
 
   return (
@@ -38,8 +38,8 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
               <p className="text-sm font-bold mt-2">Reward: +50 XP / +10 Health</p>
             </div>
           </div>
-          <Button onClick={handleClaim} size="lg" className="w-full mt-6 font-bold group">
-            Open Camera to Claim
+          <Button onClick={handleComplete} size="lg" className="w-full mt-6 font-bold group">
+            Complete Quest
             <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
         </CardContent>
