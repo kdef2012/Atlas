@@ -4,7 +4,7 @@
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
 import type { Archetype, User as UserType } from '@/lib/types';
 import { Bot, Mountain, Zap } from 'lucide-react';
-import { useFirestore, useUser, useDoc, useMemoFirebase, initiateEmailSignUp } from '@/firebase';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
@@ -12,7 +12,6 @@ import { useRouter, redirect } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { signInAnonymously } from 'firebase/auth';
 import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -60,34 +59,27 @@ export default function ArchetypeSelectionPage() {
   }, [userDoc, isUserDocLoading]);
 
   const handleSelectArchetype = async (archetype: Archetype) => {
-    let currentAuthUser = authUser;
-    
-    // If there's no user, sign them in anonymously first.
-    if (!currentAuthUser) {
-        try {
-            const userCredential = await signInAnonymously(auth);
-            currentAuthUser = userCredential.user;
-        } catch (error) {
-            console.error("Anonymous sign-in failed:", error);
-            toast({
-                variant: 'destructive',
-                title: 'Authentication Failed',
-                description: 'Could not start your journey. Please try again.',
-            });
-            return;
-        }
+    // If there's no authenticated user, they must log in or sign up first.
+    if (!authUser) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication Required',
+            description: 'Please log in or sign up to select an archetype.',
+        });
+        router.push('/login');
+        return;
     }
       
-    const newUserRef = doc(firestore, 'users', currentAuthUser.uid);
+    const newUserRef = doc(firestore, 'users', authUser.uid);
     const now = Date.now();
-    const userName = currentAuthUser.displayName || currentAuthUser.email?.split('@')[0] || 'Anonymous';
+    const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
     setDocumentNonBlocking(
       newUserRef,
       {
-        id: currentAuthUser.uid,
+        id: authUser.uid,
         archetype: archetype,
-        email: currentAuthUser.email || null,
+        email: authUser.email || null,
         userName: userName,
         physicalStat: 5,
         mentalStat: 5,
@@ -110,7 +102,7 @@ export default function ArchetypeSelectionPage() {
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
   
-  if (isUserLoading || isUserDocLoading) {
+  if (isUserLoading || (authUser && isUserDocLoading)) {
       return (
         <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
             <Skeleton className="w-48 h-16" />
