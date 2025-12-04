@@ -186,3 +186,5 @@ export function GuildChat({ guild }: { guild: Guild }) {
     </Card>
   );
 }
+
+    

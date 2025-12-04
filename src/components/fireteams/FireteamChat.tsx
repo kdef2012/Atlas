@@ -12,7 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCollection, useUser, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, query, orderBy } from 'firebase/firestore';
-import type { Fireteam, Message, User } from '@/lib/types';
+import type { Fireteam, Message } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Loader2 } from 'lucide-react';
@@ -86,6 +86,7 @@ export function FireteamChat({ fireteam }: FireteamChatProps) {
       timestamp: Date.now(),
       userId: authUser.uid,
       userName: authUser.displayName || 'Anonymous',
+      channel: 'general', // Fireteams only have a general channel
     };
 
     try {
@@ -140,3 +141,5 @@ export function FireteamChat({ fireteam }: FireteamChatProps) {
     </Card>
   );
 }
+
+    
