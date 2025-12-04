@@ -25,21 +25,37 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
+  // If auth has loaded but there's no authenticated user, send to login
+  if (!isAuthLoading && !authUser) {
+    return redirect('/login');
+  }
+
+  // If auth user exists, but the user document doesn't (or is still loading),
+  // they are a new user. Send to onboarding immediately. This takes priority over the loading skeleton.
+  if (authUser && !user) {
+    if (isLoading) {
+       // While the user doc is loading, we can't be sure if they are new or not.
+       // But if we let it render the skeleton, a new user might see it briefly.
+       // The best experience for a new user is to go directly to onboarding.
+       // If an existing user sees a flicker of the onboarding page, it's a minor issue
+       // as they will be redirected back to the dashboard once their user doc loads.
+       // This prioritizes the new user experience.
+       const isPotentiallyNewUser = isUserDocLoading && !user;
+       if (isPotentiallyNewUser) {
+         return redirect('/onboarding/archetype');
+       }
+    } else {
+        // If loading is finished and there's still no user doc, they are definitely new.
+        return redirect('/onboarding/archetype');
+    }
+  }
+
   if (isLoading) {
     return <div className="flex h-screen w-screen items-center justify-center">
       <Skeleton className="h-16 w-16 rounded-full" />
     </div>
   }
 
-  // If auth has loaded but there's no authenticated user, send to login
-  if (!authUser) {
-    return redirect('/login');
-  }
-
-  // If auth user exists, but the user document doesn't, they are a new user. Send to onboarding.
-  if (authUser && !user) {
-    return redirect('/onboarding/archetype');
-  }
 
   return (
     <SidebarProvider>
