@@ -30,11 +30,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // This is the main redirection logic for new users.
-    // If we've finished loading, have an authenticated user, but NO user document in Firestore,
-    // then they are a new user who needs to go through onboarding.
     if (!isLoading && authUser && !user) {
-      // Crucially, DO NOT redirect if they are already in onboarding or trying to access admin pages.
-      // The AdminLayout will handle its own auth checks.
+      // ** CRITICAL FIX **: Do NOT redirect the designated admin user to onboarding.
+      // Let the AdminLayout handle their existence.
+      if (authUser.email === 'kdef2012@gmail.com') {
+        return;
+      }
+
+      // Do not redirect if they are already in onboarding or trying to access admin pages.
       if (!pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
         router.push('/onboarding/archetype');
       }
@@ -43,14 +46,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
 
   // If auth has loaded but there's no authenticated user, send to login.
-  // This handles cases where someone tries to access the app directly without logging in.
   if (!isAuthLoading && !authUser) {
     return redirect('/login');
   }
 
   // While the initial user authentication or Firestore document is loading, show a skeleton.
-  // This prevents a flash of the layout before a potential redirect.
-  // We exclude onboarding and admin paths from this skeleton view as they have their own loading states.
   if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -65,7 +65,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
   
   // The AdminLayout is a child of this layout and will handle its own UI and logic.
-  // By reaching this point, we allow the children (including AdminLayout) to render.
   return (
     <SidebarProvider>
       <Sidebar>

@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useCollection, useMemoFirebase } from "@/firebase";
+import { useCollection, useMemoFirebase, useUser } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { collection, query, where, limit } from "firebase/firestore";
 import type { GlobalEvent } from "@/lib/types";
@@ -10,17 +9,19 @@ import { useState, useMemo } from "react";
 
 export function AnnouncementBanner() {
     const firestore = useFirestore();
+    const { user } = useUser(); // ✅ ADD THIS
     const [isVisible, setIsVisible] = useState(true);
 
-    // Simplified the query by removing orderBy to prevent potential indexing issues
-    // that can manifest as permission errors.
+    // ✅ Only create query if user exists (or for public events, just check if firestore is ready)
     const eventsQuery = useMemoFirebase(() => 
-        query(
+        // Since events are public (allow list: if true), we can query them
+        // But let's add a check to be safe
+        firestore ? query(
             collection(firestore, 'events'),
             where('isActive', '==', true),
             where('hasBanner', '==', true),
             limit(5)
-        ),
+        ) : null,
     [firestore]);
 
     const { data: events, isLoading } = useCollection<GlobalEvent>(eventsQuery);
