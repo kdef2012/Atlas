@@ -51,7 +51,7 @@ import {
 import { Button } from "../ui/button";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
@@ -104,7 +104,7 @@ export function SideNav() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
+                isActive={pathname === item.href}
                 tooltip={{ children: item.label, side: "right" }}
               >
                 <Link href={item.href}>

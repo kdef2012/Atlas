@@ -15,7 +15,7 @@ export default function NotFound() {
         <CardContent className="flex flex-col items-center gap-6">
           <p>The page you're looking for seems to have gotten lost in the Nebula.</p>
           <Button asChild>
-            <Link href="/">
+            <Link href="/dashboard">
               <Home className="mr-2 h-4 w-4" />
               Return to Dashboard
             </Link>

@@ -10,7 +10,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect, useRouter } from "next/navigation";
+import { redirect, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
@@ -21,6 +21,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
+  const pathname = usePathname();
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
@@ -31,9 +32,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     // If loading is finished, we have an authenticated user, but no user document in Firestore,
     // it means they are a new user who needs to go through onboarding.
     if (!isLoading && authUser && !user) {
-      router.push('/onboarding/archetype');
+      if (!pathname.startsWith('/onboarding')) {
+        router.push('/onboarding/archetype');
+      }
     }
-  }, [isLoading, authUser, user, router]);
+  }, [isLoading, authUser, user, router, pathname]);
 
 
   // If auth has loaded but there's no authenticated user, send to login.
@@ -45,11 +48,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // If we are still loading, or if we have an authUser but no user doc yet (and are about to redirect),
   // show a full-page skeleton. This prevents a flash of the old layout.
   if (isLoading || !user) {
+    // Exception for onboarding pages, which should be accessible during this phase
+    if (pathname.startsWith('/onboarding')) {
+      return <>{children}</>;
+    }
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
       </div>
     );
+  }
+
+  // If an existing user tries to access onboarding, redirect them to the dashboard.
+  if (user && pathname.startsWith('/onboarding')) {
+    return redirect('/dashboard');
   }
 
   return (

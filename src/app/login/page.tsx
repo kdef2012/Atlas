@@ -57,8 +57,8 @@ export default function LoginPage() {
           description: 'You have successfully signed in.',
         });
       }
-      // On success, redirect to the root of the app. The AppLayout will handle where to go next.
-      router.push('/');
+      // On success, redirect to the dashboard. The AppLayout will handle where to go next.
+      router.push('/dashboard');
 
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
