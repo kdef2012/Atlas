@@ -3,7 +3,7 @@
 
 import { useCollection, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
-import { collection, query, where, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, limit } from "firebase/firestore";
 import type { GlobalEvent } from "@/lib/types";
 import { AlertCircle, X } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -12,12 +12,13 @@ export function AnnouncementBanner() {
     const firestore = useFirestore();
     const [isVisible, setIsVisible] = useState(true);
 
+    // Simplified the query by removing orderBy to prevent potential indexing issues
+    // that can manifest as permission errors.
     const eventsQuery = useMemoFirebase(() => 
         query(
             collection(firestore, 'events'),
             where('isActive', '==', true),
             where('hasBanner', '==', true),
-            orderBy('startAt', 'desc'),
             limit(5)
         ),
     [firestore]);
@@ -27,7 +28,9 @@ export function AnnouncementBanner() {
     const activeEvent = useMemo(() => {
         if (!events) return null;
         const now = Date.now();
-        return events.find(event => event.startAt <= now && event.endAt > now) || null;
+        // Sort on the client side
+        const sortedEvents = events.sort((a, b) => b.startAt - a.startAt);
+        return sortedEvents.find(event => event.startAt <= now && event.endAt > now) || null;
     }, [events]);
 
 
@@ -46,5 +49,3 @@ export function AnnouncementBanner() {
         </div>
     );
 }
-
-    
