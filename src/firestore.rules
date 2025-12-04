@@ -90,7 +90,7 @@ service cloud.firestore {
      * Checks if the user has the 'isAdmin' flag set to true on their user document.
      */
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
     }
 
     /**
@@ -260,7 +260,9 @@ service cloud.firestore {
      */
     match /events/{eventId} {
         allow get: if true;
-        allow list: if request.query.where.hasBanner == true; 
+        // Allow listing by anyone. The client query is responsible for filtering to only active events.
+        // This is safe because writes are admin-only.
+        allow list: if request.query.where.hasBanner == true || isAdmin(); 
         allow write: if isAdmin();
     }
 
@@ -275,5 +277,3 @@ service cloud.firestore {
     }
   }
 }
-
-    

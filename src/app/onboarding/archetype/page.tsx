@@ -82,6 +82,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
+        isAdmin: false,
       },
       { merge: true }
     );
