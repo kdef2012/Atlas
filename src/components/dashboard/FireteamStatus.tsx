@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
-import { Link as LinkIcon, Shield, Users, Crown, PlusCircle, MessageSquare } from "lucide-react";
+import { Link as LinkIcon, Shield, Users, Crown, PlusCircle, MessageSquare, Loader2 } from "lucide-react";
 import { useUser, useDoc, useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc, collection, query, where, writeBatch, increment } from "firebase/firestore";
@@ -88,13 +88,13 @@ export function FireteamStatus() {
     const membersQuery = useMemoFirebase(() => {
         if (memberIds.length === 0) return null;
         return query(collection(firestore, 'users'), where('id', 'in', memberIds));
-    }, [firestore, memberIds]);
+    }, [firestore, JSON.stringify(memberIds)]);
     const { data: members, isLoading: areMembersLoading } = useCollection<User>(membersQuery);
     
     const prevStreakStatusRef = useRef<boolean | undefined>(fireteam?.streakActive);
 
     const handleRestoreStreak = () => {
-        if (!fireteamRef || !fireteam || !user || user.streakFreezes <= 0) return;
+        if (!fireteamRef || !fireteam || !user || !authUser || user.streakFreezes <= 0) return;
 
         // Soul-Sworn trait allows one free restore per week (not implemented, but this is where it would go)
         if (user.traits?.soul_sworn) {
@@ -111,13 +111,9 @@ export function FireteamStatus() {
             batch.update(fireteamRef, { streakActive: true, streakStartDate: Date.now() });
 
             // Use a streak freeze
-            members?.forEach(member => {
-                const memberRef = doc(firestore, 'users', member.id);
-                // Only take a freeze from one person (the one clicking)
-                if (member.id === authUser?.uid) {
-                    batch.update(memberRef, { streakFreezes: increment(-1) });
-                }
-            });
+            const userToUpdateRef = doc(firestore, 'users', authUser.uid);
+            batch.update(userToUpdateRef, { streakFreezes: increment(-1) });
+
 
             batch.commit().then(() => {
                 toast({ title: "Soul Link Restored!", description: "A streak freeze was used to mend the bond." });

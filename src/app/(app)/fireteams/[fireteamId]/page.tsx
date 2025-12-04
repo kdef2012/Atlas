@@ -1,15 +1,71 @@
 
 'use client';
 
-import { useDoc, useUser, useMemoFirebase } from '@/firebase';
+import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
-import { doc } from 'firebase/firestore';
+import { collection, doc, query, where } from 'firebase/firestore';
 import type { Fireteam, User } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { FireteamChat } from '@/components/fireteams/FireteamChat';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { ShieldOff } from 'lucide-react';
+import { Crown, ShieldOff, Users } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
+
+function MemberList({ fireteam }: { fireteam: Fireteam }) {
+    const firestore = useFirestore();
+    const memberIds = Object.keys(fireteam.members);
+
+    const membersQuery = useMemoFirebase(() => {
+        if (memberIds.length === 0) return null;
+        return query(collection(firestore, 'users'), where('id', 'in', memberIds));
+    }, [firestore, JSON.stringify(memberIds)]);
+
+    const { data: members, isLoading } = useCollection<User>(membersQuery);
+
+    if (isLoading) {
+        return <div className="space-y-2">
+            {[...Array(3)].map((_,i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+    }
+
+    return (
+        <TooltipProvider>
+             <div className="space-y-2">
+                {members?.map(member => {
+                    const isOwner = member.id === fireteam.ownerId;
+                    const isActive = member.lastLogTimestamp > Date.now() - (24 * 60 * 60 * 1000);
+                    return (
+                        <div key={member.id} className="flex items-center gap-2 p-2 rounded-md bg-secondary/50">
+                            <Tooltip>
+                                <TooltipTrigger>
+                                     <TwinskieAvatarCompact user={member} size={32} />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{member.userName} - {isActive ? 'Active' : 'Inactive'}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                            <div className="flex-1">
+                                <span className="font-semibold text-sm flex items-center">
+                                    {member.userName}
+                                </span>
+                            </div>
+                            {isOwner && (
+                                <Tooltip>
+                                    <TooltipTrigger>
+                                        <Crown className="w-4 h-4 text-yellow-400" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>Fireteam Leader</TooltipContent>
+                                </Tooltip>
+                            )}
+                        </div>
+                    )
+                })}
+            </div>
+        </TooltipProvider>
+    )
+}
 
 export default function FireteamDetailsPage({ params }: { params: { fireteamId: string } }) {
   const { fireteamId } = params;
@@ -26,9 +82,13 @@ export default function FireteamDetailsPage({ params }: { params: { fireteamId: 
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-48 w-full" />
-        <Skeleton className="h-96 w-full" />
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 space-y-4">
+            <Skeleton className="h-48 w-full" />
+        </div>
+        <div className="lg:col-span-2">
+            <Skeleton className="h-96 w-full" />
+        </div>
       </div>
     );
   }
@@ -62,8 +122,8 @@ export default function FireteamDetailsPage({ params }: { params: { fireteamId: 
             <CardDescription>Your squad's command center.</CardDescription>
           </CardHeader>
           <CardContent>
-            {/* We can add member list and other details here later */}
-            <p>Details about the Fireteam will go here.</p>
+            <h4 className="font-bold mb-2 flex items-center gap-2"><Users className="w-4 h-4"/> Roster</h4>
+             <MemberList fireteam={fireteam} />
           </CardContent>
         </Card>
       </div>
