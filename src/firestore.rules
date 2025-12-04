@@ -181,7 +181,8 @@ service cloud.firestore {
        * @principle     Scoped access based on a parent document's data using `get()`.
        */
       match /messages/{messageId} {
-        allow read, write: if isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+        allow read, write: if isSignedIn() 
+                        && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
         allow delete: if isAdmin();
       }
     }
@@ -259,9 +260,7 @@ service cloud.firestore {
      */
     match /events/{eventId} {
         allow get: if true;
-        // Allow listing based on hasBanner. This allows the client query to work without complex rules.
-        // This is secure because writes are admin-only.
-        allow list: if request.query.where.hasBanner == true;
+        allow list: if request.query.where.hasBanner == true; 
         allow write: if isAdmin();
     }
 
