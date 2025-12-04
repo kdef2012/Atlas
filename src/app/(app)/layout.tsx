@@ -31,8 +31,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     // If loading is finished, we have an authenticated user, but no user document in Firestore,
     // it means they are a new user who needs to go through onboarding.
+    // Crucially, do not redirect if they are an admin trying to access admin pages.
     if (!isLoading && authUser && !user) {
-      if (!pathname.startsWith('/onboarding')) {
+      if (!pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
         router.push('/onboarding/archetype');
       }
     }
@@ -47,7 +48,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   // If we are still loading, or if we have an authUser but no user doc yet (and are about to redirect),
   // show a full-page skeleton. This prevents a flash of the old layout.
-  if (isLoading && !pathname.startsWith('/onboarding')) {
+  if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -58,6 +59,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // If an existing user tries to access onboarding, redirect them to the dashboard.
   if (user && pathname.startsWith('/onboarding')) {
     return redirect('/dashboard');
+  }
+
+  // If the user is an admin, the AdminLayout will handle its own logic.
+  // For all other authenticated users, render the standard app layout.
+  if (pathname.startsWith('/admin')) {
+    return <>{children}</>;
   }
 
   return (
