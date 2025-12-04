@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -30,7 +30,7 @@ export default function LoginPage() {
   const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.SignIn);
   const { toast } = useToast();
   const auth = useAuth();
-  const { user } = useUser();
+  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -41,9 +41,11 @@ export default function LoginPage() {
     },
   });
 
-  if (user) {
-    router.push('/');
-  }
+  useEffect(() => {
+    if (user) {
+      router.push('/');
+    }
+  }, [user, router]);
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
@@ -79,6 +81,14 @@ export default function LoginPage() {
       });
       setIsLoading(false);
     }
+  }
+  
+  if (isUserLoading || user) {
+    return (
+        <div className="flex min-h-screen items-center justify-center bg-background p-4">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+    );
   }
 
   return (
