@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,8 +14,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { Log, Trait, User } from '@/lib/types';
-import traitsData from '@/lib/traits.json';
 
 // Define the input schema for the flow
 const AssignPersonalityTraitsInputSchema = z.object({
@@ -33,6 +32,7 @@ const AssignPersonalityTraitsInputSchema = z.object({
       id: z.string(),
       name: z.string(),
       description: z.string(),
+      icon: z.string(),
   })).describe("A list of all possible traits that can be assigned."),
 });
 export type AssignPersonalityTraitsInput = z.infer<typeof AssignPersonalityTraitsInputSchema>;

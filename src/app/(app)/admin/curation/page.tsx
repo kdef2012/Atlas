@@ -8,10 +8,12 @@ import { GuildList } from '@/components/admin/curation/GuildList';
 import { SkillList } from '@/components/admin/curation/SkillList';
 import { StoreItemList } from '@/components/admin/curation/StoreItemList';
 import { Palette } from 'lucide-react';
+import { TraitList } from '@/components/admin/curation/TraitList';
 
 function CurationDashboardContent() {
   return (
     <div className="space-y-6">
+        <TraitList />
         <SkillList />
         <GuildList />
         <StoreItemList />
@@ -29,7 +31,7 @@ export default function CurationPage() {
                         Content Curation
                     </CardTitle>
                     <CardDescription>
-                        Manage user-pioneered skills, guilds, and store items to maintain a high-quality experience.
+                        Manage user-pioneered skills, guilds, store items, and traits to maintain a high-quality experience.
                     </CardDescription>
                 </CardHeader>
             </Card>

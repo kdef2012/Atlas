@@ -13,7 +13,6 @@ import { Trophy, BrainCircuit, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { useState } from 'react';
 import { assignPersonalityTraits } from '@/ai/flows/assign-personality-traits';
-import allTraitsData from '@/lib/traits.json';
 import { useToast } from '@/hooks/use-toast';
 
 export function TraitBadges() {
@@ -29,7 +28,7 @@ export function TraitBadges() {
     const { data: allTraits, isLoading: areTraitsLoading } = useCollection<Trait>(traitsCollectionRef);
 
     const handleSyncTraits = async () => {
-        if (!user || !userRef || !authUser) return;
+        if (!user || !userRef || !authUser || !allTraits) return;
         setIsSyncing(true);
 
         try {
@@ -58,7 +57,7 @@ export function TraitBadges() {
                     createdAt: user.createdAt,
                 },
                 logs: logsWithCategory,
-                allTraits: allTraitsData.traits,
+                allTraits: allTraits,
             });
 
             // 4. Update user document in Firestore
@@ -70,7 +69,7 @@ export function TraitBadges() {
                 await updateDoc(userRef, updates);
                 toast({
                     title: "Personality Matrix Recalibrated!",
-                    description: `You've earned ${result.newlyAssignedTraits.length} new trait(s). Check your profile!`
+                    description: `You've earned ${result.newlyAssignedTraits.length} new trait(s).`
                 });
             } else {
                 toast({
@@ -99,15 +98,7 @@ export function TraitBadges() {
     const earnedTraitIds = user?.traits ? Object.keys(user.traits).filter(traitId => user.traits?.[traitId] === true) : [];
     
     const earnedTraits = earnedTraitIds.map(traitId => {
-        if (traitId === 'state_best') {
-            return {
-                id: 'state_best',
-                name: 'State Best',
-                description: 'Your state was the top performer in a recent Faction Challenge.',
-                icon: 'state_best'
-            }
-        }
-        return allTraits?.find(t => t.id === traitId) || allTraitsData.traits.find(t => t.id === traitId);
+        return allTraits?.find(t => t.id === traitId);
     }).filter((t): t is Trait => !!t);
 
 
@@ -145,4 +136,3 @@ export function TraitBadges() {
         </TooltipProvider>
     );
 }
-    
