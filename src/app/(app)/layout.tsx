@@ -42,20 +42,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return redirect('/login');
   }
 
-  // Show a loading skeleton while we're verifying auth and fetching the user document.
-  // The useEffect above will handle redirection for new users once loading is complete.
-  if (isLoading) {
-    return <div className="flex h-screen w-screen items-center justify-center">
-      <Skeleton className="h-16 w-16 rounded-full" />
-    </div>
+  // If we are still loading, or if we have an authUser but no user doc yet (and are about to redirect),
+  // show a full-page skeleton. This prevents a flash of the old layout.
+  if (isLoading || !user) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <Skeleton className="h-16 w-16 rounded-full" />
+      </div>
+    );
   }
-  
-  // If we are still here after loading and the user object is still missing,
-  // it means the useEffect is about to trigger the redirect. Render null to avoid a flash of content.
-  if (!user) {
-      return null;
-  }
-
 
   return (
     <SidebarProvider>
