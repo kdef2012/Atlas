@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -82,10 +82,13 @@ export function UserLogsDialog({ user }: { user: User }) {
   const { toast } = useToast();
 
   const logsQuery = useMemoFirebase(
-    () => collection(firestore, `users/${user.id}/logs`),
+    () => {
+        const logsCollection = collection(firestore, `users/${user.id}/logs`);
+        return query(logsCollection, orderBy('timestamp', 'desc'), limit(50));
+    },
     [firestore, user.id]
   );
-  const { data: logs, isLoading: isLoadingLogs } = useCollection<Log>(query(logsQuery, orderBy('timestamp', 'desc'), limit(50)));
+  const { data: logs, isLoading: isLoadingLogs } = useCollection<Log>(logsQuery);
   
   const skillsCollection = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const { data: skills, isLoading: isLoadingSkills } = useCollection<Skill>(skillsCollection);
