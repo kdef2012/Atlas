@@ -1,6 +1,7 @@
 
 'use client';
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -9,7 +10,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
@@ -19,41 +20,40 @@ import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+  const isLoading = isAuthLoading || isUserDocLoading;
 
-  // If auth has loaded but there's no authenticated user, send to login
+  useEffect(() => {
+    // If loading is finished, we have an authenticated user, but no user document in Firestore,
+    // it means they are a new user who needs to go through onboarding.
+    if (!isLoading && authUser && !user) {
+      router.push('/onboarding/archetype');
+    }
+  }, [isLoading, authUser, user, router]);
+
+
+  // If auth has loaded but there's no authenticated user, send to login.
+  // This handles cases where someone tries to access the app directly without logging in.
   if (!isAuthLoading && !authUser) {
     return redirect('/login');
   }
 
-  // If auth user exists, but the user document doesn't (or is still loading),
-  // they are a new user. Send to onboarding immediately. This takes priority over the loading skeleton.
-  if (authUser && !user) {
-    if (isLoading) {
-       // While the user doc is loading, we can't be sure if they are new or not.
-       // But if we let it render the skeleton, a new user might see it briefly.
-       // The best experience for a new user is to go directly to onboarding.
-       // If an existing user sees a flicker of the onboarding page, it's a minor issue
-       // as they will be redirected back to the dashboard once their user doc loads.
-       // This prioritizes the new user experience.
-       const isPotentiallyNewUser = isUserDocLoading && !user;
-       if (isPotentiallyNewUser) {
-         return redirect('/onboarding/archetype');
-       }
-    } else {
-        // If loading is finished and there's still no user doc, they are definitely new.
-        return redirect('/onboarding/archetype');
-    }
-  }
-
+  // Show a loading skeleton while we're verifying auth and fetching the user document.
+  // The useEffect above will handle redirection for new users once loading is complete.
   if (isLoading) {
     return <div className="flex h-screen w-screen items-center justify-center">
       <Skeleton className="h-16 w-16 rounded-full" />
     </div>
+  }
+  
+  // If we are still here after loading and the user object is still missing,
+  // it means the useEffect is about to trigger the redirect. Render null to avoid a flash of content.
+  if (!user) {
+      return null;
   }
 
 
