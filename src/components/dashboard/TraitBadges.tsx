@@ -2,7 +2,7 @@
 'use client';
 
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
-import { collection, doc, query, where, limit, getDocs, updateDoc } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import type { User, Trait, Log, Skill } from '@/lib/types';
 import { TRAIT_ICONS } from '@/lib/types';
@@ -97,7 +97,11 @@ export function TraitBadges() {
 
     const earnedTraitIds = user?.traits ? Object.keys(user.traits).filter(traitId => user.traits?.[traitId] === true) : [];
     
+    // Handle the special 'state_best' trait which is not in the global collection
     const earnedTraits = earnedTraitIds.map(traitId => {
+        if (traitId === 'state_best') {
+            return { id: 'state_best', name: 'State Best', description: 'Your state was the top performer in a recent Faction Challenge.', icon: 'state_best' };
+        }
         return allTraits?.find(t => t.id === traitId);
     }).filter((t): t is Trait => !!t);
 
