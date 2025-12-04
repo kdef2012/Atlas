@@ -82,7 +82,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: false,
+        isAdmin: false, // Ensure isAdmin is set for new users
       },
       { merge: true }
     );
