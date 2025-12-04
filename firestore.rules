@@ -105,7 +105,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       // Allow anyone to perform a list for counting, but not read individual docs.
       allow list: if true;
-      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow create: if isOwner(userId);
       // Allow updates by the owner or an admin. Admins can only update specific fields.
       allow update: if isOwner(userId) || 
                     (isAdmin() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin', 'userName', 'gems']))) ||
@@ -214,7 +214,10 @@ service cloud.firestore {
          * @principle     Scoped access based on a parent document's data using `get()`.
          */
         match /messages/{messageId} {
-            allow read, write: if isGuildMember(guildId);
+            allow read: if isGuildMember(guildId);
+            allow write: if isGuildMember(guildId) 
+                            && request.resource.data.userId == request.auth.uid
+                            && request.resource.data.channel is string;
             allow delete: if isAdmin();
         }
     }

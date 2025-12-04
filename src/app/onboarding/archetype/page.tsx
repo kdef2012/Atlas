@@ -2,14 +2,14 @@
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
-import type { Archetype } from '@/lib/types';
+import type { Archetype, User as UserType } from '@/lib/types';
 import { Bot, Mountain, Zap } from 'lucide-react';
-import { useAuth, useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { initiateAnonymousSignIn } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, redirect } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const archetypes: {
   name: Archetype;
@@ -38,29 +38,37 @@ const archetypes: {
 ];
 
 export default function ArchetypeSelectionPage() {
-  const auth = useAuth();
   const firestore = useFirestore();
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
+  const { user: authUser, isUserLoading } = useUser();
+  
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: userDoc, isLoading: isUserDocLoading } = useDoc<UserType>(userRef);
 
   useEffect(() => {
-    if (!isUserLoading && !user) {
-      initiateAnonymousSignIn(auth);
+    // If auth has loaded and there's no one logged in, send to login page.
+    if (!isUserLoading && !authUser) {
+      redirect('/login');
     }
-  }, [auth, user, isUserLoading]);
+    // If the user document already exists, they have completed onboarding, send to dashboard.
+    if (userDoc) {
+      redirect('/');
+    }
+  }, [authUser, isUserLoading, userDoc]);
 
   const handleSelectArchetype = (archetype: Archetype) => {
-    if (user) {
-      const userRef = doc(firestore, 'users', user.uid);
+    if (authUser) {
+      const newUserRef = doc(firestore, 'users', authUser.uid);
       const now = Date.now();
-      // Base stats are set to a non-zero but low value to make the chart visible but still look "pathetic".
+      const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
+      
       setDocumentNonBlocking(
-        userRef,
+        newUserRef,
         {
-          id: user.uid,
+          id: authUser.uid,
           archetype: archetype,
-          email: user.email || null,
-          userName: user.displayName || 'Anonymous',
+          email: authUser.email || null,
+          userName: userName,
           physicalStat: 5,
           mentalStat: 5,
           socialStat: 5,
@@ -75,14 +83,24 @@ export default function ArchetypeSelectionPage() {
           momentumFlameActive: true,
           gems: 0,
           streakFreezes: 0,
+          traits: {},
         },
         { merge: true }
       );
       router.push(`/onboarding/customize?archetype=${archetype}`);
     }
   };
+  
+  if (isUserLoading || isUserDocLoading) {
+      return (
+        <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
+            <Skeleton className="w-48 h-16" />
+        </main>
+      )
+  }
 
-  return (
+  // Render only if user is authenticated but has no user document
+  return authUser && !userDoc ? (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
       <div className="text-center mb-12">
         <h1 className="font-headline text-5xl md:text-7xl font-bold text-primary mb-2 animate-fade-in-slow">
@@ -108,5 +126,5 @@ export default function ArchetypeSelectionPage() {
         }
       `}</style>
     </main>
-  );
+  ) : null;
 }

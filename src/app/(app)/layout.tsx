@@ -31,8 +31,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </div>
   }
 
-  // If auth has loaded but there's no authenticated user, or if the user doc doesn't exist yet (onboarding not complete)
-  if (!authUser || !user) {
+  // If auth has loaded but there's no authenticated user, send to login
+  if (!authUser) {
+    return redirect('/login');
+  }
+
+  // If auth user exists, but the user document doesn't, they are in onboarding
+  if (!user) {
     return redirect('/onboarding/archetype');
   }
 
@@ -49,5 +54,3 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    
