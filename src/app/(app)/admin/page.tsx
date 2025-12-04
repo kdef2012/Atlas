@@ -9,6 +9,7 @@ import { UserList } from "@/components/admin/UserList";
 import { SuggestionBox } from '@/components/admin/SuggestionBox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArchetypeDistributionChart } from '@/components/admin/ArchetypeDistributionChart';
+import { EconomicHealth } from '@/components/admin/EconomicHealth';
 
 function AdminDashboardContent() {
   return (
@@ -21,6 +22,7 @@ function AdminDashboardContent() {
       </div>
       <div className="lg:col-span-1 space-y-6">
         <ArchetypeDistributionChart />
+        <EconomicHealth />
         <SuggestionBox />
       </div>
     </div>
