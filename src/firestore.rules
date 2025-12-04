@@ -106,8 +106,10 @@ service cloud.firestore {
       // Allow anyone to perform a list for counting, but not read individual docs.
       allow list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
-      // Allow updates by the owner or an admin.
-      allow update: if isOwner(userId) || isAdmin() || (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
+      // Allow updates by the owner or an admin. Admins can only update specific fields.
+      allow update: if isOwner(userId) || 
+                    (isAdmin() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin', 'userName', 'gems']))) ||
+                    (request.resource.data.keys().hasOnly(['traits', 'innovatorAwarded']));
       allow delete: if isExistingOwner(userId) || isAdmin();
 
       /**
@@ -278,5 +280,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
