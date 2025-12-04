@@ -4,7 +4,6 @@ import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
 import { redirect } from "next/navigation";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
@@ -15,54 +14,47 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
+  // Create a stable reference to the user document path
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
-  
-  const isStillAuthenticating = isAuthLoading || !authUser;
-  const isStillLoadingUserDoc = authUser && isUserDocLoading;
+
+  // This is the core logic change.
+  // We determine the final loading state FIRST, before any rendering logic.
+  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
   useEffect(() => {
-    // Auto-provision admin user document if it doesn't exist upon login.
-    // This runs once when the user is authenticated but their document is confirmed to not exist.
-    if (!isUserDocLoading && authUser && !user && authUser.email === 'kdef2012@gmail.com') {
-      console.log('Provisioning new admin user document...');
+    // This effect runs once after the initial loading is complete.
+    // If we have an authenticated admin user, but their Firestore document doesn't exist, we create it.
+    if (!isLoading && authUser && !user && authUser.email === 'kdef2012@gmail.com') {
       const adminUserRef = doc(firestore, 'users', authUser.uid);
       const adminUserData: Partial<User> = {
         id: authUser.uid,
         email: authUser.email,
         userName: authUser.email?.split('@')[0] || 'Admin',
         isAdmin: true,
-        level: 99,
-        xp: 0,
-        createdAt: Date.now(),
+        // Set default non-null values for a lean admin object to satisfy the User type
+        archetype: 'Titan',
+        physicalStat: 0, mentalStat: 0, socialStat: 0, practicalStat: 0, creativeStat: 0,
         lastLogTimestamp: Date.now(),
-        archetype: 'Titan', // Placeholder, not used for routing or game logic for admin
-        physicalStat: 0,
-        mentalStat: 0,
-        socialStat: 0,
-        practicalStat: 0,
-        creativeStat: 0,
+        createdAt: Date.now(),
+        level: 99, xp: 0,
         userSkills: {},
-        avatarLayers: {},
         momentumFlameActive: false,
         gems: 0,
         streakFreezes: 0,
-        traits: {},
       };
-      // Create the document non-blockingly. The useDoc hook will automatically
-      // pick up the change, causing a re-render.
       setDocumentNonBlocking(adminUserRef, adminUserData, { merge: true });
     }
-  }, [isUserDocLoading, authUser, user, firestore]);
+  }, [isLoading, authUser, user, firestore]);
 
-  // If auth has finished and there's no user, redirect to login.
-  if (!isStillAuthenticating && !authUser) {
+  // If authentication is finished and there's no user, redirect to login.
+  if (!isAuthLoading && !authUser) {
     return redirect('/login');
   }
 
-  // Show a full-screen loading state while we're verifying the user and their Firestore document.
-  // This prevents child components from rendering prematurely and causing permission errors.
-  if (isStillAuthenticating || isStillLoadingUserDoc) {
+  // If we are still loading authentication state OR the user document, show a loading screen.
+  // This is the crucial part that prevents children from rendering prematurely.
+  if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <div className="flex flex-col items-center gap-4">
@@ -72,8 +64,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
-  
-  // After loading, if we have a user but they are not an admin, show access denied.
+
+  // After loading, if there's a user but they are NOT an admin, show Access Denied.
   if (user && !user.isAdmin) {
     return (
         <div className="flex h-screen w-screen items-center justify-center p-4">
@@ -86,19 +78,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
   
-  // After loading, if the user document still doesn't exist for the admin email (should be rare),
-  // show a message instead of rendering children, as the useEffect will be attempting to create it.
+  // After loading, if there's an authenticated user but their document *still* doesn't exist
+  // (which could happen for a non-admin user trying to access /admin directly), deny access.
   if (!user) {
-      return (
-         <div className="flex h-screen w-screen items-center justify-center">
-            <div className="flex flex-col items-center gap-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-              <p className="text-muted-foreground">Finalizing account setup...</p>
-            </div>
+     return (
+        <div className="flex h-screen w-screen items-center justify-center p-4">
+            <Alert variant="destructive" className="max-w-lg">
+                <ShieldOff className="h-4 w-4" />
+                <AlertTitle>Access Denied</AlertTitle>
+                <AlertDescription>User profile not found.</AlertDescription>
+            </Alert>
         </div>
-      )
+    );
   }
 
-  // If all checks pass (authenticated, user doc loaded, is an admin), render the admin content.
+  // If all checks pass (authenticated, user doc loaded, IS an admin), render the admin content.
   return <>{children}</>;
 }
