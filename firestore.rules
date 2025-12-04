@@ -88,6 +88,7 @@ service cloud.firestore {
     
     /**
      * Checks if the user has the 'isAdmin' flag set to true on their user document.
+     * Uses .get() with a default value to prevent errors on non-existent fields.
      */
     function isAdmin() {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
@@ -105,7 +106,7 @@ service cloud.firestore {
       allow get: if isOwner(userId) || isAdmin();
       // Allow anyone to perform a list for counting, but not read individual docs.
       allow list: if true;
-      allow create: if isOwner(userId);
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
       // Allow updates by the owner or an admin. Admins can only update specific fields.
       allow update: if isOwner(userId) || 
                     (isAdmin() && (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isAdmin', 'userName', 'gems']))) ||
@@ -259,8 +260,7 @@ service cloud.firestore {
      * @principle     Public Read for global game state, with admin-only writes.
      */
     match /events/{eventId} {
-        allow get: if true;
-        allow list: if true; 
+        allow get, list: if true; 
         allow write: if isAdmin();
     }
 
@@ -275,3 +275,4 @@ service cloud.firestore {
     }
   }
 }
+
