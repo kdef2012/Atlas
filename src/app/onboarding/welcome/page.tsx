@@ -17,7 +17,7 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
 
   const handleClaim = () => {
     // Redirect to a dedicated camera page to claim the quest
-    router.push(`/claim-quest?quest=elixir-of-life&archetype=${archetype}`);
+    router.push(`/onboarding/claim-quest?quest=elixir-of-life&archetype=${archetype}`);
   };
 
   return (
