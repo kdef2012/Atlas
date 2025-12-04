@@ -95,10 +95,7 @@ export default function ArchetypeSelectionPage() {
           Choose Your Origin
         </h1>
         <p className="text-muted-foreground">
-            Already have a pilot profile?{' '}
-            <Button variant="link" asChild className="p-0 text-base">
-                <Link href="/login">Login or Sign Up</Link>
-            </Button>
+            Explore the Atlas
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
