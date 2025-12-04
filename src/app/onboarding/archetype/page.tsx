@@ -2,17 +2,14 @@
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
-import type { Archetype, User as UserType } from '@/lib/types';
+import type { Archetype } from '@/lib/types';
 import { Bot, Mountain, Zap } from 'lucide-react';
-import { useFirestore, useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useEffect } from 'react';
-import { useRouter, redirect } from 'next/navigation';
-import { Skeleton } from '@/components/ui/skeleton';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/firebase';
 import { useToast } from '@/hooks/use-toast';
 
 const archetypes: {
@@ -44,20 +41,9 @@ const archetypes: {
 export default function ArchetypeSelectionPage() {
   const firestore = useFirestore();
   const router = useRouter();
-  const auth = useAuth();
   const { toast } = useToast();
-  const { user: authUser, isUserLoading } = useUser();
+  const { user: authUser } = useUser();
   
-  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: userDoc, isLoading: isUserDocLoading } = useDoc<UserType>(userRef);
-
-  useEffect(() => {
-    // If the user document already exists, they have completed onboarding, send to dashboard.
-    if (!isUserDocLoading && userDoc) {
-      redirect('/');
-    }
-  }, [userDoc, isUserDocLoading]);
-
   const handleSelectArchetype = async (archetype: Archetype) => {
     // If there's no authenticated user, they must log in or sign up first.
     if (!authUser) {
@@ -101,14 +87,6 @@ export default function ArchetypeSelectionPage() {
     );
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
-  
-  if (isUserLoading || (authUser && isUserDocLoading)) {
-      return (
-        <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
-            <Skeleton className="w-48 h-16" />
-        </main>
-      )
-  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">

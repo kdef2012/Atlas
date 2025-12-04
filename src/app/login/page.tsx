@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,9 +11,9 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth, useUser } from '@/firebase';
+import { useAuth } from '@/firebase';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
-import { Auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -31,7 +31,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
-  const { user, isUserLoading } = useUser();
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -51,25 +50,21 @@ export default function LoginPage() {
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
         });
-        // After sign-up, redirect to archetype selection if they don't have a profile
-        router.push('/onboarding/archetype');
       } else {
         await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-        // onAuthStateChanged in layout will handle redirect
-        router.push('/');
       }
+      // On success, redirect to the root of the app. The AppLayout will handle where to go next.
+      router.push('/');
+
     } catch (error: any) {
       let description = 'An unexpected error occurred. Please try again.';
       if (error.code === 'auth/email-already-in-use') {
         description = 'This email is already in use. Try signing in instead.';
-      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        description = 'Invalid email or password. Please try again.';
-      }
-       else if (error.code === 'auth/invalid-credential') {
+      } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
       }
       toast({
@@ -80,14 +75,6 @@ export default function LoginPage() {
     } finally {
         setIsLoading(false);
     }
-  }
-  
-  if (isUserLoading) {
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-background p-4">
-            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-        </div>
-    );
   }
 
   return (
