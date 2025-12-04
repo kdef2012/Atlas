@@ -60,7 +60,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   const handleStart = () => {
-    router.push('/onboarding/archetype');
+    router.push('/login');
   };
 
   return (

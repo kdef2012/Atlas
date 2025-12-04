@@ -36,8 +36,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return redirect('/login');
   }
 
-  // If auth user exists, but the user document doesn't, they are in onboarding
-  if (!user) {
+  // If auth user exists, but the user document doesn't, they are a new user. Send to onboarding.
+  if (authUser && !user) {
     return redirect('/onboarding/archetype');
   }
 
