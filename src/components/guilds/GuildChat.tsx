@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useCollection, useUser, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
-import { collection, query, orderBy, doc } from 'firebase/firestore';
-import type { Guild, Message, User } from '@/lib/types';
+import { collection, query, orderBy, doc, where } from 'firebase/firestore';
+import type { Guild, Message, User, Fireteam } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Loader2, Globe, MapPin, Building, LocateFixed } from 'lucide-react';
@@ -27,9 +27,7 @@ interface ChatChannelProps {
     guild: Guild;
     channelId: string;
     channelName: string;
-    messages: Message[];
     currentUser: User | null;
-    isLoading: boolean;
 }
 
 function ChatMessage({ message, isCurrentUser }: { message: Message; isCurrentUser: boolean }) {
@@ -51,7 +49,7 @@ function ChatMessage({ message, isCurrentUser }: { message: Message; isCurrentUs
   );
 }
 
-function ChatChannel({ guild, channelId, channelName, messages, currentUser, isLoading }: ChatChannelProps) {
+function ChatChannel({ guild, channelId, channelName, currentUser }: ChatChannelProps) {
     const firestore = useFirestore();
     const [isSending, setIsSending] = useState(false);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -60,6 +58,13 @@ function ChatChannel({ guild, channelId, channelName, messages, currentUser, isL
       () => collection(firestore, `guilds/${guild.id}/messages`),
       [firestore, guild.id]
     );
+
+    const messagesQuery = useMemoFirebase(
+        () => query(messagesCollectionRef, where('channel', '==', channelId), orderBy('timestamp', 'asc')),
+        [messagesCollectionRef, channelId]
+    );
+
+    const { data: messages, isLoading } = useCollection<Message>(messagesQuery);
 
     const form = useForm<z.infer<typeof chatSchema>>({
       resolver: zodResolver(chatSchema),
@@ -106,7 +111,7 @@ function ChatChannel({ guild, channelId, channelName, messages, currentUser, isL
                             <Skeleton className="h-16 w-3/4"/>
                             <Skeleton className="h-12 w-1/2 ml-auto"/>
                         </div>
-                    ) : messages.length > 0 ? (
+                    ) : messages && messages.length > 0 ? (
                         messages.map(msg => (
                             <ChatMessage key={msg.id} message={msg} isCurrentUser={msg.userId === currentUser?.id} />
                         ))
@@ -134,40 +139,22 @@ export function GuildChat({ guild }: { guild: Guild }) {
 
   const fireteamDocRef = useMemoFirebase(() => currentUserData?.fireteamId ? doc(firestore, 'fireteams', currentUserData.fireteamId) : null, [firestore, currentUserData?.fireteamId]);
   const { data: fireteamData } = useDoc<Fireteam>(fireteamDocRef);
-
-  const messagesCollectionRef = useMemoFirebase(
-    () => collection(firestore, `guilds/${guild.id}/messages`),
-    [firestore, guild.id]
-  );
-  
-  const messagesQuery = useMemoFirebase(
-      () => query(messagesCollectionRef, orderBy('timestamp', 'asc')),
-      [messagesCollectionRef]
-  );
-
-  const { data: allMessages, isLoading } = useCollection<Message>(messagesQuery);
   
   const channels = useMemo(() => {
-      if (!fireteamData) return [];
-      return [
-          { id: 'global', name: 'Global', icon: Globe },
+      const baseChannels = [{ id: 'global', name: 'Global', icon: Globe }];
+      if (!fireteamData) return baseChannels;
+      
+      const regionalChannels = [
           { id: fireteamData.country, name: fireteamData.country, icon: MapPin },
           { id: fireteamData.state, name: fireteamData.state, icon: Building },
           { id: fireteamData.region, name: fireteamData.region, icon: LocateFixed }
-      ]
+      ];
+      // Use a Set to ensure unique channel IDs before returning
+      const uniqueChannels = new Map<string, {id: string, name: string, icon: React.ElementType}>();
+      [...baseChannels, ...regionalChannels].forEach(c => uniqueChannels.set(c.id, c));
+
+      return Array.from(uniqueChannels.values());
   }, [fireteamData]);
-
-  const messagesByChannel = useMemo(() => {
-    const grouped: Record<string, Message[]> = {};
-    channels.forEach(c => grouped[c.id] = []);
-    allMessages?.forEach(msg => {
-        if(grouped[msg.channel]) {
-            grouped[msg.channel].push(msg);
-        }
-    });
-    return grouped;
-  }, [allMessages, channels]);
-
 
   return (
     <Card className="h-full flex flex-col">
@@ -189,9 +176,7 @@ export function GuildChat({ guild }: { guild: Guild }) {
                         guild={guild}
                         channelId={channel.id}
                         channelName={channel.name}
-                        messages={messagesByChannel[channel.id] || []}
                         currentUser={currentUserData}
-                        isLoading={isLoading}
                     />
                 </AccordionContent>
              </AccordionItem>
@@ -201,5 +186,3 @@ export function GuildChat({ guild }: { guild: Guild }) {
     </Card>
   );
 }
-
-    

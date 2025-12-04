@@ -35,7 +35,7 @@ import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { TwinskieAvatar } from "@/components/twinskie-avatar";
+import { TwinskieAvatar } from "@/components/twinskie-avatar-openpeeps";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
