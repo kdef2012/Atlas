@@ -59,7 +59,7 @@ export default function RewardPage({}: RewardPageProps) {
   const [isClaimed, setIsClaimed] = useState(false);
   const { toast } = useToast();
 
-  const handleQuestGeneration = useCallback(async (userData: User) => {
+  const generateInitialQuests = useCallback(async (userData: User) => {
     if (!user) return;
     try {
       const questsCollectionRef = collection(firestore, 'users', user.uid, 'quests');
@@ -107,12 +107,15 @@ export default function RewardPage({}: RewardPageProps) {
             streakFreezes: 1,
             'avatarLayers.newbie_sweatband': true,
           };
+          // This part is fast and happens immediately
           updateDocumentNonBlocking(userRef, updates);
+          
           const updatedUserData = { ...userDoc.data(), ...updates } as User;
-          await handleQuestGeneration(updatedUserData);
+          // This part (AI call) is slow and now happens after the UI updates
+          generateInitialQuests(updatedUserData);
         }
       }
-    }, [user, archetype, firestore, handleQuestGeneration]);
+    }, [user, archetype, firestore, generateInitialQuests]);
 
   
   if (!archetype) {
