@@ -270,8 +270,8 @@ service cloud.firestore {
      * @principle     Public Read for global game state, with admin-only writes.
      */
     match /events/{eventId} {
-        allow get: if isSignedIn();
-        allow list: if isSignedIn();
+        allow get: if true;
+        allow list: if true;
         allow write: if isAdmin();
     }
 
