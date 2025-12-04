@@ -27,6 +27,7 @@ import {
   Shield,
   Palette,
   Megaphone,
+  Trophy,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -41,6 +42,7 @@ const navItems = [
   { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
+  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/store", label: "Store", icon: Store },
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
