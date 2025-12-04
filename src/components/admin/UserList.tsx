@@ -8,13 +8,13 @@ import { useFirestore } from "@/firebase/provider";
 import { collection, doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Badge } from "../ui/badge";
 import { formatDistanceToNow } from 'date-fns';
 import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { GiftGemsDialog } from "./GiftGemsDialog";
 import { EditUserDialog } from "./EditUserDialog";
+import { UserLogsDialog } from "./UserLogsDialog";
 
 export function UserList() {
     const firestore = useFirestore();
@@ -83,7 +83,8 @@ export function UserList() {
                                         aria-label={`Toggle admin status for ${user.userName}`}
                                     />
                                 </TableCell>
-                                 <TableCell className="text-right">
+                                 <TableCell className="text-right space-x-1">
+                                    <UserLogsDialog user={user} />
                                     <GiftGemsDialog user={user} />
                                     <EditUserDialog user={user} />
                                 </TableCell>
