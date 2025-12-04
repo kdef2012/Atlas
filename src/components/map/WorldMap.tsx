@@ -25,16 +25,16 @@ export default function WorldMap() {
         return <div className="h-full w-full bg-muted animate-pulse" />;
     }
     
-    // Placeholder: We need a way to get lat/lon from a guild's region.
-    // For now, we'll just scatter them randomly.
-    const getGuildPosition = (guildId: string): [number, number] => {
-        // Simple hash function to create pseudo-random but consistent coordinates
+    // Convert a region name into a consistent, pseudo-random coordinate.
+    const getPositionFromRegion = (region: string): [number, number] => {
         let hash = 0;
-        for (let i = 0; i < guildId.length; i++) {
-            hash = guildId.charCodeAt(i) + ((hash << 5) - hash);
+        for (let i = 0; i < region.length; i++) {
+            hash = region.charCodeAt(i) + ((hash << 5) - hash);
         }
-        const lat = (hash % 180) - 90;
-        const lon = (hash % 360) - 180;
+        // Use a fixed seed to make the "randomness" consistent
+        const seed = hash;
+        const lat = (Math.sin(seed) * 90);
+        const lon = (Math.cos(seed) * 180);
         return [lat, lon];
     }
 
@@ -45,7 +45,7 @@ export default function WorldMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             />
             {guilds?.map(guild => {
-                const position = getGuildPosition(guild.id);
+                const position = getPositionFromRegion(guild.region);
                 return (
                     <Marker key={guild.id} position={position} icon={icon}>
                         <Popup>
