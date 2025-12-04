@@ -20,7 +20,7 @@ export function AppHeader() {
       <div className="flex-1">
         {/* Can add breadcrumbs or page title here later */}
       </div>
-      <div>
+      <div className="flex items-center gap-4">
         {user && !user.isAdmin && <SuggestionDialog />}
       </div>
     </header>

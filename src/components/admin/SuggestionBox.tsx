@@ -3,85 +3,21 @@
 
 import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { useCollection, useMemoFirebase, useUser, addDocumentNonBlocking, updateDocumentNonBlocking } from "@/firebase";
+import { useCollection, useMemoFirebase, updateDocumentNonBlocking } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { collection, query, where, orderBy, doc } from "firebase/firestore";
-import type { Suggestion, User } from "@/lib/types";
+import type { Suggestion } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
 import { ScrollArea } from "../ui/scroll-area";
-import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
-import { Lightbulb, Archive, Loader2, Send } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { Lightbulb, Archive } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useDoc } from '@/firebase/firestore/use-doc';
-
-const suggestionSchema = z.object({
-  suggestion: z.string().min(10, 'Suggestion must be at least 10 characters.').max(500, 'Suggestion is too long.'),
-});
-
-function SuggestionForm() {
-    const { user: authUser } = useUser();
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const suggestionsCollection = useMemoFirebase(() => collection(firestore, 'suggestions'), [firestore]);
-
-    const form = useForm<z.infer<typeof suggestionSchema>>({
-        resolver: zodResolver(suggestionSchema),
-        defaultValues: { suggestion: '' },
-    });
-
-    async function onSubmit(values: z.infer<typeof suggestionSchema>) {
-        if (!authUser || !suggestionsCollection) return;
-        
-        const newSuggestion: Omit<Suggestion, 'id'> = {
-            suggestion: values.suggestion,
-            userId: authUser.uid,
-            userName: authUser.displayName || 'Anonymous',
-            timestamp: Date.now(),
-            isArchived: false,
-        };
-
-        addDocumentNonBlocking(suggestionsCollection, newSuggestion);
-        toast({ title: 'Suggestion Submitted!', description: 'Thank you for your feedback.' });
-        form.reset();
-    }
-
-    return (
-         <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="w-5 h-5 text-primary" />
-                    Suggestion Box
-                </CardTitle>
-                <CardDescription>Have an idea to improve ATLAS? Share it!</CardDescription>
-            </CardHeader>
-            <CardContent>
-                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-2">
-                    <Textarea {...form.register('suggestion')} placeholder="I think it would be cool if..." />
-                    {form.formState.errors.suggestion && <p className="text-sm text-destructive">{form.formState.errors.suggestion.message}</p>}
-                    <Button type="submit" disabled={form.formState.isSubmitting} className="w-full">
-                        {form.formState.isSubmitting ? <Loader2 className="animate-spin" /> : <Send />}
-                        Submit
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
-    )
-}
-
 
 export function SuggestionBox() {
     const firestore = useFirestore();
-    const { user: authUser } = useUser();
     const { toast } = useToast();
     
-    const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-    const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
-
     const suggestionsQuery = useMemoFirebase(() => query(
         collection(firestore, 'suggestions'), 
         where('isArchived', '==', false), 
@@ -98,11 +34,6 @@ export function SuggestionBox() {
             description: 'The suggestion has been moved to the archive.'
         });
     };
-    
-    if (user && !user.isAdmin) {
-        // Regular users no longer see this on the dashboard. They use the dialog in the header.
-        return null;
-    }
 
     return (
         <Card className="h-full flex flex-col">
