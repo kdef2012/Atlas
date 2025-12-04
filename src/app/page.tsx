@@ -2,12 +2,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Shield } from 'lucide-react';
 
 function UserCounter() {
   const firestore = useFirestore();
@@ -66,6 +69,15 @@ export default function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background text-foreground overflow-hidden">
       
+      <div className="absolute top-4 right-4 z-20">
+        <Button asChild variant="ghost">
+          <Link href="/admin">
+            <Shield className="mr-2 h-4 w-4" />
+            Admin Login
+          </Link>
+        </Button>
+      </div>
+
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

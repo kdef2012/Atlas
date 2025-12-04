@@ -26,7 +26,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  const isLoading = isAuthLoading || isUserDocLoading;
+  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
   useEffect(() => {
     // If loading is finished, we have an authenticated user, but no user document in Firestore,
@@ -47,11 +47,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   // If we are still loading, or if we have an authUser but no user doc yet (and are about to redirect),
   // show a full-page skeleton. This prevents a flash of the old layout.
-  if (isLoading || !user) {
-    // Exception for onboarding pages, which should be accessible during this phase
-    if (pathname.startsWith('/onboarding')) {
-      return <>{children}</>;
-    }
+  if (isLoading && !pathname.startsWith('/onboarding')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
