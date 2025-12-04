@@ -249,7 +249,7 @@ service cloud.firestore {
      * @principle     Allow public write for feedback, but restrict read/update/delete to admins.
      */
     match /suggestions/{suggestionId} {
-        allow get, list: if isAdmin();
+        allow get, list: if request.auth != null && request.auth.token.email == 'kdef2012@gmail.com';
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         allow update, delete: if isAdmin();
     }
@@ -275,4 +275,4 @@ service cloud.firestore {
     }
   }
 }
-
+    
