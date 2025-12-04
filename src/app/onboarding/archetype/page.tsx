@@ -85,7 +85,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: isAdmin, // Set admin status based on the email check
+        isAdmin: isAdmin,
       },
       { merge: true }
     );

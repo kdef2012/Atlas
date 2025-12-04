@@ -90,7 +90,7 @@ service cloud.firestore {
      * Checks if the user has the 'isAdmin' flag set to true on their user document.
      */
     function isAdmin() {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
     }
 
     /**
@@ -121,8 +121,7 @@ service cloud.firestore {
        * @principle     Enforces document ownership for a user's private subcollections.
        */
       match /logs/{logId} {
-        allow get: if isOwner(userId) || isAdmin();
-        allow list: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update: if (isExistingOwner(userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId) || isAdmin();
@@ -136,8 +135,7 @@ service cloud.firestore {
        * @principle     Enforces document ownership for a user's private quests.
        */
       match /quests/{questId} {
-        allow get: if isOwner(userId) || isAdmin();
-        allow list: if isOwner(userId) || isAdmin();
+        allow get, list: if isOwner(userId) || isAdmin();
         allow create: if isOwner(userId) && request.resource.data.userId == userId;
         allow update: if (isExistingOwner(userId) || isAdmin()) && request.resource.data.userId == resource.data.userId;
         allow delete: if isExistingOwner(userId) || isAdmin();
@@ -153,8 +151,7 @@ service cloud.firestore {
      * @principle     Public Read with Owner-Only Writes, based on a denormalized 'pioneerUserId' field.
      */
     match /skills/{skillId} {
-      allow get: if true;
-      allow list: if true;
+      allow get, list: if true;
       allow create: if isSignedIn() && request.resource.data.pioneerUserId == request.auth.uid;
       // Allow pioneer or admin to update.
       allow update: if (isExistingOwner(resource.data.pioneerUserId) && request.resource.data.pioneerUserId == resource.data.pioneerUserId) || isAdmin() || (request.resource.data.keys().hasAll(['xp', 'innovatorAwarded']));
@@ -170,8 +167,7 @@ service cloud.firestore {
      * @principle     Public Read with Owner-Only Writes, based on a denormalized 'ownerId' field.
      */
     match /fireteams/{fireteamId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
       // Allow owner or members to update (for streak logic)
       allow update: if isExistingOwner(resource.data.ownerId) || isFireteamMember() || isAdmin();
@@ -185,11 +181,8 @@ service cloud.firestore {
        * @principle     Scoped access based on a parent document's data using `get()`.
        */
       match /messages/{messageId} {
-        allow read: if isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
-        allow write: if isSignedIn() 
-                        && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true
-                        && request.resource.data.userId == request.auth.uid
-                        && request.resource.data.channel == 'general';
+        allow read, write: if isSignedIn() 
+                        && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
         allow delete: if isAdmin();
       }
     }
@@ -201,8 +194,7 @@ service cloud.firestore {
      * @principle     Public read, with restricted, logical writes. Creation is handled server-side.
      */
     match /guilds/{guildId} {
-        allow get: if isSignedIn();
-        allow list: if isSignedIn();
+        allow get, list: if isSignedIn();
         // Disallow client-side creation. Admins or server logic handle this.
         allow create: if isAdmin(); 
         // Allow members to update their own membership status or for admins to manage.
@@ -234,8 +226,7 @@ service cloud.firestore {
      * @principle     Public Read for a global game state feature.
      */
     match /territories/{territoryId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow write: if isAdmin();
     }
     
@@ -247,8 +238,7 @@ service cloud.firestore {
      * @principle     Public Read for global game definitions.
      */
     match /traits/{traitId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow write: if isAdmin();
     }
     
@@ -258,8 +248,7 @@ service cloud.firestore {
      * @principle     Allow public write for feedback, but restrict read/update/delete to admins.
      */
     match /suggestions/{suggestionId} {
-        allow get: if isAdmin();
-        allow list: if isAdmin();
+        allow get, list: if isAdmin();
         allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
         allow update, delete: if isAdmin();
     }
@@ -271,8 +260,6 @@ service cloud.firestore {
      */
     match /events/{eventId} {
         allow get: if true;
-        // Allow listing by anyone. The client query is responsible for filtering to only active events.
-        // This is safe because writes are admin-only.
         allow list: if true; 
         allow write: if isAdmin();
     }
@@ -283,8 +270,7 @@ service cloud.firestore {
      * @principle     Public Read for store content, with admin-only writes.
      */
     match /store-items/{itemId} {
-        allow get: if isSignedIn();
-        allow list: if isSignedIn();
+        allow get, list: if isSignedIn();
         allow write: if isAdmin();
     }
   }
