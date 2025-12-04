@@ -100,7 +100,8 @@ export function SuggestionBox() {
     };
     
     if (user && !user.isAdmin) {
-        return <SuggestionForm />;
+        // Regular users no longer see this on the dashboard. They use the dialog in the header.
+        return null;
     }
 
     return (
