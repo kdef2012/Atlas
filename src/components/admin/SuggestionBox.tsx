@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -25,21 +26,9 @@ export function SuggestionBox() {
     );
     const { data: userData, isLoading: userLoading } = useDoc<User>(userRef);
     
-    // 🔍 DEBUG - Log every render
-    console.log('🔍 SuggestionBox Render:', {
-        component: 'SuggestionBox',
-        authUID: authUser?.uid,
-        userLoading,
-        userDataExists: !!userData,
-        isAdmin: userData?.isAdmin,
-        willCreateQuery: userData?.isAdmin === true
-    });
-    
     // ✅ Only create query if user is admin
     const suggestionsQuery = useMemoFirebase(() => {
-        const shouldQuery = userData?.isAdmin === true;
-        console.log('🔍 Creating suggestionsQuery:', { shouldQuery, isAdmin: userData?.isAdmin });
-        return shouldQuery ? query(
+        return userData?.isAdmin ? query(
             collection(firestore, 'suggestions'), 
             where('isArchived', '==', false), 
             orderBy('timestamp', 'desc')

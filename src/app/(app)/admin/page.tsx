@@ -11,6 +11,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArchetypeDistributionChart } from '@/components/admin/ArchetypeDistributionChart';
 import { EconomicHealth } from '@/components/admin/EconomicHealth';
 import { SuggestionDialog } from '@/components/admin/SuggestionDialog';
+import { useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { useFirestore } from '@/firebase/provider';
+import { doc } from 'firebase/firestore';
+import type { User as UserType } from '@/lib/types';
 
 function AdminDashboardContent() {
   return (
@@ -31,6 +35,54 @@ function AdminDashboardContent() {
 }
 
 export default function AdminPage() {
+    const { user: authUser } = useUser();
+    const firestore = useFirestore();
+    
+    // ✅ Load user document to check admin status
+    const userRef = useMemoFirebase(
+        () => authUser ? doc(firestore, 'users', authUser.uid) : null,
+        [firestore, authUser]
+    );
+    const { data: userData, isLoading } = useDoc<UserType>(userRef);
+
+    // ✅ Show loading while checking admin status
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-3xl flex items-center gap-2">
+                            <Shield className="w-8 h-8 text-primary" />
+                            Admin Dashboard
+                        </CardTitle>
+                        <CardDescription>Loading...</CardDescription>
+                    </CardHeader>
+                </Card>
+                <Skeleton className="h-[500px] w-full" />
+            </div>
+        );
+    }
+
+    // ✅ Check if user is admin (redundant with layout, but ensures components don't mount prematurely)
+    if (!userData?.isAdmin) {
+        return (
+            <div className="space-y-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="font-headline text-3xl flex items-center gap-2">
+                            <Shield className="w-8 h-8 text-primary" />
+                            Access Denied
+                        </CardTitle>
+                        <CardDescription>
+                            You do not have permission to access this page.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
+    }
+
+    // ✅ Only render components AFTER confirming admin status
     return (
         <div className="space-y-6">
             <Card>
@@ -51,5 +103,5 @@ export default function AdminPage() {
                 <AdminDashboardContent />
             </Suspense>
         </div>
-    )
+    );
 }
