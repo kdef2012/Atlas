@@ -173,6 +173,7 @@ export default function EventsPage() {
             xpMultiplier: values.xpMultiplier,
             bannerMessage: values.bannerMessage,
             isActive: values.isActive,
+            hasBanner: !!values.bannerMessage,
         };
 
         addDocumentNonBlocking(eventsCollection, newEvent);
@@ -332,5 +333,6 @@ export default function EventsPage() {
         </div>
     )
 }
+
 
     

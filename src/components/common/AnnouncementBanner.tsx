@@ -12,15 +12,15 @@ export function AnnouncementBanner() {
     const firestore = useFirestore();
     const [isVisible, setIsVisible] = useState(true);
 
-    // Simplified query to only fetch active events with banners
+    // Simplified query to fetch active banner events.
+    // This is now valid because we are not using multiple range/inequality filters.
     const eventsQuery = useMemoFirebase(() => 
         query(
             collection(firestore, 'events'),
             where('isActive', '==', true),
-            where('bannerMessage', '!=', null),
-            orderBy('bannerMessage'), // Firestore requires ordering by the field used in an inequality
+            where('hasBanner', '==', true),
             orderBy('startAt', 'desc'),
-            limit(5) // Fetch a few recent events to filter on client
+            limit(5) // Fetch a few recent banner events to filter on client
         ),
     [firestore]);
 
@@ -30,7 +30,7 @@ export function AnnouncementBanner() {
     const activeEvent = useMemo(() => {
         if (!events) return null;
         const now = Date.now();
-        // Find the first event that is currently active
+        // Find the first event that is currently active by date
         return events.find(event => event.startAt <= now && event.endAt > now) || null;
     }, [events]);
 
@@ -50,3 +50,6 @@ export function AnnouncementBanner() {
         </div>
     );
 }
+
+
+    

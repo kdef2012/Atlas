@@ -306,12 +306,25 @@
       "type": "object",
       "description": "Represents a chat message within a Fireteam or Guild.",
       "properties": {
-        "id": { "type": "string" },
-        "text": { "type": "string" },
-        "timestamp": { "type": "number" },
-        "userId": { "type": "string" },
-        "userName": { "type": "string" },
-        "channel": { "type": "string", "description": "The specific chat channel (e.g., global, USA, NY, NYC)" }
+        "id": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "number"
+        },
+        "userId": {
+          "type": "string"
+        },
+        "userName": {
+          "type": "string"
+        },
+        "channel": {
+          "type": "string",
+          "description": "The specific chat channel (e.g., global, USA, NY, NYC)"
+        }
       },
       "required": ["id", "text", "timestamp", "userId", "userName", "channel"]
     },
@@ -480,7 +493,8 @@
         "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." },
         "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." },
         "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." },
-        "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." }
+        "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." },
+        "hasBanner": { "type": "boolean", "description": "A flag indicating if a banner message exists, for efficient querying." }
       },
       "required": ["id", "title", "description", "startAt", "endAt", "isActive"]
     },
@@ -703,3 +717,6 @@
     "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering. Suggestions are stored in a top-level collection for admins to review.\\n\\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\\n\\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
   }
 }
+
+
+    

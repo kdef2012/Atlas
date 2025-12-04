@@ -139,6 +139,7 @@ export interface GlobalEvent {
   xpMultiplier?: number;
   isActive: boolean;
   bannerMessage?: string;
+  hasBanner?: boolean;
 }
 
 export interface StoreItem {
@@ -199,6 +200,8 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
+
+    
 
     
 
