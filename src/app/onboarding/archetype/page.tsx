@@ -60,6 +60,9 @@ export default function ArchetypeSelectionPage() {
     const now = Date.now();
     const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
+    // Check if the user's email is the designated admin email
+    const isAdmin = authUser.email === 'kdef2012@gmail.com';
+
     setDocumentNonBlocking(
       newUserRef,
       {
@@ -82,7 +85,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: false, // Ensure isAdmin is set for new users
+        isAdmin: isAdmin, // Set admin status based on the email check
       },
       { merge: true }
     );
