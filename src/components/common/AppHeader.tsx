@@ -2,7 +2,6 @@
 "use client";
 
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { SuggestionDialog } from "@/components/admin/SuggestionDialog";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
@@ -21,7 +20,7 @@ export function AppHeader() {
         {/* Can add breadcrumbs or page title here later */}
       </div>
       <div className="flex items-center gap-4">
-        {user && !user.isAdmin && <SuggestionDialog />}
+        {/* The SuggestionDialog was moved to the admin page to prevent permission errors */}
       </div>
     </header>
   );
