@@ -1,29 +1,35 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useCollection, useUser, useMemoFirebase, addDocumentNonBlocking } from '@/firebase';
+import { useCollection, useUser, useMemoFirebase, addDocumentNonBlocking, useDoc } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
-import { collection, query, orderBy } from 'firebase/firestore';
-import type { Guild, Message } from '@/lib/types';
+import { collection, query, orderBy, doc } from 'firebase/firestore';
+import type { Guild, Message, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { formatDistanceToNow } from 'date-fns';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, Globe, MapPin, Building, LocateFixed } from 'lucide-react';
 import { Skeleton } from '../ui/skeleton';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../ui/accordion';
 
 const chatSchema = z.object({
   message: z.string().min(1, 'Message cannot be empty.').max(500, 'Message is too long.'),
 });
 
-interface GuildChatProps {
-  guild: Guild;
+interface ChatChannelProps {
+    guild: Guild;
+    channelId: string;
+    channelName: string;
+    messages: Message[];
+    currentUser: User | null;
+    isLoading: boolean;
 }
 
 function ChatMessage({ message, isCurrentUser }: { message: Message; isCurrentUser: boolean }) {
@@ -45,10 +51,89 @@ function ChatMessage({ message, isCurrentUser }: { message: Message; isCurrentUs
   );
 }
 
-export function GuildChat({ guild }: GuildChatProps) {
+function ChatChannel({ guild, channelId, channelName, messages, currentUser, isLoading }: ChatChannelProps) {
+    const firestore = useFirestore();
+    const [isSending, setIsSending] = useState(false);
+    const scrollAreaRef = useRef<HTMLDivElement>(null);
+    
+    const messagesCollectionRef = useMemoFirebase(
+      () => collection(firestore, `guilds/${guild.id}/messages`),
+      [firestore, guild.id]
+    );
+
+    const form = useForm<z.infer<typeof chatSchema>>({
+      resolver: zodResolver(chatSchema),
+      defaultValues: { message: '' },
+    });
+  
+    useEffect(() => {
+      if (scrollAreaRef.current) {
+        scrollAreaRef.current.scrollTo({
+          top: scrollAreaRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    }, [messages]);
+
+    async function onSubmit(values: z.infer<typeof chatSchema>) {
+        if (!currentUser || !messagesCollectionRef) return;
+        setIsSending(true);
+
+        const newMessage: Omit<Message, 'id'> = {
+            text: values.message,
+            timestamp: Date.now(),
+            userId: currentUser.id,
+            userName: currentUser.userName,
+            channel: channelId,
+        };
+
+        try {
+            addDocumentNonBlocking(messagesCollectionRef, newMessage);
+            form.reset();
+        } catch (error) {
+            console.error('Failed to send message:', error);
+        } finally {
+            setIsSending(false);
+        }
+    }
+
+    return (
+        <div className="space-y-4">
+             <ScrollArea className="h-64 pr-4" ref={scrollAreaRef}>
+                <div className="space-y-4">
+                    {isLoading ? (
+                        <div className="space-y-4">
+                            <Skeleton className="h-16 w-3/4"/>
+                            <Skeleton className="h-12 w-1/2 ml-auto"/>
+                        </div>
+                    ) : messages.length > 0 ? (
+                        messages.map(msg => (
+                            <ChatMessage key={msg.id} message={msg} isCurrentUser={msg.userId === currentUser?.id} />
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground pt-12">No messages in {channelName} yet.</p>
+                    )}
+                </div>
+            </ScrollArea>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full items-center space-x-2">
+                <Input {...form.register('message')} placeholder={`Message #${channelName}`} autoComplete="off" disabled={isSending}/>
+                <Button type="submit" size="icon" disabled={isSending}>
+                    {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+            </form>
+        </div>
+    )
+}
+
+export function GuildChat({ guild }: { guild: Guild }) {
   const { user: authUser } = useUser();
   const firestore = useFirestore();
-  const [isSending, setIsSending] = useState(false);
+
+  const userDocRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: currentUserData } = useDoc<User>(userDocRef);
+
+  const fireteamDocRef = useMemoFirebase(() => currentUserData?.fireteamId ? doc(firestore, 'fireteams', currentUserData.fireteamId) : null, [firestore, currentUserData?.fireteamId]);
+  const { data: fireteamData } = useDoc<Fireteam>(fireteamDocRef);
 
   const messagesCollectionRef = useMemoFirebase(
     () => collection(firestore, `guilds/${guild.id}/messages`),
@@ -60,81 +145,61 @@ export function GuildChat({ guild }: GuildChatProps) {
       [messagesCollectionRef]
   );
 
-  const { data: messages, isLoading } = useCollection<Message>(messagesQuery);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { data: allMessages, isLoading } = useCollection<Message>(messagesQuery);
   
-  const form = useForm<z.infer<typeof chatSchema>>({
-    resolver: zodResolver(chatSchema),
-    defaultValues: { message: '' },
-  });
+  const channels = useMemo(() => {
+      if (!fireteamData) return [];
+      return [
+          { id: 'global', name: 'Global', icon: Globe },
+          { id: fireteamData.country, name: fireteamData.country, icon: MapPin },
+          { id: fireteamData.state, name: fireteamData.state, icon: Building },
+          { id: fireteamData.region, name: fireteamData.region, icon: LocateFixed }
+      ]
+  }, [fireteamData]);
 
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTo({
-        top: scrollAreaRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, [messages]);
+  const messagesByChannel = useMemo(() => {
+    const grouped: Record<string, Message[]> = {};
+    channels.forEach(c => grouped[c.id] = []);
+    allMessages?.forEach(msg => {
+        if(grouped[msg.channel]) {
+            grouped[msg.channel].push(msg);
+        }
+    });
+    return grouped;
+  }, [allMessages, channels]);
 
-  async function onSubmit(values: z.infer<typeof chatSchema>) {
-    if (!authUser || !messagesCollectionRef) return;
-    setIsSending(true);
-
-    const newMessage: Omit<Message, 'id'> = {
-      text: values.message,
-      timestamp: Date.now(),
-      userId: authUser.uid,
-      userName: authUser.displayName || 'Anonymous',
-    };
-
-    try {
-      addDocumentNonBlocking(messagesCollectionRef, newMessage);
-      form.reset();
-    } catch (error) {
-      console.error('Failed to send message:', error);
-    } finally {
-        setIsSending(false);
-    }
-  }
 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>Guild Comms</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4 overflow-hidden">
-        <ScrollArea className="h-[400px] flex-grow pr-4" ref={scrollAreaRef}>
-            <div className="space-y-4">
-                {isLoading ? (
-                    <div className="space-y-4">
-                        <Skeleton className="h-16 w-3/4"/>
-                        <Skeleton className="h-12 w-1/2 ml-auto"/>
-                        <Skeleton className="h-20 w-2/3"/>
+      <CardContent className="flex-1 overflow-auto">
+        <Accordion type="single" collapsible defaultValue="global">
+          {channels.map(channel => (
+             <AccordionItem value={channel.id} key={channel.id}>
+                <AccordionTrigger>
+                    <div className="flex items-center gap-2">
+                        <channel.icon className="w-4 h-4"/>
+                        {channel.name}
                     </div>
-                ) : messages && messages.length > 0 ? (
-                     messages.map(msg => (
-                        <ChatMessage key={msg.id} message={msg} isCurrentUser={msg.userId === authUser?.uid} />
-                    ))
-                ) : (
-                    <p className="text-center text-muted-foreground pt-12">No messages yet. Be the first to speak!</p>
-                )}
-            </div>
-        </ScrollArea>
+                </AccordionTrigger>
+                <AccordionContent>
+                    <ChatChannel 
+                        guild={guild}
+                        channelId={channel.id}
+                        channelName={channel.name}
+                        messages={messagesByChannel[channel.id] || []}
+                        currentUser={currentUserData}
+                        isLoading={isLoading}
+                    />
+                </AccordionContent>
+             </AccordionItem>
+          ))}
+        </Accordion>
       </CardContent>
-      <CardFooter>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex w-full items-center space-x-2">
-          <Input 
-            {...form.register('message')} 
-            placeholder="Type a message..." 
-            autoComplete="off"
-            disabled={isSending}
-          />
-          <Button type="submit" size="icon" disabled={isSending}>
-            {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </form>
-      </CardFooter>
     </Card>
   );
 }
+
+    

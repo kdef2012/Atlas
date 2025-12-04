@@ -214,7 +214,10 @@ service cloud.firestore {
          * @principle     Scoped access based on a parent document's data using `get()`.
          */
         match /messages/{messageId} {
-            allow read, write: if isGuildMember(guildId);
+            allow read: if isGuildMember(guildId);
+            allow write: if isGuildMember(guildId) 
+                            && request.resource.data.userId == request.auth.uid
+                            && request.resource.data.channel is string;
             allow delete: if isAdmin();
         }
     }
@@ -280,3 +283,5 @@ service cloud.firestore {
     }
   }
 }
+
+    

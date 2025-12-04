@@ -96,6 +96,7 @@ export interface Message {
   timestamp: number;
   userId: string;
   userName: string;
+  channel: string;
 }
 
 export interface Guild {
@@ -198,5 +199,7 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
+
+    
 
     

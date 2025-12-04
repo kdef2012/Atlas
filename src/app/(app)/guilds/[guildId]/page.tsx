@@ -4,7 +4,7 @@
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, doc, query, where } from 'firebase/firestore';
-import type { Guild, User, Trait, Skill } from '@/lib/types';
+import type { Guild, User, Trait, Skill, Fireteam } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -147,3 +147,5 @@ export default function GuildDetailsPage({ params }: { params: { guildId: string
     </div>
   );
 }
+
+    
