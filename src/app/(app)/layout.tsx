@@ -26,36 +26,46 @@ import {
         const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
         const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-        const isLoading = isAuthLoading || isUserDocLoading;
+        const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
         useEffect(() => {
           // Wait until all loading is complete before making any decisions
-          if (!isLoading && authUser) {
-            // If the user is authenticated but has no user document in Firestore,
-            // and they are not already trying to onboard, redirect them to the start of onboarding.
-            if (!user && !pathname.startsWith('/onboarding')) {
-              router.push('/onboarding/archetype');
-            }
+          if (isLoading) {
+            return;
           }
+
+          // Case 1: No authenticated user. Redirect to login.
+          if (!authUser) {
+            return redirect('/login');
+          }
+
+          // Case 2: Authenticated user, but no user document found in Firestore.
+          // This means they are a new user who hasn't completed onboarding.
+          if (!user && !pathname.startsWith('/onboarding')) {
+              router.push('/onboarding/archetype');
+          }
+
+          // Case 3: Existing user trying to access onboarding. Redirect to dashboard.
+          if (user && pathname.startsWith('/onboarding')) {
+            router.push('/dashboard');
+          }
+
         }, [isLoading, authUser, user, pathname, router]);
 
-        // If auth has finished loading and there's no user, they must log in.
-        if (!isAuthLoading && !authUser) {
-          return redirect('/login');
-        }
-
-        // Show a loading skeleton while waiting for user data, but not on onboarding pages
-        if (isLoading && !pathname.startsWith('/onboarding')) {
+        // While initial authentication is happening, show a full-screen loader.
+        // This prevents showing the app layout to a user who will be redirected.
+        if (isAuthLoading) {
           return (
             <div className="flex h-screen w-screen items-center justify-center">
               <Skeleton className="h-16 w-16 rounded-full" />
             </div>
           );
         }
-
-        // If a user with a document tries to go back to onboarding, send them to the dashboard.
-        if (user && pathname.startsWith('/onboarding')) {
-          return redirect('/dashboard');
+        
+        // After auth is checked, if there's no user, we've already started the redirect.
+        // We can render null or a loader to prevent a flash of content.
+        if (!authUser) {
+            return null;
         }
 
         // If all checks pass, render the main app.

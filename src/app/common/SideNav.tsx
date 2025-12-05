@@ -187,10 +187,10 @@ export function SideNav() {
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
            {displayUser && 'avatarStyle' in displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
-           {displayUser && (!('avatarStyle' in displayUser) || !displayUser.avatarStyle) && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
+           {displayUser && (!('avatarStyle' in displayUser) || !(displayUser as User).avatarStyle) && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{displayUser?.userName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">Level { 'level' in displayUser ? displayUser?.level : 0}</p>
+              <p className="text-xs text-muted-foreground">Level { (displayUser && 'level' in displayUser) ? displayUser?.level : 0}</p>
             </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>

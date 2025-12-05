@@ -19,6 +19,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const isLoading = isAuthLoading || (authUser && isAdminDocLoading);
 
   // If auth is done and there's no logged-in user, redirect.
+  // This is a failsafe, as AppLayout should already handle this.
   if (!isAuthLoading && !authUser) {
     return redirect('/login');
   }
