@@ -24,8 +24,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
+  // The isLoading check is the most critical part. It now correctly waits for both
+  // auth to be resolved AND the user document fetch to be attempted.
   const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
+  // 1. Strict Loading Gate: Render a loader and do nothing else until all data is settled.
+  // This prevents any premature redirects.
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -37,24 +41,34 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // After loading, if there's no authenticated user, they must log in.
+  // 2. Unauthenticated Gate: If loading is finished and there's no authUser, they must log in.
   if (!authUser) {
     return redirect('/login');
   }
-
-  // After loading, if there IS an authenticated user but NO user document,
-  // they are a new user who must complete onboarding.
-  // We check that they aren't an admin, as admins might not have a /users doc.
-  if (!user && authUser.email !== 'kdef2012@gmail.com' && !pathname.startsWith('/onboarding')) {
-    return redirect('/onboarding/archetype');
-  }
-
-  // After loading, if an existing user lands on an onboarding page, redirect them to the dashboard.
-  if (user && pathname.startsWith('/onboarding')) {
-    return redirect('/dashboard');
+  
+  // We check for admin status *after* the main loading is done.
+  const isAdmin = authUser.email === 'kdef2012@gmail.com';
+  
+  // Special routing for admin users.
+  if (isAdmin) {
+    // If an admin is not in the admin section, redirect them there.
+    if (!pathname.startsWith('/admin')) {
+      return redirect('/admin');
+    }
+  } else {
+    // 3. New User Gate: If it's not an admin, and the user doc doesn't exist, they need to onboard.
+    // This now only runs AFTER isLoading is false, guaranteeing 'user' is truly null and not just loading.
+    if (!user && !pathname.startsWith('/onboarding')) {
+      return redirect('/onboarding/archetype');
+    }
+  
+    // 4. Existing User Gate: If an existing user lands on onboarding, send them to the dashboard.
+    if (user && pathname.startsWith('/onboarding')) {
+      return redirect('/dashboard');
+    }
   }
   
-  // If all checks pass, render the main app.
+  // 5. If all checks pass, render the main app.
   return (
     <SidebarProvider>
       <Sidebar>
