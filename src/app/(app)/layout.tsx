@@ -35,7 +35,6 @@ import {
           }
       
           // Case 1: No authenticated user. Redirect to login.
-          // This should be handled, but it's a good safeguard.
           if (!authUser) {
             return redirect('/login');
           }
@@ -62,6 +61,7 @@ import {
             <div className="flex h-screen w-screen items-center justify-center">
               <Skeleton className="h-16 w-16 rounded-full" />
             </div>
+
           );
         }
         
