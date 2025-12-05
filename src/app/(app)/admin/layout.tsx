@@ -2,11 +2,12 @@
 'use client';
 import type { ReactNode } from "react";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect } from "next/navigation";
+import Link from 'next/link';
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { ShieldOff, Loader2 } from "lucide-react";
+import { ShieldOff, Loader2, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -37,7 +38,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <Alert variant="destructive" className="max-w-lg">
                 <ShieldOff className="h-4 w-4" />
                 <AlertTitle>Access Denied</AlertTitle>
-                <AlertDescription>You do not have the required permissions to view the admin dashboard.</AlertDescription>
+                <AlertDescription className="mb-4">
+                    You do not have the required permissions to view the admin dashboard.
+                </AlertDescription>
+                <Button asChild variant="outline">
+                    <Link href="/">
+                        <Home className="mr-2 h-4 w-4" />
+                        Return to Home
+                    </Link>
+                </Button>
             </Alert>
         </div>
     );
