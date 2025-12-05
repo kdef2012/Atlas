@@ -29,8 +29,10 @@ service cloud.firestore {
     // ADMINS COLLECTION
     // Admins have their own collection for clear and simple privilege checks.
     match /admins/{adminId} {
-      allow read, write: if isAdmin(); // Only other admins can manage the admin list.
-      allow create: if request.auth.uid == 'cufv3LPlRpbVIamqpBKBZ6AeKQH3'; // Allow initial admin creation by a specific UID if needed, or manage via console.
+      allow read: if isOwner(adminId) || isAdmin();
+      allow write: if isAdmin(); // Only other admins can manage the admin list.
+      // Allow initial admin creation by a specific UID if needed, or manage via console.
+      allow create: if request.auth.uid == 'cufv3LPlRpbVIamqpBKBZ6AeKQH3'; 
     }
     
     // USERS COLLECTION
@@ -109,5 +111,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
