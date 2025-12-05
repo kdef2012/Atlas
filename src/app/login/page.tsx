@@ -44,8 +44,6 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const isAdminLogin = values.email === 'kdef2012@gmail.com';
-
       if (authMode === AuthMode.SignUp) {
         await createUserWithEmailAndPassword(auth, values.email, values.password);
         toast({
@@ -60,12 +58,8 @@ export default function LoginPage() {
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-        // On sign-in, redirect based on role
-        if (isAdminLogin) {
-          router.push('/admin');
-        } else {
-          router.push('/dashboard');
-        }
+        // On sign-in, always redirect to dashboard. AppLayout will handle routing to /admin if needed.
+        router.push('/dashboard');
       }
 
     } catch (error: any) {

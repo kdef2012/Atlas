@@ -1,3 +1,4 @@
+
 'use client';
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -8,116 +9,66 @@ import {
     SidebarInset,
       SidebarProvider,
       } from "@/components/ui/sidebar";
-      import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+      import { useUser, useDoc, useMemoFirebase } from "@/firebase";
       import { redirect, useRouter, usePathname } from "next/navigation";
       import { Skeleton } from "@/components/ui/skeleton";
       import { useFirestore } from "@/firebase/provider";
-      import { collection, doc } from "firebase/firestore";
+      import { doc } from "firebase/firestore";
       import type { User } from "@/lib/types";
       import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
       export default function AppLayout({ children }: { children: ReactNode }) {
         const { user: authUser, isUserLoading: isAuthLoading } = useUser();
-          const firestore = useFirestore();
-            const router = useRouter();
-              const pathname = usePathname();
+        const firestore = useFirestore();
+        const router = useRouter();
+        const pathname = usePathname();
 
-                const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-                  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+        const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+        const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-                    const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
-                      const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
+        const isLoading = isAuthLoading || isUserDocLoading;
 
-                        // ✅ Keep this for skeleton display
-                          const isLoading = isAuthLoading || (authUser && (isUserDocLoading || isAdminDocLoading));
-                            const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
+        useEffect(() => {
+          // Wait until all loading is complete before making any decisions
+          if (!isLoading && authUser) {
+            // If the user is authenticated but has no user document in Firestore,
+            // and they are not already trying to onboard, redirect them to the start of onboarding.
+            if (!user && !pathname.startsWith('/onboarding')) {
+              router.push('/onboarding/archetype');
+            }
+          }
+        }, [isLoading, authUser, user, pathname, router]);
 
-                              useEffect(() => {
-                                  // ✅ FIX: Explicitly check if ALL loading is complete
-                                      const authFinishedLoading = !isAuthLoading;
-                                          const userDocFinishedLoading = authUser ? !isUserDocLoading : true;
-                                              const adminDocFinishedLoading = authUser ? !isAdminDocLoading : true;
-                                                  const allFinishedLoading = authFinishedLoading && userDocFinishedLoading && adminDocFinishedLoading;
+        // If auth has finished loading and there's no user, they must log in.
+        if (!isAuthLoading && !authUser) {
+          return redirect('/login');
+        }
 
-                                                      // 🔍 DEBUG - Remove after confirming fix works
-                                                          console.log('🔍 AppLayout State:', {
-                                                                authFinishedLoading,
-                                                                      userDocFinishedLoading,
-                                                                            adminDocFinishedLoading,
-                                                                                  allFinishedLoading,
-                                                                                        isAdminLogin,
-                                                                                              hasUser: !!user,
-                                                                                                    hasAdmin: !!adminData,
-                                                                                                          pathname,
-                                                                                                              });
+        // Show a loading skeleton while waiting for user data, but not on onboarding pages
+        if (isLoading && !pathname.startsWith('/onboarding')) {
+          return (
+            <div className="flex h-screen w-screen items-center justify-center">
+              <Skeleton className="h-16 w-16 rounded-full" />
+            </div>
+          );
+        }
 
-                                                                                                                  // ✅ Only make decisions after ALL loading is complete
-                                                                                                                      if (allFinishedLoading && authUser) {
-                                                                                                                            if (isAdminLogin) {
-                                                                                                                                    // If the user is the designated admin but has no admin document, create one.
-                                                                                                                                            if (!adminData) {
-                                                                                                                                                      console.log('🔧 Creating admin document for:', authUser.email);
-                                                                                                                                                                const adminCollection = collection(firestore, 'admins');
-                                                                                                                                                                          const newAdminDocRef = doc(adminCollection, authUser.uid);
-                                                                                                                                                                                    // This is a special, one-time setup for the super admin.
-                                                                                                                                                                                              setDocumentNonBlocking(newAdminDocRef, {
-                                                                                                                                                                                                          id: authUser.uid,
-                                                                                                                                                                                                                      email: authUser.email,
-                                                                                                                                                                                                                                  userName: 'SuperAdmin',
-                                                                                                                                                                                                                                              createdAt: Date.now(),
-                                                                                                                                                                                                                                                        }, {});
-                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                      } else if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-                                                                                                                                                                                                                                                                              // ✅ FIXED: Only redirect when we're SURE there's no user doc (not just loading)
-                                                                                                                                                                                                                                                                                      // If a regular user is logged in but has no user document, send to onboarding.
-                                                                                                                                                                                                                                                                                              console.log('🔄 No user document - redirecting to onboarding');
-                                                                                                                                                                                                                                                                                                      router.push('/onboarding/archetype');
-                                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                                                }
-                                                                                                                                                                                                                                                                                                                  }, [
-                                                                                                                                                                                                                                                                                                                      isAuthLoading, 
-                                                                                                                                                                                                                                                                                                                          isUserDocLoading, 
-                                                                                                                                                                                                                                                                                                                              isAdminDocLoading, 
-                                                                                                                                                                                                                                                                                                                                  authUser, 
-                                                                                                                                                                                                                                                                                                                                      user, 
-                                                                                                                                                                                                                                                                                                                                          adminData, 
-                                                                                                                                                                                                                                                                                                                                              isAdminLogin, 
-                                                                                                                                                                                                                                                                                                                                                  router, 
-                                                                                                                                                                                                                                                                                                                                                      pathname, 
-                                                                                                                                                                                                                                                                                                                                                          firestore
-                                                                                                                                                                                                                                                                                                                                                            ]);
+        // If a user with a document tries to go back to onboarding, send them to the dashboard.
+        if (user && pathname.startsWith('/onboarding')) {
+          return redirect('/dashboard');
+        }
 
-                                                                                                                                                                                                                                                                                                                                                              // If auth has loaded but there's no authenticated user, send to login.
-                                                                                                                                                                                                                                                                                                                                                                if (!isAuthLoading && !authUser) {
-                                                                                                                                                                                                                                                                                                                                                                    return redirect('/login');
-                                                                                                                                                                                                                                                                                                                                                                      }
-
-                                                                                                                                                                                                                                                                                                                                                                        // While the initial user authentication or Firestore documents are loading, show a skeleton.
-                                                                                                                                                                                                                                                                                                                                                                          if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-                                                                                                                                                                                                                                                                                                                                                                              return (
-                                                                                                                                                                                                                                                                                                                                                                                    <div className="flex h-screen w-screen items-center justify-center">
-                                                                                                                                                                                                                                                                                                                                                                                            <Skeleton className="h-16 w-16 rounded-full" />
-                                                                                                                                                                                                                                                                                                                                                                                                  </div>
-                                                                                                                                                                                                                                                                                                                                                                                                      );
-                                                                                                                                                                                                                                                                                                                                                                                                        }
-
-                                                                                                                                                                                                                                                                                                                                                                                                          // If an existing user tries to access onboarding, send them to the dashboard.
-                                                                                                                                                                                                                                                                                                                                                                                                            if (user && pathname.startsWith('/onboarding')) {
-                                                                                                                                                                                                                                                                                                                                                                                                                return redirect('/dashboard');
-                                                                                                                                                                                                                                                                                                                                                                                                                  }
-                                                                                                                                                                                                                                                                                                                                                                                                                    
-                                                                                                                                                                                                                                                                                                                                                                                                                      // The AdminLayout is a child of this layout and will handle its own UI and logic for admins.
-                                                                                                                                                                                                                                                                                                                                                                                                                        // For non-admins, this layout provides the main app structure.
-                                                                                                                                                                                                                                                                                                                                                                                                                          return (
-                                                                                                                                                                                                                                                                                                                                                                                                                              <SidebarProvider>
-                                                                                                                                                                                                                                                                                                                                                                                                                                    <Sidebar>
-                                                                                                                                                                                                                                                                                                                                                                                                                                            <SideNav />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                  </Sidebar>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                        <SidebarInset>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                <AnnouncementBanner />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                        <AppHeader />
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <main className="p-4 md:p-8 flex-1">{children}</main>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      </SidebarInset>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          </SidebarProvider>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            );
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            }
+        // If all checks pass, render the main app.
+        return (
+          <SidebarProvider>
+            <Sidebar>
+              <SideNav />
+            </Sidebar>
+            <SidebarInset>
+              <AnnouncementBanner />
+              <AppHeader />
+              <main className="p-4 md:p-8 flex-1">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+        );
+      }
