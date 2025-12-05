@@ -23,15 +23,17 @@ export default function VerifyPage() {
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Query for unverified logs that have a photo and were NOT submitted by the current user
+  // Query for unverified logs that have a photo.
+  // We can't filter out the current user's logs here because Firestore
+  // does not allow two '!=' or 'not-in' filters in the same query.
+  // We will filter them out on the client side.
   const unverifiedLogsQuery = useMemoFirebase(() => {
     if (!authUser) return null;
     return query(
       collectionGroup(firestore, 'logs'), 
       where('isVerified', '==', false),
       where('verificationPhotoUrl', '!=', ''),
-      where('userId', '!=', authUser.uid), // Exclude own submissions
-      limit(10) // Limit to 10 to prevent fetching too many at once
+      limit(20) // Fetch a bit more to account for client-side filtering
     )
   }, [firestore, authUser]);
 
@@ -39,15 +41,15 @@ export default function VerifyPage() {
 
   useEffect(() => {
     async function fetchSubmissionDetails() {
-      if (logs) {
+      if (logs && authUser) {
         setIsLoading(true);
         const detailedSubmissions: Submission[] = [];
 
-        for (const log of logs) {
-          try {
-            // No need to process logs from the current user, as they are pre-filtered.
-            if (authUser && log.userId === authUser.uid) continue;
+        // Filter out the current user's own logs on the client.
+        const filteredLogs = logs.filter(log => log.userId !== authUser.uid);
 
+        for (const log of filteredLogs) {
+          try {
             const skillRef = doc(firestore, 'skills', log.skillId);
             const userRef = doc(firestore, 'users', log.userId);
 
@@ -65,7 +67,7 @@ export default function VerifyPage() {
             console.error("Error fetching submission details:", error);
           }
         }
-        setSubmissions(detailedSubmissions);
+        setSubmissions(detailedSubmissions.slice(0, 10)); // Limit to 10 after processing
         setIsLoading(false);
       } else if (!isLoadingLogs) {
         // If logs are done loading and are null/empty
