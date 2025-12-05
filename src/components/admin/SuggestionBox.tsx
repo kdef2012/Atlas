@@ -17,27 +17,34 @@ import { useToast } from '@/hooks/use-toast';
 export function SuggestionBox() {
     const firestore = useFirestore();
     const { toast } = useToast();
-    const { user: authUser } = useUser();
+    const { user: authUser, isUserLoading: isAuthLoading } = useUser();
     
     // Get user document to check admin status
     const userRef = useMemoFirebase(
         () => authUser ? doc(firestore, 'users', authUser.uid) : null,
         [firestore, authUser]
     );
-    const { data: userData, isLoading: userLoading } = useDoc<User>(userRef);
+    const { data: userData, isLoading: isUserDocLoading } = useDoc<User>(userRef);
     
-    // ✅ Only create query if user is a confirmed admin
+    // ✅ ONLY create query if user is a confirmed admin. Otherwise, it's null.
     const suggestionsQuery = useMemoFirebase(() => {
-        return userData?.isAdmin ? query(
-            collection(firestore, 'suggestions'), 
-            where('isArchived', '==', false), 
-            orderBy('timestamp', 'desc')
-        ) : null;
-    }, [firestore, userData?.isAdmin]);
+        if (userData && userData.isAdmin) {
+            return query(
+                collection(firestore, 'suggestions'), 
+                where('isArchived', '==', false), 
+                orderBy('timestamp', 'desc')
+            );
+        }
+        return null; // Return null if not admin, preventing the query from running
+    }, [firestore, userData]);
     
-    const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
+    // useCollection is now safe to use with a potentially null query
+    const { data: suggestions, isLoading: areSuggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
+    
+    const isLoading = isAuthLoading || isUserDocLoading || areSuggestionsLoading;
     
     const handleArchive = (id: string) => {
+        if (!firestore) return;
         const suggestionRef = doc(firestore, 'suggestions', id);
         updateDocumentNonBlocking(suggestionRef, { isArchived: true });
         toast({
@@ -46,8 +53,8 @@ export function SuggestionBox() {
         });
     };
 
-    // Wait for user document to load to check permissions
-    if (userLoading) {
+    // Initial loading state while we verify admin status
+    if (isAuthLoading || isUserDocLoading) {
         return (
             <Card className="h-full flex flex-col">
                 <CardHeader>
@@ -66,7 +73,7 @@ export function SuggestionBox() {
         );
     }
 
-    // ✅ Don't render if not admin, even after loading
+    // After loading, if user is not admin, show nothing.
     if (!userData?.isAdmin) {
         return null;
     }
@@ -82,7 +89,7 @@ export function SuggestionBox() {
             </CardHeader>
             <CardContent className="flex-grow overflow-hidden">
                 <ScrollArea className="h-96 pr-4">
-                    {suggestionsLoading ? (
+                    {areSuggestionsLoading ? (
                         <div className="space-y-4">
                             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
                         </div>
