@@ -20,15 +20,15 @@ export function SuggestionBox() {
     const { user: authUser, isUserLoading: isAuthLoading } = useUser();
     
     // Get user document to check admin status
-    const userRef = useMemoFirebase(
-        () => authUser ? doc(firestore, 'users', authUser.uid) : null,
+    const adminRef = useMemoFirebase(
+        () => authUser ? doc(firestore, 'admins', authUser.uid) : null,
         [firestore, authUser]
     );
-    const { data: userData, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+    const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
     
     // ✅ ONLY create query if user is a confirmed admin. Otherwise, it's null.
     const suggestionsQuery = useMemoFirebase(() => {
-        if (userData && userData.isAdmin) {
+        if (adminData) {
             return query(
                 collection(firestore, 'suggestions'), 
                 where('isArchived', '==', false), 
@@ -36,12 +36,12 @@ export function SuggestionBox() {
             );
         }
         return null; // Return null if not admin, preventing the query from running
-    }, [firestore, userData]);
+    }, [firestore, adminData]);
     
     // useCollection is now safe to use with a potentially null query
     const { data: suggestions, isLoading: areSuggestionsLoading } = useCollection<Suggestion>(suggestionsQuery);
     
-    const isLoading = isAuthLoading || isUserDocLoading || areSuggestionsLoading;
+    const isLoading = isAuthLoading || isAdminDocLoading || (adminData && areSuggestionsLoading);
     
     const handleArchive = (id: string) => {
         if (!firestore) return;
@@ -54,7 +54,7 @@ export function SuggestionBox() {
     };
 
     // Initial loading state while we verify admin status
-    if (isAuthLoading || isUserDocLoading) {
+    if (isAuthLoading || isAdminDocLoading) {
         return (
             <Card className="h-full flex flex-col">
                 <CardHeader>
@@ -74,7 +74,7 @@ export function SuggestionBox() {
     }
 
     // After loading, if user is not admin, show nothing.
-    if (!userData?.isAdmin) {
+    if (!adminData) {
         return null;
     }
 
