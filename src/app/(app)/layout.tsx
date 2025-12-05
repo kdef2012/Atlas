@@ -9,11 +9,11 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
 import { redirect, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
-import { doc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
@@ -26,23 +26,37 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
+
+  const isLoading = isAuthLoading || (authUser && (isUserDocLoading || isAdminDocLoading));
+  const isAdminUser = authUser?.email === 'kdef2012@gmail.com';
 
   useEffect(() => {
-    // This is the main redirection logic for new users.
-    if (!isLoading && authUser && !user) {
-      // ** CRITICAL FIX **: Do NOT redirect the designated admin user to onboarding.
-      // Let the AdminLayout handle their existence.
-      if (authUser.email === 'kdef2012@gmail.com') {
-        return;
-      }
-
-      // Do not redirect if they are already in onboarding or trying to access admin pages.
-      if (!pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+    // This is the main redirection logic for new users and admin setup.
+    if (!isLoading && authUser) {
+      if (isAdminUser) {
+        // If the user is the designated admin but has no admin document, create one.
+        if (!adminData) {
+            const adminCollection = collection(firestore, 'admins');
+            const newAdminDocRef = doc(adminCollection, authUser.uid);
+            setDocumentNonBlocking(newAdminDocRef, {
+                id: authUser.uid,
+                email: authUser.email,
+                userName: 'SuperAdmin',
+                createdAt: Date.now(),
+            }, {});
+        }
+        // Always ensure admin is routed to the admin section, not user onboarding.
+        if (!pathname.startsWith('/admin')) {
+            router.push('/admin');
+        }
+      } else if (!user && !pathname.startsWith('/onboarding')) {
+        // If a regular user is logged in but has no user document, send to onboarding.
         router.push('/onboarding/archetype');
       }
     }
-  }, [isLoading, authUser, user, router, pathname]);
+  }, [isLoading, authUser, user, adminData, isAdminUser, router, pathname, firestore]);
 
 
   // If auth has loaded but there's no authenticated user, send to login.
@@ -51,7 +65,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   // While the initial user authentication or Firestore document is loading, show a skeleton.
-  if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+  if (isLoading && !pathname.startsWith('/onboarding')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -64,7 +78,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return redirect('/dashboard');
   }
   
-  // The AdminLayout is a child of this layout and will handle its own UI and logic.
+  // The AdminLayout is a child of this layout and will handle its own UI and logic for admins.
+  // For non-admins, this layout provides the main app structure.
   return (
     <SidebarProvider>
       <Sidebar>

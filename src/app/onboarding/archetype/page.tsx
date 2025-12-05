@@ -4,13 +4,13 @@
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
 import type { Archetype } from '@/lib/types';
 import { Bot, Mountain, Zap } from 'lucide-react';
-import { useFirestore, useUser } from '@/firebase';
+import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 const archetypes: {
   name: Archetype;
@@ -43,6 +43,14 @@ export default function ArchetypeSelectionPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: authUser } = useUser();
+  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
+
+  useEffect(() => {
+      // **CRITICAL FIX**: If the admin user somehow lands here, redirect them immediately.
+      if (isAdminLogin) {
+          router.replace('/admin');
+      }
+  }, [isAdminLogin, router]);
   
   const handleSelectArchetype = async (archetype: Archetype) => {
     if (!authUser) {
@@ -54,11 +62,17 @@ export default function ArchetypeSelectionPage() {
         router.push('/login');
         return;
     }
+    
+    // This check is now redundant because of the useEffect, but it's good for safety.
+    if (isAdminLogin) {
+        toast({ title: 'Redirecting to Admin Dashboard...' });
+        router.replace('/admin');
+        return;
+    }
       
     const now = Date.now();
     const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
-    // For regular users, create a document in the /users collection
     const newUserRef = doc(firestore, 'users', authUser.uid);
     setDocumentNonBlocking(
       newUserRef,
@@ -82,12 +96,17 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: false, // Default to false for all new users from this flow
+        isAdmin: false, 
       },
       { merge: true }
     );
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
+  
+  // Don't render the page content if we're about to redirect the admin.
+  if (isAdminLogin) {
+      return null;
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">

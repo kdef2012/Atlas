@@ -86,5 +86,3 @@
     "reasoning": "The Firestore data structure is designed for clear separation of concerns and scalable security. Regular user data is in `/users/{userId}`. A new, separate `/admins/{adminId}` collection is introduced to cleanly distinguish administrators, eliminating complex security rule checks. Publicly readable data like skills, fireteams, and guilds are in top-level collections for easy access, while their write permissions are tightly controlled. This architecture simplifies security rules, enhances data integrity, and provides a robust foundation for the application's features."
   }
 }
-
-    

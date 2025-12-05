@@ -7,16 +7,16 @@ import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { ShieldOff, Loader2 } from "lucide-react";
-import type { User } from "@/lib/types";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
-  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: userData, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+  // Point to the /admins collection for verification
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+  const isLoading = isAuthLoading || (authUser && isAdminDocLoading);
 
   // If auth is done and there's no logged-in user, redirect.
   if (!isAuthLoading && !authUser) {
@@ -35,8 +35,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // After loading, if the user document doesn't have isAdmin: true, deny access.
-  if (!userData?.isAdmin) {
+  // After loading, if the admin document doesn't exist, deny access.
+  if (!adminData) {
     return (
         <div className="flex h-screen w-screen items-center justify-center p-4">
             <Alert variant="destructive" className="max-w-lg">
@@ -48,6 +48,6 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // If all checks pass (authenticated and an admin), render the admin content.
+  // If all checks pass, render the admin content.
   return <>{children}</>;
 }
