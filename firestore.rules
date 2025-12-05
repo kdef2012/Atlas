@@ -30,9 +30,8 @@ service cloud.firestore {
     // Admins have their own collection for clear and simple privilege checks.
     match /admins/{adminId} {
       allow read: if isOwner(adminId) || isAdmin();
-      allow write: if isAdmin(); // Only other admins can manage the admin list.
-      // Allow initial admin creation by a specific UID if needed, or manage via console.
-      allow create: if request.auth.uid == 'cufv3LPlRpbVIamqpBKBZ6AeKQH3'; 
+      // Allow an admin to manage other admins, or a user to create their own admin record.
+      allow write: if isAdmin() || isOwner(adminId);
     }
     
     // USERS COLLECTION
