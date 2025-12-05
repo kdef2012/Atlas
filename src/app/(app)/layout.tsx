@@ -35,7 +35,7 @@ import {
           }
 
           // **ADMIN HOT-PATH**: If the user is the known admin, immediately send to the admin dashboard.
-          if (authUser && authUser.email === 'kclan30@gmail.com') {
+          if (authUser && authUser.email === 'kdef2012@gmail.com') {
             if (!pathname.startsWith('/admin')) {
               router.push('/admin');
             }
@@ -76,7 +76,7 @@ import {
         }
 
         // If a new user is being redirected to onboarding, show a loader to prevent content flash.
-        if (!user && !pathname.startsWith('/onboarding') && authUser.email !== 'kclan30@gmail.com') {
+        if (!user && !pathname.startsWith('/onboarding') && authUser.email !== 'kdef2012@gmail.com') {
             return (
                 <div className="flex h-screen w-screen items-center justify-center">
                     <Skeleton className="h-16 w-16 rounded-full" />
