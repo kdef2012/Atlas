@@ -3,11 +3,111 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      // WARNING: These rules are insecure and for development only.
-      // They allow anyone, authenticated or not, to read and write to your entire database.
-      // Re-enable security rules before going to production.
-      allow read, write: if true;
+
+    // HELPER FUNCTIONS
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isFireteamMember(fireteamId) {
+      return isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+    }
+
+    function isGuildMember(guildId) {
+      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
+    }
+
+    // ADMINS COLLECTION
+    // Admins have their own collection for clear and simple privilege checks.
+    match /admins/{adminId} {
+      allow read, write: if isAdmin(); // Only other admins can manage the admin list.
+      allow create: if request.auth.uid == 'cufv3LPlRpbVIamqpBKBZ6AeKQH3'; // Allow initial admin creation by a specific UID if needed, or manage via console.
+    }
+    
+    // USERS COLLECTION
+    match /users/{userId} {
+      allow get, list: if isSignedIn(); // Allow any signed-in user to read profiles (for fireteams, leaderboards etc.)
+      allow create: if isOwner(userId); // A user can create their own profile.
+      allow update: if isOwner(userId) || isAdmin(); // A user can update their own profile, or an admin can.
+      allow delete: if isAdmin(); // Only admins can delete user accounts.
+
+      // USER SUB-COLLECTIONS (LOGS, QUESTS)
+      match /{subcollection}/{docId} {
+        allow read, write, create, update, delete: if isOwner(userId) || isAdmin();
+      }
+    }
+
+    // SKILLS COLLECTION
+    match /skills/{skillId} {
+      allow get, list: if true; // Skills are public knowledge.
+      allow create: if isSignedIn(); // Any user can pioneer a new skill.
+      allow update, delete: if isAdmin(); // Only admins can curate skills.
+    }
+
+    // FIRETEAMS COLLECTION
+    match /fireteams/{fireteamId} {
+      allow get, list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isFireteamMember(fireteamId) || isAdmin(); // Members or admins can update.
+      allow delete: if isAdmin(); // Only admins can delete fireteams.
+
+      // FIRETEAM MESSAGES
+      match /messages/{messageId} {
+        allow read, write: if isFireteamMember(fireteamId);
+        allow delete: if isAdmin();
+      }
+    }
+
+    // GUILDS COLLECTION
+    match /guilds/{guildId} {
+      allow get, list: if isSignedIn();
+      allow create: if isAdmin(); // Guilds are created based on pioneered skills, managed by admin/system.
+      allow update: if isGuildMember(guildId) || isAdmin(); // Members or admins can update.
+      allow delete: if isAdmin();
+      
+      // GUILD MESSAGES
+      match /messages/{messageId} {
+        allow read, write: if isGuildMember(guildId);
+        allow delete: if isAdmin();
+      }
+    }
+
+    // PUBLIC/ADMIN-MANAGED COLLECTIONS
+    match /territories/{territoryId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /traits/{traitId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /suggestions/{suggestionId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
+    }
+
+    match /events/{eventId} {
+      allow get, list: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /store-items/{itemId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
     }
   }
 }
+
+    

@@ -40,7 +40,7 @@ export interface User {
   level: number;
   xp: number;
   fireteamId?: string;
-  guilds?: Record<string, boolean>; // Changed from guildId
+  guilds?: Record<string, boolean>;
   userSkills: Record<string, UserSkillData>;
   avatarLayers?: Partial<Record<string, boolean>>;
   momentumFlameActive: boolean;
@@ -49,8 +49,16 @@ export interface User {
   traits?: Partial<Record<string, boolean>>;
   verificationVotes?: number;
   region?: string;
-  isAdmin?: boolean; // <-- ADDED
 }
+
+// A new, separate type for Admin users
+export interface AdminUser {
+    id: string;
+    email: string;
+    userName: string;
+    createdAt: number;
+}
+
 
 export interface Skill {
   id:string;
@@ -200,11 +208,5 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
-
-    
-
-    
-
-    
 
     

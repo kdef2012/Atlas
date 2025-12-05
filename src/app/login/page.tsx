@@ -45,6 +45,8 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       let userCredential;
+      const isAdminLogin = values.email === 'kdef2012@gmail.com';
+
       if (authMode === AuthMode.SignUp) {
         userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
         toast({
@@ -60,7 +62,7 @@ export default function LoginPage() {
       }
 
       // On success, redirect to the correct dashboard.
-      if (userCredential.user.email === 'kdef2012@gmail.com') {
+      if (isAdminLogin) {
         router.push('/admin');
       } else {
         router.push('/dashboard');
@@ -166,3 +168,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

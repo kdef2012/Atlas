@@ -45,7 +45,6 @@ export default function ArchetypeSelectionPage() {
   const { user: authUser } = useUser();
   
   const handleSelectArchetype = async (archetype: Archetype) => {
-    // If there's no authenticated user, they must log in or sign up first.
     if (!authUser) {
         toast({
             variant: 'destructive',
@@ -56,13 +55,28 @@ export default function ArchetypeSelectionPage() {
         return;
     }
       
-    const newUserRef = doc(firestore, 'users', authUser.uid);
     const now = Date.now();
     const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
-    // Check if the user's email is the designated admin email
-    const isAdmin = authUser.email === 'kdef2012@gmail.com';
+    // Check if the user is the designated admin
+    if (authUser.email === 'kdef2012@gmail.com') {
+        const adminRef = doc(firestore, 'admins', authUser.uid);
+        setDocumentNonBlocking(
+            adminRef,
+            {
+                id: authUser.uid,
+                email: authUser.email,
+                userName: userName,
+                createdAt: now,
+            },
+            { merge: true }
+        );
+        router.push('/admin');
+        return;
+    }
 
+    // For regular users, create a document in the /users collection
+    const newUserRef = doc(firestore, 'users', authUser.uid);
     setDocumentNonBlocking(
       newUserRef,
       {
@@ -85,7 +99,6 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: isAdmin,
       },
       { merge: true }
     );
@@ -130,3 +143,5 @@ export default function ArchetypeSelectionPage() {
     </main>
   );
 }
+
+    
