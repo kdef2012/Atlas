@@ -103,7 +103,8 @@ service cloud.firestore {
      * @principle     Restricts access to a user's own data tree and prevents user enumeration.
      */
     match /users/{userId} {
-      allow get: if isOwner(userId) || isAdmin();
+      // ** FIX: Allow a user to read their own document to break circular dependency for isAdmin() check. **
+      allow get: if isOwner(userId);
       // Allow anyone to perform a list for counting, but not read individual docs.
       allow list: if true;
       allow create: if isOwner(userId) && request.resource.data.id == userId;
@@ -275,3 +276,5 @@ service cloud.firestore {
     }
   }
 }
+
+    
