@@ -26,30 +26,33 @@ import {
         const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
         const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-        const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+        const isLoading = isAuthLoading || isUserDocLoading;
 
         useEffect(() => {
-          // Wait until all loading is complete before making any decisions
+          // Wait until all loading is complete before making any decisions.
           if (isLoading) {
             return;
           }
-
+      
           // Case 1: No authenticated user. Redirect to login.
+          // This should be handled, but it's a good safeguard.
           if (!authUser) {
             return redirect('/login');
           }
-
+      
           // Case 2: Authenticated user, but no user document found in Firestore.
           // This means they are a new user who hasn't completed onboarding.
+          // Only redirect if they are not already in the onboarding flow.
           if (!user && !pathname.startsWith('/onboarding')) {
-              router.push('/onboarding/archetype');
+            router.push('/onboarding/archetype');
+            return;
           }
-
+      
           // Case 3: Existing user trying to access onboarding. Redirect to dashboard.
           if (user && pathname.startsWith('/onboarding')) {
             router.push('/dashboard');
+            return;
           }
-
         }, [isLoading, authUser, user, pathname, router]);
 
         // While initial authentication is happening, show a full-screen loader.
@@ -67,6 +70,17 @@ import {
         if (!authUser) {
             return null;
         }
+
+        // If a new user is being redirected to onboarding, show a loader
+        // to prevent a flash of the dashboard content.
+        if (authUser && !user && !pathname.startsWith('/onboarding')) {
+            return (
+                <div className="flex h-screen w-screen items-center justify-center">
+                    <Skeleton className="h-16 w-16 rounded-full" />
+                </div>
+            );
+        }
+
 
         // If all checks pass, render the main app.
         return (
