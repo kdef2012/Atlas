@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useCollection, useMemoFirebase, useUser } from "@/firebase";
@@ -29,6 +30,7 @@ export function AnnouncementBanner() {
     const activeEvent = useMemo(() => {
         if (!events) return null;
         const now = Date.now();
+        // The sort is important to ensure we get the most recently created event if multiple are active.
         const sortedEvents = events.sort((a, b) => b.startAt - a.startAt);
         return sortedEvents.find(event => event.startAt <= now && event.endAt > now) || null;
     }, [events]);
@@ -49,3 +51,4 @@ export function AnnouncementBanner() {
         </div>
     );
 }
+
