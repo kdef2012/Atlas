@@ -29,14 +29,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
   useEffect(() => {
-    // **ADMIN HOT-PATH**: If the user is the known admin, immediately send to the admin dashboard.
-    // This check is safe to run early because it doesn't depend on the user doc.
-    if (authUser && authUser.email === 'kdef2012@gmail.com') {
-      if (!pathname.startsWith('/admin')) {
-        router.push('/admin');
-      }
-      return;
-    }
+    // This effect handles the core routing logic for authenticated users.
+
+    // If the admin user is on a non-admin page, we let them.
+    // The admin layout itself protects the /admin routes.
+    // The SideNav provides the link back to the admin dashboard.
+    // So, we don't need a special redirect for the admin here.
 
     // Wait until ALL loading is fully complete before making any other decisions.
     if (isLoading) {
@@ -48,9 +46,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       return redirect('/login');
     }
 
-    // After loading, if there IS an authenticated user but NO user document,
-    // it means they are a new user who needs to complete onboarding.
-    if (authUser && !user && !pathname.startsWith('/onboarding')) {
+    // After loading, if there IS an authenticated user but NO user document
+    // AND they are not the special admin user, they need to complete onboarding.
+    if (authUser && !user && authUser.email !== 'kdef2012@gmail.com' && !pathname.startsWith('/onboarding')) {
       router.push('/onboarding/archetype');
       return;
     }
