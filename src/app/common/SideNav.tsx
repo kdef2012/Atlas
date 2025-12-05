@@ -85,7 +85,7 @@ export function SideNav() {
   const handleLogout = () => {
     if (!auth) return;
     signOut(auth).then(() => {
-      router.push('/login');
+      router.push('/');
     });
   }
 
