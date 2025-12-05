@@ -60,17 +60,6 @@ export default function ArchetypeSelectionPage() {
     
     // Check if the user is the designated admin
     if (authUser.email === 'kdef2012@gmail.com') {
-        const adminRef = doc(firestore, 'admins', authUser.uid);
-        setDocumentNonBlocking(
-            adminRef,
-            {
-                id: authUser.uid,
-                email: authUser.email,
-                userName: userName,
-                createdAt: now,
-            },
-            { merge: true }
-        );
         router.push('/admin');
         return;
     }
@@ -99,6 +88,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
+        isAdmin: authUser.email === 'kdef2012@gmail.com', // Set admin flag
       },
       { merge: true }
     );
@@ -108,9 +98,9 @@ export default function ArchetypeSelectionPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
        <div className="absolute top-4 right-4 z-20">
-        <Button asChild variant="ghost">
+        <Button asChild variant="link">
           <Link href="/login">
-            Admin Login
+            Already have an account? Log In
           </Link>
         </Button>
       </div>
@@ -143,5 +133,3 @@ export default function ArchetypeSelectionPage() {
     </main>
   );
 }
-
-    

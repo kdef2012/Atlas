@@ -53,19 +53,20 @@ export default function LoginPage() {
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
         });
+        // For new users, always go to onboarding
+        router.push('/onboarding/archetype');
       } else {
         userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-      }
-
-      // On success, redirect to the correct dashboard.
-      if (isAdminLogin) {
-        router.push('/admin');
-      } else {
-        router.push('/dashboard');
+        // On sign-in, redirect based on role
+        if (isAdminLogin) {
+          router.push('/admin');
+        } else {
+          router.push('/dashboard');
+        }
       }
 
     } catch (error: any) {
@@ -168,5 +169,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
