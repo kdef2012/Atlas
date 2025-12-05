@@ -48,7 +48,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { Button } from "../ui/button";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -87,6 +86,7 @@ export function SideNav() {
   }
 
   const isAdmin = user?.isAdmin === true;
+  const isViewingAdminSection = pathname.startsWith('/admin');
 
   return (
     <>
@@ -100,24 +100,9 @@ export function SideNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname === item.href}
-                tooltip={{ children: item.label, side: "right" }}
-              >
-                <Link href={item.href}>
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-           {isAdmin && (
-            <>
-                <SidebarSeparator className="my-2" />
-                 <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
+          {isViewingAdminSection && isAdmin ? (
+             <>
+                <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
                 {adminNavItems.map((item) => (
                      <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -132,6 +117,51 @@ export function SideNav() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
+                <SidebarSeparator className="my-2" />
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname === '/dashboard'}
+                        tooltip={{ children: 'User Dashboard', side: "right" }}
+                    >
+                        <Link href={'/dashboard'}>
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span>User View</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             </>
+          ) : (
+             navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                    tooltip={{ children: item.label, side: "right" }}
+                >
+                    <Link href={item.href}>
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))
+          )}
+           {isAdmin && !isViewingAdminSection && (
+            <>
+                <SidebarSeparator className="my-2" />
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith('/admin')}
+                        tooltip={{ children: 'Admin Dashboard', side: "right" }}
+                    >
+                        <Link href={'/admin'}>
+                        <Shield className="w-5 h-5" />
+                        <span>Admin View</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
             </>
           )}
         </SidebarMenu>
@@ -140,13 +170,13 @@ export function SideNav() {
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
            {user && <TwinskieAvatar user={user} size="sm" showInactiveLabel={false} />}
-            <div className="group-data-[collapsible=icon]:hidden flex-1">
+            <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
             </div>
-             <AlertDialog>
+            <AlertDialog>
                 <AlertDialogTrigger asChild>
-                    <button className="group-data-[collapsible=icon]:hidden text-muted-foreground hover:text-destructive">
+                    <button className="ml-auto group-data-[collapsible=icon]:hidden text-muted-foreground hover:text-destructive">
                         <LogOut className="w-5 h-5" />
                     </button>
                 </AlertDialogTrigger>
@@ -160,7 +190,7 @@ export function SideNav() {
                     <AlertDialogFooter>
                     <AlertDialogCancel>Stay in ATLAS</AlertDialogCancel>
                     <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
-                        good bye atlas!
+                        Sign Out
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

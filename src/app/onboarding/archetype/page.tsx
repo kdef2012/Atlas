@@ -58,12 +58,6 @@ export default function ArchetypeSelectionPage() {
     const now = Date.now();
     const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
-    // Check if the user is the designated admin
-    if (authUser.email === 'kdef2012@gmail.com') {
-        router.push('/admin');
-        return;
-    }
-
     // For regular users, create a document in the /users collection
     const newUserRef = doc(firestore, 'users', authUser.uid);
     setDocumentNonBlocking(
@@ -88,7 +82,7 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        isAdmin: authUser.email === 'kdef2012@gmail.com', // Set admin flag
+        isAdmin: false, // Default to false for all new users from this flow
       },
       { merge: true }
     );

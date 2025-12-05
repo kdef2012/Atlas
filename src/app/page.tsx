@@ -68,15 +68,6 @@ export default function LandingPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background text-foreground overflow-hidden">
-      
-      <div className="absolute top-4 right-4 z-20">
-        <Button asChild variant="ghost">
-          <Link href="/login">
-            <Shield className="mr-2 h-4 w-4" />
-            Admin / User Login
-          </Link>
-        </Button>
-      </div>
 
       <motion.div
         initial={{ opacity: 0 }}
