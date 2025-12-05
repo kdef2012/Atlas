@@ -6,11 +6,9 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { User, Shield } from "lucide-react";
 import { AnalyticsOverview } from "@/components/admin/AnalyticsOverview";
 import { UserList } from "@/components/admin/UserList";
-import { SuggestionBox } from '@/components/admin/SuggestionBox';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ArchetypeDistributionChart } from '@/components/admin/ArchetypeDistributionChart';
 import { EconomicHealth } from '@/components/admin/EconomicHealth';
-import { SuggestionDialog } from '@/components/admin/SuggestionDialog';
 
 function AdminDashboardContent() {
   return (
@@ -24,7 +22,6 @@ function AdminDashboardContent() {
       <div className="lg:col-span-1 space-y-6">
         <ArchetypeDistributionChart />
         <EconomicHealth />
-        <SuggestionBox />
       </div>
     </div>
   );
@@ -44,7 +41,6 @@ export default function AdminPage() {
                             Manage users, view analytics, and oversee the ATLAS application.
                         </CardDescription>
                     </div>
-                    <SuggestionDialog />
                 </CardHeader>
             </Card>
             <Suspense fallback={<Skeleton className="h-[500px] w-full" />}>

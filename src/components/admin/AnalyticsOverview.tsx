@@ -5,9 +5,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useCollection, useMemoFirebase, useUser, useDoc } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { collection, doc } from "firebase/firestore";
-import type { User, Skill, Fireteam, Guild, Suggestion } from "@/lib/types";
+import type { User, Skill, Fireteam, Guild } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
-import { Users, Atom, Users2, Building2, MessageSquare } from "lucide-react";
+import { Users, Atom, Users2, Building2 } from "lucide-react";
 
 function StatCard({ title, value, icon: Icon, isLoading }: { title: string, value: number, icon: React.ElementType, isLoading: boolean }) {
     return (
@@ -31,13 +31,10 @@ export function AnalyticsOverview() {
     const firestore = useFirestore();
     const { user: authUser, isUserLoading: isAuthLoading } = useUser();
     
-    const userRef = useMemoFirebase(
-        () => authUser ? doc(firestore, 'users', authUser.uid) : null,
-        [firestore, authUser]
-    );
-    const { data: userData, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+    const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+    const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-    const shouldQuery = userData?.isAdmin === true;
+    const shouldQuery = !!adminData;
 
     const usersCollection = useMemoFirebase(
         () => shouldQuery ? collection(firestore, 'users') : null,
@@ -63,25 +60,18 @@ export function AnalyticsOverview() {
     );
     const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(guildsCollection);
     
-    const suggestionsCollection = useMemoFirebase(
-        () => shouldQuery ? collection(firestore, 'suggestions') : null,
-        [firestore, shouldQuery]
-    );
-    const { data: suggestions, isLoading: suggestionsLoading } = useCollection<Suggestion>(suggestionsCollection);
-
-    const isLoading = isAuthLoading || isUserDocLoading || (shouldQuery && (usersLoading || skillsLoading || fireteamsLoading || guildsLoading || suggestionsLoading));
+    const isLoading = isAuthLoading || isAdminDocLoading || (shouldQuery && (usersLoading || skillsLoading || fireteamsLoading || guildsLoading));
 
     if (!shouldQuery && !isLoading) {
         return null; // Don't render if not an admin and not loading
     }
     
     return (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <StatCard title="Total Users" value={users?.length || 0} icon={Users} isLoading={isLoading} />
             <StatCard title="Pioneered Skills" value={skills?.length || 0} icon={Atom} isLoading={isLoading} />
             <StatCard title="Active Fireteams" value={fireteams?.length || 0} icon={Users2} isLoading={isLoading} />
             <StatCard title="Established Guilds" value={guilds?.length || 0} icon={Building2} isLoading={isLoading} />
-            <StatCard title="Suggestions" value={suggestions?.length || 0} icon={MessageSquare} isLoading={isLoading} />
         </div>
     )
 }

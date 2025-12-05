@@ -15,8 +15,7 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // Use .get() to safely access the isAdmin field. Default to false if it doesn't exist.
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('isAdmin', false) == true;
+      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
     }
 
     function isFireteamMember(fireteamId) {
@@ -27,6 +26,14 @@ service cloud.firestore {
       return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
     }
 
+    // ADMINS COLLECTION
+    // Admins have their own collection for clear and simple privilege checks.
+    match /admins/{adminId} {
+      allow read: if isOwner(adminId) || isAdmin();
+      // Allow an admin to manage other admins, or a user to create their own admin record.
+      allow write: if isAdmin() || isOwner(adminId);
+    }
+    
     // USERS COLLECTION
     match /users/{userId} {
       allow get: if isOwner(userId); // A user can only get their own document.
@@ -85,12 +92,6 @@ service cloud.firestore {
     match /traits/{traitId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
-    }
-
-    match /suggestions/{suggestionId} {
-      allow get, list: if isAdmin();
-      allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
     }
 
     match /events/{eventId} {

@@ -7,139 +7,44 @@
       "type": "object",
       "description": "Represents a user in the ATLAS application.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the User entity."
-        },
-        "archetype": {
-          "type": "string",
-          "description": "The user's chosen archetype (e.g., Titan, Sage, Maverick)."
-        },
-        "email": {
-          "type": "string",
-          "description": "The user's email address.",
-          "format": "email"
-        },
-        "userName": {
-          "type": "string",
-          "description": "The user's display name or username."
-        },
-        "gender": {
-          "type": "string",
-          "enum": ["Male", "Female"],
-          "description": "The user's selected gender identity."
-        },
-        "avatarStyle": {
-          "type": "string",
-          "description": "The user's selected avatar style."
-        },
-        "avatarUrl": {
-            "type": "string",
-            "description": "The URL for the user's selected avatar portrait."
-        },
-        "physicalStat": {
-          "type": "number",
-          "description": "The user's physical skill points"
-        },
-        "mentalStat": {
-          "type": "number",
-          "description": "The user's mental skill points."
-        },
-        "socialStat": {
-          "type": "number",
-          "description": "The user's social skill points."
-        },
-        "practicalStat": {
-          "type": "number",
-          "description": "The user's practical skill points."
-        },
-        "creativeStat": {
-          "type": "number",
-          "description": "The user's creative skill points."
-        },
-        "fireteamId": {
-          "type": "string",
-          "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)"
-        },
-        "guilds": {
-            "type": "object",
-            "description": "A map of Guild IDs this user belongs to. Keys are guild IDs, values are true.",
-            "patternProperties": {
-                "^[a-zA-Z0-9_]+$": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "lastLogTimestamp": {
-          "type": "number",
-          "description": "The Unix timestamp of the user's last logged activity."
-        },
-        "quests": {
-          "type": "array",
-          "items": {
-            "$ref": "#/backend/entities/Quest"
-          }
-        },
-        "userSkills": {
-          "type": "object",
-          "description": "A map of skills the user has interacted with, tracking unlock status and XP. Keys are skill IDs.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_]+$": {
-              "type": "object",
-              "properties": {
-                "isUnlocked": {
-                  "type": "boolean"
-                },
-                "xp": {
-                  "type": "number"
-                }
-              },
-              "required": ["isUnlocked", "xp"]
-            }
-          }
-        },
-        "avatarLayers": {
-          "type": "object",
-          "description": "A map of visual layers active on the user's avatar. Keys are layer names, values are true.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_]+$": {
-              "type": "boolean"
-            }
-          }
-        },
-        "momentumFlameActive": {
-            "type": "boolean",
-            "description": "Whether the user's daily activity streak (Momentum Flame) is active."
-        },
-        "gems": {
-            "type": "number",
-            "description": "The user's balance of premium currency."
-        },
-        "streakFreezes": {
-            "type": "number",
-            "description": "The number of streak-repair items the user owns."
-        },
-        "traits": {
-            "type": "object",
-            "description": "A map of traits the user has earned. Keys are trait IDs, values are true.",
-            "patternProperties": {
-                "^[a-zA-Z0-9_]+$": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "verificationVotes": {
-            "type": "number",
-            "description": "The total number of verification votes this user has cast."
-        },
-        "isAdmin": {
-            "type": "boolean",
-            "description": "Whether the user has admin privileges."
-        }
+        "id": { "type": "string", "description": "Unique identifier for the User entity." },
+        "archetype": { "type": "string", "description": "The user's chosen archetype (e.g., Titan, Sage, Maverick)." },
+        "email": { "type": "string", "description": "The user's email address.", "format": "email" },
+        "userName": { "type": "string", "description": "The user's display name or username." },
+        "gender": { "type": "string", "enum": ["Male", "Female"], "description": "The user's selected gender identity." },
+        "avatarStyle": { "type": "string", "description": "The user's selected avatar style." },
+        "avatarUrl": { "type": "string", "description": "The URL for the user's selected avatar portrait." },
+        "physicalStat": { "type": "number", "description": "The user's physical skill points" },
+        "mentalStat": { "type": "number", "description": "The user's mental skill points." },
+        "socialStat": { "type": "number", "description": "The user's social skill points." },
+        "practicalStat": { "type": "number", "description": "The user's practical skill points." },
+        "creativeStat": { "type": "number", "description": "The user's creative skill points." },
+        "fireteamId": { "type": "string", "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)" },
+        "guilds": { "type": "object", "description": "A map of Guild IDs this user belongs to.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
+        "lastLogTimestamp": { "type": "number", "description": "The Unix timestamp of the user's last logged activity." },
+        "quests": { "type": "array", "items": { "$ref": "#/backend/entities/Quest" } },
+        "userSkills": { "type": "object", "description": "A map of skills the user has interacted with.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "object", "properties": { "isUnlocked": { "type": "boolean" }, "xp": { "type": "number" } }, "required": ["isUnlocked", "xp"] } } },
+        "avatarLayers": { "type": "object", "description": "A map of visual layers active on the user's avatar.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
+        "momentumFlameActive": { "type": "boolean", "description": "Whether the user's daily activity streak (Momentum Flame) is active." },
+        "gems": { "type": "number", "description": "The user's balance of premium currency." },
+        "streakFreezes": { "type": "number", "description": "The number of streak-repair items the user owns." },
+        "traits": { "type": "object", "description": "A map of traits the user has earned.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
+        "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." }
       },
-      "required": [
-        "id"
-      ]
+      "required": ["id"]
+    },
+    "Admin": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Admin",
+        "type": "object",
+        "description": "Represents an administrator user with elevated privileges.",
+        "properties": {
+            "id": { "type": "string", "description": "Unique identifier for the Admin user (matches their auth UID)." },
+            "email": { "type": "string", "format": "email", "description": "The admin's email address." },
+            "userName": { "type": "string", "description": "The admin's display name." },
+            "createdAt": { "type": "number", "description": "The Unix timestamp when the admin account was created." }
+        },
+        "required": ["id", "email", "userName", "createdAt"]
     },
     "Skill": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -147,573 +52,35 @@
       "type": "object",
       "description": "Represents a skill in the Nebula skill tree.",
       "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Skill entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the skill (e.g., 'Coding', 'Running')."
-        },
-        "description": {
-            "type": "string",
-            "description": "A brief description of the skill."
-        },
-        "category": {
-          "type": "string",
-          "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)."
-        },
-        "xp": {
-            "type": "number",
-            "description": "Total XP logged for this skill across all users."
-        },
-        "pioneerUserId": {
-          "type": "string",
-          "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))"
-        },
-        "prerequisites": {
-            "type": "array",
-            "items": {
-                "type": "string"
-            },
-            "description": "An array of skill IDs that must be unlocked before this skill can be acquired."
-        },
-        "cost": {
-          "type": "object",
-          "description": "The cost to unlock this skill.",
-          "properties": {
-            "category": {
-              "type": "string",
-              "enum": ["Physical", "Mental", "Social", "Practical", "Creative"]
-            },
-            "points": {
-              "type": "number"
-            }
-          }
-        },
-        "innovatorAwarded": {
-            "type": "boolean",
-            "description": "A flag to ensure the Innovator trait is only awarded once for this skill."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "category"
-      ]
-    },
-    "Log": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Log",
-      "type": "object",
-      "description": "Represents a user's activity log entry.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Log entity."
-        },
-        "userId": {
-          "type": "string",
-          "description": "Reference to the User who performed the activity. (Relationship: User 1:N Log)"
-        },
-        "skillId": {
-          "type": "string",
-          "description": "Reference to the Skill associated with this log entry. (Relationship: Skill 1:N Log)"
-        },
-        "timestamp": {
-          "type": "string",
-          "description": "The timestamp of when the activity was performed.",
-          "format": "date-time"
-        },
-        "xp": {
-          "type": "number",
-          "description": "The amount of experience points gained from this activity."
-        },
-        "verificationPhotoUrl": {
-          "type": "string",
-          "description": "URL of the photo/video used to verify the activity.",
-          "format": "uri"
-        },
-        "isVerified": {
-          "type": "boolean",
-          "description": "Whether the log entry has been verified by the community."
-        }
-      },
-      "required": [
-        "id",
-        "userId",
-        "skillId",
-        "timestamp",
-        "isVerified"
-      ]
-    },
-    "Fireteam": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Fireteam",
-      "type": "object",
-      "description": "Represents a fireteam (a group of up to 5 users).",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Fireteam entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the fireteam."
-        },
-        "region": {
-          "type": "string",
-          "description": "The region (city) where the fireteam is based."
-        },
-        "state": {
-          "type": "string",
-          "description": "The state where the fireteam is based."
-        },
-        "country": {
-          "type": "string",
-          "description": "The country where the fireteam is based."
-        },
-        "ownerId": {
-          "type": "string",
-          "description": "The user ID of the fireteam's creator."
-        },
-        "members": {
-          "type": "object",
-          "description": "A map of user IDs who are members of this fireteam. Keys are user IDs, values are true.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_]+$": {
-              "type": "boolean"
-            }
-          }
-        },
-        "streakActive": {
-            "type": "boolean",
-            "description": "Whether the Fireteam's Soul Link is active."
-        },
-        "streakStartDate": {
-            "type": "number",
-            "description": "The Unix timestamp when the current active streak began."
-        }
-      },
-      "required": [
-        "id",
-        "ownerId"
-      ]
-    },
-    "Message": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Message",
-      "type": "object",
-      "description": "Represents a chat message within a Fireteam or Guild.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "text": {
-          "type": "string"
-        },
-        "timestamp": {
-          "type": "number"
-        },
-        "userId": {
-          "type": "string"
-        },
-        "userName": {
-          "type": "string"
-        },
-        "channel": {
-          "type": "string",
-          "description": "The specific chat channel (e.g., global, USA, NY, NYC)"
-        }
-      },
-      "required": ["id", "text", "timestamp", "userId", "userName", "channel"]
-    },
-    "Quest": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Quest",
-      "type": "object",
-      "description": "Represents a quest assigned to a user.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Quest entity."
-        },
-        "name": {
-          "type": "string",
-          "description": "The name of the quest."
-        },
-        "description": {
-          "type": "string",
-          "description": "A description of what the user needs to do to complete the quest."
-        },
-        "category": {
-          "type": "string",
-          "description": "The skill category this quest is related to (e.g., Physical, Mental)."
-        },
-        "isCompleted": {
-          "type": "boolean",
-          "description": "Whether the user has completed the quest."
-        },
-        "userId": {
-          "type": "string",
-          "description": "The ID of the user this quest is assigned to."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "category",
-        "isCompleted",
-        "userId"
-      ]
-    },
-    "Territory": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Territory",
-      "type": "object",
-      "description": "Represents a Faction Challenge that Fireteams can compete in.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Territory Challenge."
-        },
-        "faction": {
-          "type": "string",
-          "enum": ["Physical", "Mental", "Social", "Practical", "Creative"],
-          "description": "The skill category this challenge is associated with."
-        },
-        "challengeDescription": {
-          "type": "string",
-          "description": "A description of the challenge (e.g., 'Log the most running distance this week')."
-        },
-        "endsAt": {
-            "type": "number",
-            "description": "The Unix timestamp when the challenge ends."
-        },
-        "scores": {
-          "type": "object",
-          "description": "A map of Fireteam IDs to their scores in this challenge.",
-          "patternProperties": {
-            "^[a-zA-Z0-9_]+$": {
-              "type": "number"
-            }
-          }
-        },
-        "awarded": {
-          "type": "boolean",
-          "description": "A flag to track if the 'State Best' trait has been awarded for this challenge cycle."
-        }
-      },
-      "required": [
-        "id",
-        "faction",
-        "challengeDescription",
-        "endsAt"
-      ]
-    },
-    "Trait": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Trait",
-      "type": "object",
-      "description": "Represents a personality trait or achievement a user can earn.",
-      "properties": {
-        "id": {
-          "type": "string",
-          "description": "Unique identifier for the Trait (e.g., 'pioneer', 'innovator')."
-        },
-        "name": {
-          "type": "string",
-          "description": "The display name of the trait (e.g., 'Pioneer')."
-        },
-        "description": {
-          "type": "string",
-          "description": "A brief description of what the trait represents."
-        },
-        "icon": {
-          "type": "string",
-          "description": "The key for the lucide-react icon associated with this trait."
-        }
-      },
-      "required": [
-        "id",
-        "name",
-        "description",
-        "icon"
-      ]
-    },
-    "Guild": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Guild",
-        "type": "object",
-        "description": "Represents a large, global community focused on a specific skill, with a collective weekly challenge.",
-        "properties": {
-            "id": { "type": "string", "description": "Unique identifier for the Guild." },
-            "name": { "type": "string", "description": "The name of the Guild (e.g., 'Guild of Running')." },
-            "skillId": { "type": "string", "description": "The ID of the skill this guild is associated with." },
-            "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"], "description": "The skill category this Guild is focused on." },
-            "region": { "type": "string", "description": "The region where the Guild was first founded." },
-            "members": {
-                "type": "object",
-                "description": "A map of user IDs who are members of this Guild. Keys are user IDs, values are true.",
-                "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } }
-            },
-            "challengeGoal": { "type": "number", "description": "The collective XP target for the current weekly challenge." },
-            "challengeProgress": { "type": "number", "description": "The current collective XP contributed by all members." },
-            "challengeEndsAt": { "type": "number", "description": "The Unix timestamp when the current challenge cycle ends." },
-            "isBuffActive": { "type": "boolean", "description": "Whether the Guild-wide XP buff is currently active." }
-        },
-        "required": ["id", "name", "skillId", "category", "region", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"]
-    },
-    "Suggestion": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Suggestion",
-        "type": "object",
-        "description": "Represents a user-submitted suggestion for the app.",
-        "properties": {
-            "id": { "type": "string" },
-            "userId": { "type": "string" },
-            "userName": { "type": "string" },
-            "suggestion": { "type": "string" },
-            "timestamp": { "type": "number" },
-            "isArchived": { "type": "boolean" }
-        },
-        "required": ["id", "userId", "userName", "suggestion", "timestamp", "isArchived"]
-    },
-    "GlobalEvent": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Global Event",
-      "type": "object",
-      "description": "Represents a limited-time global event for all users.",
-      "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the event." },
-        "title": { "type": "string", "description": "The name of the event." },
-        "description": { "type": "string", "description": "A brief explanation of the event." },
-        "startAt": { "type": "number", "description": "The Unix timestamp when the event starts." },
-        "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." },
-        "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." },
-        "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." },
-        "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." },
-        "hasBanner": { "type": "boolean", "description": "A flag indicating if a banner message exists, for efficient querying." }
-      },
-      "required": ["id", "title", "description", "startAt", "endAt", "isActive"]
-    },
-    "StoreItem": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Store Item",
-      "type": "object",
-      "description": "Represents an item available for purchase in the store.",
-      "properties": {
-        "id": { "type": "string" },
-        "name": { "type": "string" },
-        "description": { "type": "string" },
-        "price": { "type": "number" },
-        "icon": { "type": "string", "description": "The name of the lucide-react icon to display." },
-        "layerKey": { "type": "string", "description": "The key to use in the user's avatarLayers map." }
-      },
-      "required": ["id", "name", "description", "price", "icon", "layerKey"]
-    }
+        "id": { "type": "string", "description": "Unique identifier for the Skill entity." }, "name": { "type": "string", "description": "The name of the skill (e.g., 'Coding', 'Running')." }, "description": { "type": "string", "description": "A brief description of the skill." }, "category": { "type": "string", "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)." }, "xp": { "type": "number", "description": "Total XP logged for this skill across all users." }, "pioneerUserId": { "type": "string", "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))" }, "prerequisites": { "type": "array", "items": { "type": "string" }, "description": "An array of skill IDs that must be unlocked before this skill can be acquired." }, "cost": { "type": "object", "description": "The cost to unlock this skill.", "properties": { "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"] }, "points": { "type": "number" } } }, "innovatorAwarded": { "type": "boolean", "description": "A flag to ensure the Innovator trait is only awarded once for this skill." } }, "required": ["id", "name", "category"] },
+    "Log": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Log", "type": "object", "description": "Represents a user's activity log entry.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Log entity." }, "userId": { "type": "string", "description": "Reference to the User who performed the activity. (Relationship: User 1:N Log)" }, "skillId": { "type": "string", "description": "Reference to the Skill associated with this log entry. (Relationship: Skill 1:N Log)" }, "timestamp": { "type": "string", "description": "The timestamp of when the activity was performed.", "format": "date-time" }, "xp": { "type": "number", "description": "The amount of experience points gained from this activity." }, "verificationPhotoUrl": { "type": "string", "description": "URL of the photo/video used to verify the activity.", "format": "uri" }, "isVerified": { "type": "boolean", "description": "Whether the log entry has been verified by the community." } }, "required": ["id", "userId", "skillId", "timestamp", "isVerified"] },
+    "Fireteam": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Fireteam", "type": "object", "description": "Represents a fireteam (a group of up to 5 users).", "properties": { "id": { "type": "string", "description": "Unique identifier for the Fireteam entity." }, "name": { "type": "string", "description": "The name of the fireteam." }, "region": { "type": "string", "description": "The region (city) where the fireteam is based." }, "state": { "type": "string", "description": "The state where the fireteam is based." }, "country": { "type": "string", "description": "The country where the fireteam is based." }, "ownerId": { "type": "string", "description": "The user ID of the fireteam's creator." }, "members": { "type": "object", "description": "A map of user IDs who are members of this fireteam. Keys are user IDs, values are true.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } }, "streakActive": { "type": "boolean", "description": "Whether the Fireteam's Soul Link is active." }, "streakStartDate": { "type": "number", "description": "The Unix timestamp when the current active streak began." } }, "required": ["id", "ownerId"] },
+    "Message": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Message", "type": "object", "description": "Represents a chat message within a Fireteam or Guild.", "properties": { "id": { "type": "string" }, "text": { "type": "string" }, "timestamp": { "type": "number" }, "userId": { "type": "string" }, "userName": { "type": "string" }, "channel": { "type": "string", "description": "The specific chat channel (e.g., global, USA, NY, NYC)" } }, "required": ["id", "text", "timestamp", "userId", "userName", "channel"] },
+    "Quest": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Quest", "type": "object", "description": "Represents a quest assigned to a user.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Quest entity." }, "name": { "type": "string", "description": "The name of the quest." }, "description": { "type": "string", "description": "A description of what the user needs to do to complete the quest." }, "category": { "type": "string", "description": "The skill category this quest is related to (e.g., Physical, Mental)." }, "isCompleted": { "type": "boolean", "description": "Whether the user has completed the quest." }, "userId": { "type": "string", "description": "The ID of the user this quest is assigned to." } }, "required": ["id", "name", "description", "category", "isCompleted", "userId"] },
+    "Territory": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Territory", "type": "object", "description": "Represents a Faction Challenge that Fireteams can compete in.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Territory Challenge." }, "faction": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"], "description": "The skill category this challenge is associated with." }, "challengeDescription": { "type": "string", "description": "A description of the challenge (e.g., 'Log the most running distance this week')." }, "endsAt": { "type": "number", "description": "The Unix timestamp when the challenge ends." }, "scores": { "type": "object", "description": "A map of Fireteam IDs to their scores in this challenge.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "number" } } }, "awarded": { "type": "boolean", "description": "A flag to track if the 'State Best' trait has been awarded for this challenge cycle." } }, "required": ["id", "faction", "challengeDescription", "endsAt"] },
+    "Trait": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Trait", "type": "object", "description": "Represents a personality trait or achievement a user can earn.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Trait (e.g., 'pioneer', 'innovator')." }, "name": { "type": "string", "description": "The display name of the trait (e.g., 'Pioneer')." }, "description": { "type": "string", "description": "A brief description of what the trait represents." }, "icon": { "type": "string", "description": "The key for the lucide-react icon associated with this trait." } }, "required": ["id", "name", "description", "icon"] },
+    "Guild": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Guild", "type": "object", "description": "Represents a large, global community focused on a specific skill, with a collective weekly challenge.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Guild." }, "name": { "type": "string", "description": "The name of the Guild (e.g., 'Guild of Running')." }, "skillId": { "type": "string", "description": "The ID of the skill this guild is associated with." }, "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"], "description": "The skill category this Guild is focused on." }, "region": { "type": "string", "description": "The region where the Guild was first founded." }, "members": { "type": "object", "description": "A map of user IDs who are members of this Guild. Keys are user IDs, values are true.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } }, "challengeGoal": { "type": "number", "description": "The collective XP target for the current weekly challenge." }, "challengeProgress": { "type": "number", "description": "The current collective XP contributed by all members." }, "challengeEndsAt": { "type": "number", "description": "The Unix timestamp when the current challenge cycle ends." }, "isBuffActive": { "type": "boolean", "description": "Whether the Guild-wide XP buff is currently active." } }, "required": ["id", "name", "skillId", "category", "region", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"] },
+    "GlobalEvent": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Global Event", "type": "object", "description": "Represents a limited-time global event for all users.", "properties": { "id": { "type": "string", "description": "Unique identifier for the event." }, "title": { "type": "string", "description": "The name of the event." }, "description": { "type": "string", "description": "A brief explanation of the event." }, "startAt": { "type": "number", "description": "The Unix timestamp when the event starts." }, "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." }, "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." }, "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." }, "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." }, "hasBanner": { "type": "boolean", "description": "A flag indicating if a banner message exists, for efficient querying." } }, "required": ["id", "title", "description", "startAt", "endAt", "isActive"] },
+    "StoreItem": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Store Item", "type": "object", "description": "Represents an item available for purchase in the store.", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "number" }, "icon": { "type": "string", "description": "The name of the lucide-react icon to display." }, "layerKey": { "type": "string", "description": "The key to use in the user's avatarLayers map." } }, "required": ["id", "name", "description", "price", "icon", "layerKey"] }
   },
-  "auth": {
-    "providers": [
-      "password"
-    ]
-  },
-  "storage": {
-    "rules": "storage.rules"
-  },
+  "auth": { "providers": ["password"] },
+  "storage": { "rules": "storage.rules" },
   "firestore": {
     "structure": [
-      {
-        "path": "/users/{userId}",
-        "definition": {
-          "entityName": "User",
-          "schema": {
-            "$ref": "#/backend/entities/User"
-          },
-          "description": "Stores user profile data. Path-based ownership enables simple security rules.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/skills/{skillId}",
-        "definition": {
-          "entityName": "Skill",
-          "schema": {
-            "$ref": "#/backend/entities/Skill"
-          },
-          "description": "Stores skill data created by pioneer user.",
-          "params": [
-            {
-              "name": "skillId",
-              "description": "The unique identifier for the skill."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/logs/{logId}",
-        "definition": {
-          "entityName": "Log",
-          "schema": {
-            "$ref": "#/backend/entities/Log"
-          },
-          "description": "Stores logs, for the activities realized by each user and the skills they are trained on. Enables filtering and aggregation of logs based on user and skill.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "logId",
-              "description": "The unique identifier for the log."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/fireteams/{fireteamId}",
-        "definition": {
-          "entityName": "Fireteam",
-          "schema": {
-            "$ref": "#/backend/entities/Fireteam"
-          },
-          "description": "Stores fireteam data. The 'members' map is denormalized for authorization independence, removing the need for `get()` calls in security rules.",
-          "params": [
-            {
-              "name": "fireteamId",
-              "description": "The unique identifier for the fireteam."
-            }
-          ]
-        }
-      },
-       {
-        "path": "/fireteams/{fireteamId}/messages/{messageId}",
-        "definition": {
-          "entityName": "Message",
-          "schema": {
-            "$ref": "#/backend/entities/Message"
-          },
-          "description": "Stores chat messages for a specific Fireteam.",
-          "params": [
-            {
-              "name": "fireteamId",
-              "description": "The unique identifier for the fireteam."
-            },
-            {
-                "name": "messageId",
-                "description": "The unique identifier for the message."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/users/{userId}/quests/{questId}",
-        "definition": {
-          "entityName": "Quest",
-          "schema": {
-            "$ref": "#/backend/entities/Quest"
-          },
-          "description": "Stores personalized quests for each user. Enables private quest tracking and management.",
-          "params": [
-            {
-              "name": "userId",
-              "description": "The unique identifier for the user."
-            },
-            {
-              "name": "questId",
-              "description": "The unique identifier for the quest."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/territories/{territoryId}",
-        "definition": {
-          "entityName": "Territory",
-          "schema": {
-            "$ref": "#/backend/entities/Territory"
-          },
-          "description": "Stores data about Faction Challenges that Fireteams can compete in.",
-          "params": [
-            {
-              "name": "territoryId",
-              "description": "The unique identifier for the territory challenge."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/traits/{traitId}",
-        "definition": {
-          "entityName": "Trait",
-          "schema": {
-            "$ref": "#/backend/entities/Trait"
-          },
-          "description": "Stores global definitions for all available traits.",
-          "params": [
-            {
-              "name": "traitId",
-              "description": "The unique identifier for the trait."
-            }
-          ]
-        }
-      },
-      {
-        "path": "/guilds/{guildId}",
-        "definition": {
-            "entityName": "Guild",
-            "schema": { "$ref": "#/backend/entities/Guild" },
-            "description": "Stores data for large, skill-based communities (Guilds). Includes weekly challenge data.",
-            "params": [{ "name": "guildId", "description": "The unique identifier for the Guild." }]
-        }
-      },
-      {
-        "path": "/guilds/{guildId}/messages/{messageId}",
-        "definition": {
-          "entityName": "Message",
-          "schema": { "$ref": "#/backend/entities/Message" },
-          "description": "Stores chat messages for a specific Guild.",
-          "params": [
-            { "name": "guildId", "description": "The unique identifier for the guild." },
-            { "name": "messageId", "description": "The unique identifier for the message." }
-          ]
-        }
-      },
-      {
-        "path": "/suggestions/{suggestionId}",
-        "definition": {
-            "entityName": "Suggestion",
-            "schema": { "$ref": "#/backend/entities/Suggestion" },
-            "description": "Stores user-submitted suggestions for improving the app.",
-            "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }]
-        }
-      },
-      {
-        "path": "/events/{eventId}",
-        "definition": {
-            "entityName": "GlobalEvent",
-            "schema": { "$ref": "#/backend/entities/GlobalEvent" },
-            "description": "Stores global, limited-time events for all users.",
-            "params": [{ "name": "eventId", "description": "The unique identifier for the event." }]
-        }
-      },
-      {
-        "path": "/store-items/{itemId}",
-        "definition": {
-            "entityName": "StoreItem",
-            "schema": { "$ref": "#/backend/entities/StoreItem" },
-            "description": "Stores cosmetic and functional items available for purchase with Gems.",
-            "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }]
-        }
-      }
+      { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user profile data.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }] } },
+      { "path": "/admins/{adminId}", "definition": { "entityName": "Admin", "schema": { "$ref": "#/backend/entities/Admin" }, "description": "Stores administrator user data.", "params": [{ "name": "adminId", "description": "The unique identifier for the admin." }] } },
+      { "path": "/skills/{skillId}", "definition": { "entityName": "Skill", "schema": { "$ref": "#/backend/entities/Skill" }, "description": "Stores skill data created by pioneer user.", "params": [{ "name": "skillId", "description": "The unique identifier for the skill." }] } },
+      { "path": "/users/{userId}/logs/{logId}", "definition": { "entityName": "Log", "schema": { "$ref": "#/backend/entities/Log" }, "description": "Stores logs for user activities.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "logId", "description": "The unique identifier for the log." }] } },
+      { "path": "/fireteams/{fireteamId}", "definition": { "entityName": "Fireteam", "schema": { "$ref": "#/backend/entities/Fireteam" }, "description": "Stores fireteam data.", "params": [{ "name": "fireteamId", "description": "The unique identifier for the fireteam." }] } },
+      { "path": "/fireteams/{fireteamId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/backend/entities/Message" }, "description": "Stores chat messages for a specific Fireteam.", "params": [{ "name": "fireteamId", "description": "The unique identifier for the fireteam." }, { "name": "messageId", "description": "The unique identifier for the message." }] } },
+      { "path": "/users/{userId}/quests/{questId}", "definition": { "entityName": "Quest", "schema": { "$ref": "#/backend/entities/Quest" }, "description": "Stores personalized quests for each user.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "questId", "description": "The unique identifier for the quest." }] } },
+      { "path": "/territories/{territoryId}", "definition": { "entityName": "Territory", "schema": { "$ref": "#/backend/entities/Territory" }, "description": "Stores data about Faction Challenges.", "params": [{ "name": "territoryId", "description": "The unique identifier for the territory challenge." }] } },
+      { "path": "/traits/{traitId}", "definition": { "entityName": "Trait", "schema": { "$ref": "#/backend/entities/Trait" }, "description": "Stores global definitions for all available traits.", "params": [{ "name": "traitId", "description": "The unique identifier for the trait." }] } },
+      { "path": "/guilds/{guildId}", "definition": { "entityName": "Guild", "schema": { "$ref": "#/backend/entities/Guild" }, "description": "Stores data for large, skill-based communities (Guilds).", "params": [{ "name": "guildId", "description": "The unique identifier for the Guild." }] } },
+      { "path": "/guilds/{guildId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/backend/entities/Message" }, "description": "Stores chat messages for a specific Guild.", "params": [{ "name": "guildId", "description": "The unique identifier for the guild." }, { "name": "messageId", "description": "The unique identifier for the message." }] } },
+      { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
+      { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } }
     ],
-    "reasoning": "The Firestore data structure is designed to support ATLAS's core features with a focus on authorization independence, scalability, and clear data modeling. User data is stored under `/users/{userId}`, enabling simple ownership-based security rules. Skills are stored under `/skills/{skillId}`, created by pioneer users and associated to skills via the Logs. Logs are created under `/users/{userId}/logs/{logId}`, enabling tracking the skills used by users and the XP earned. Fireteams are stored under `/fireteams/{fireteamId}` with denormalized membership data to enforce team-based logic (Soul Link) without complex `get()` calls. Fireteam messages are stored in a sub-collection `/fireteams/{fireteamId}/messages` to enable real-time chat functionality securely scoped to team members. Territories are now Faction Challenges, stored in a top-level collection for public access and competition. Traits are stored globally in `/traits/{traitId}` as they are definitions, while user-specific earned traits are stored within the `/users/{userId}` document itself. Guilds are stored in a new top-level collection `/guilds/{guildId}` to facilitate public discovery and regional filtering. Suggestions are stored in a top-level collection for admins to review.\\n\\nAuthorization Independence is achieved by storing the `userId` directly within the Log documents. The Fireteam `members` map is denormalized so all access control decisions are made locally to the document without requiring server-side `get()` operations.\\n\\nStructural Segregation is applied to private user data (profile, logs) versus shared team data. The Fireteam data has a homogenous security posture in that all members have the same access (read access and write if they are the owner), and is segregated from user data."
+    "reasoning": "The Firestore data structure is designed for clear separation of concerns and scalable security. Regular user data is in `/users/{userId}`. A new, separate `/admins/{adminId}` collection is introduced to cleanly distinguish administrators, eliminating complex security rule checks. Publicly readable data like skills, fireteams, and guilds are in top-level collections for easy access, while their write permissions are tightly controlled. This architecture simplifies security rules, enhances data integrity, and provides a robust foundation for the application's features."
   }
 }
-

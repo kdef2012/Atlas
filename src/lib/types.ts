@@ -129,15 +129,6 @@ export interface Territory {
   awarded?: boolean; // New field to track if State Best trait has been awarded
 }
 
-export interface Suggestion {
-  id: string;
-  userId: string;
-  userName: string;
-  suggestion: string;
-  timestamp: number;
-  isArchived: boolean;
-}
-
 export interface GlobalEvent {
   id: string;
   title: string;
@@ -160,7 +151,7 @@ export interface StoreItem {
 }
 
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Suggestion' | 'Events', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Events', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -172,7 +163,6 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Verify: ShieldCheck,
   Guilds: Building2,
   Store: Store,
-  Suggestion: MessageSquare,
   Events: Megaphone,
 };
 
@@ -208,5 +198,3 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
-
-    
