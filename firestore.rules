@@ -36,8 +36,7 @@ service cloud.firestore {
     
     // USERS COLLECTION
     match /users/{userId} {
-      allow get: if isOwner(userId); // A user can only get their own document.
-      allow list: if true; // Allow anyone to count documents, but not read them.
+      allow read, list: if isSignedIn(); // Allow any signed in user to read/list user profiles.
       allow create: if isOwner(userId); // A user can create their own profile.
       allow update: if isOwner(userId) || isAdmin(); // A user can update their own profile, or an admin can.
       allow delete: if isAdmin(); // Only admins can delete user accounts.
