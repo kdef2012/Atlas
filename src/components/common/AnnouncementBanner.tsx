@@ -9,27 +9,26 @@ import { useState, useMemo } from "react";
 
 export function AnnouncementBanner() {
     const firestore = useFirestore();
-    const { user } = useUser(); // ✅ ADD THIS
+    const { user } = useUser();
     const [isVisible, setIsVisible] = useState(true);
 
-    // ✅ Only create query if user exists (or for public events, just check if firestore is ready)
-    const eventsQuery = useMemoFirebase(() => 
-        // Since events are public (allow list: if true), we can query them
-        // But let's add a check to be safe
-        firestore ? query(
+    const eventsQuery = useMemoFirebase(() => {
+        // Only attempt to query if the user is authenticated, to prevent initial load errors.
+        if (!user) return null;
+        
+        return query(
             collection(firestore, 'events'),
             where('isActive', '==', true),
             where('hasBanner', '==', true),
             limit(5)
-        ) : null,
-    [firestore]);
+        );
+    }, [firestore, user]);
 
     const { data: events, isLoading } = useCollection<GlobalEvent>(eventsQuery);
 
     const activeEvent = useMemo(() => {
         if (!events) return null;
         const now = Date.now();
-        // Sort on the client side
         const sortedEvents = events.sort((a, b) => b.startAt - a.startAt);
         return sortedEvents.find(event => event.startAt <= now && event.endAt > now) || null;
     }, [events]);
