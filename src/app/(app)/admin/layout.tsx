@@ -12,19 +12,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
 
-  // Point to the /admins collection for verification
+  // Point to the /admins collection for verification. This is the crucial check.
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
   const isLoading = isAuthLoading || (authUser && isAdminDocLoading);
 
-  // If auth is done and there's no logged-in user, redirect.
-  // This is a failsafe, as AppLayout should already handle this.
-  if (!isAuthLoading && !authUser) {
-    return redirect('/login');
-  }
-
-  // Show a loading screen while we verify admin status.
+  // While we verify auth and admin status, show a loader.
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -36,8 +30,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // After loading, if the admin document doesn't exist, deny access.
-  if (!adminData) {
+  // After loading, if there is no authenticated user OR the admin document doesn't exist, deny access.
+  if (!authUser || !adminData) {
     return (
         <div className="flex h-screen w-screen items-center justify-center p-4">
             <Alert variant="destructive" className="max-w-lg">

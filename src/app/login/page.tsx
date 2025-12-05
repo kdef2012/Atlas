@@ -58,7 +58,7 @@ export default function LoginPage() {
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-        // On sign-in, always redirect to dashboard. AppLayout will handle routing to /admin if needed.
+        // On sign-in, always redirect to dashboard. AppLayout will handle routing from there.
         router.push('/dashboard');
       }
 

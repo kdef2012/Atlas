@@ -26,22 +26,29 @@ import {
         const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
         const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-        const isLoading = isAuthLoading || isUserDocLoading;
+        const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
         useEffect(() => {
           // Wait until all loading is complete before making any decisions.
           if (isLoading) {
             return;
           }
+
+          // **ADMIN HOT-PATH**: If the user is the known admin, immediately send to the admin dashboard.
+          if (authUser && authUser.email === 'kclan30@gmail.com') {
+            if (!pathname.startsWith('/admin')) {
+              router.push('/admin');
+            }
+            return;
+          }
       
-          // Case 1: No authenticated user. Redirect to login.
+          // Case 1: No authenticated user at all. Redirect to login.
           if (!authUser) {
             return redirect('/login');
           }
       
           // Case 2: Authenticated user, but no user document found in Firestore.
           // This means they are a new user who hasn't completed onboarding.
-          // Only redirect if they are not already in the onboarding flow.
           if (!user && !pathname.startsWith('/onboarding')) {
             router.push('/onboarding/archetype');
             return;
@@ -55,32 +62,27 @@ import {
         }, [isLoading, authUser, user, pathname, router]);
 
         // While initial authentication is happening, show a full-screen loader.
-        // This prevents showing the app layout to a user who will be redirected.
         if (isAuthLoading) {
           return (
             <div className="flex h-screen w-screen items-center justify-center">
               <Skeleton className="h-16 w-16 rounded-full" />
             </div>
-
           );
         }
         
-        // After auth is checked, if there's no user, we've already started the redirect.
-        // We can render null or a loader to prevent a flash of content.
+        // If auth is checked but no user, we've likely started a redirect. Render null.
         if (!authUser) {
             return null;
         }
 
-        // If a new user is being redirected to onboarding, show a loader
-        // to prevent a flash of the dashboard content.
-        if (authUser && !user && !pathname.startsWith('/onboarding')) {
+        // If a new user is being redirected to onboarding, show a loader to prevent content flash.
+        if (!user && !pathname.startsWith('/onboarding') && authUser.email !== 'kclan30@gmail.com') {
             return (
                 <div className="flex h-screen w-screen items-center justify-center">
                     <Skeleton className="h-16 w-16 rounded-full" />
                 </div>
             );
         }
-
 
         // If all checks pass, render the main app.
         return (
