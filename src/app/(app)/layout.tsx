@@ -48,10 +48,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 createdAt: Date.now(),
             }, {});
         }
-        // BUGFIX: The faulty redirect logic was here. It has been removed.
-        // The AdminLayout handles security, and this was preventing navigation
-        // from the admin view to the user view.
-
       } else if (!user && !pathname.startsWith('/onboarding')) {
         // If a regular user is logged in but has no user document, send to onboarding.
         router.push('/onboarding/archetype');

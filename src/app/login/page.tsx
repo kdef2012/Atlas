@@ -44,11 +44,10 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      let userCredential;
       const isAdminLogin = values.email === 'kdef2012@gmail.com';
 
       if (authMode === AuthMode.SignUp) {
-        userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        await createUserWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
@@ -56,7 +55,7 @@ export default function LoginPage() {
         // For new users, always go to onboarding
         router.push('/onboarding/archetype');
       } else {
-        userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+        await signInWithEmailAndPassword(auth, values.email, values.password);
         toast({
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
