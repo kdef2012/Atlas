@@ -74,8 +74,13 @@ export function SideNav() {
   const auth = useAuth();
   const { user: authUser } = useUser();
   const firestore = useFirestore();
+
+  // Check both /users and /admins to determine role and get display info
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user } = useDoc<User>(userRef);
+
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const { data: adminData } = useDoc(adminRef);
 
   const handleLogout = () => {
     signOut(auth).then(() => {
@@ -83,8 +88,17 @@ export function SideNav() {
     });
   }
 
-  const isAdmin = user?.isAdmin === true;
+  // Determine if the user is an admin based on the existence of their doc in /admins
+  const isAdmin = !!adminData;
   const isViewingAdminSection = pathname.startsWith('/admin');
+
+  // Determine what user data to display in the footer
+  const displayUser = isViewingAdminSection && isAdmin ? {
+      ...adminData, // Use admin data
+      level: 99, // Admins are special
+      avatarStyle: undefined, // No avatar for admins in this simple setup
+  } : user;
+
 
   return (
     <>
@@ -105,7 +119,7 @@ export function SideNav() {
                      <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
                             asChild
-                            isActive={pathname === item.href}
+                            isActive={pathname.startsWith(item.href)}
                             tooltip={{ children: item.label, side: "right" }}
                         >
                             <Link href={item.href}>
@@ -134,7 +148,7 @@ export function SideNav() {
                 <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
+                    isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                     tooltip={{ children: item.label, side: "right" }}
                 >
                     <Link href={item.href}>
@@ -167,10 +181,11 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           {user && <TwinskieAvatar user={user} size="sm" showInactiveLabel={false} />}
+           {displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
+           {displayUser && !displayUser.avatarStyle && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
             <div className="group-data-[collapsible=icon]:hidden">
-              <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
-              <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
+              <p className="font-bold text-sm">{displayUser?.userName || 'User'}</p>
+              <p className="text-xs text-muted-foreground">Level {displayUser?.level || 0}</p>
             </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>

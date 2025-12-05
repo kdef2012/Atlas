@@ -30,16 +30,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
   const isLoading = isAuthLoading || (authUser && (isUserDocLoading || isAdminDocLoading));
-  const isAdminUser = authUser?.email === 'kdef2012@gmail.com';
+  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
   useEffect(() => {
     // This is the main redirection logic for new users and admin setup.
     if (!isLoading && authUser) {
-      if (isAdminUser) {
+      if (isAdminLogin) {
         // If the user is the designated admin but has no admin document, create one.
         if (!adminData) {
             const adminCollection = collection(firestore, 'admins');
             const newAdminDocRef = doc(adminCollection, authUser.uid);
+            // This is a special, one-time setup for the super admin.
+            // In a real app, this would be managed by a secure backend process.
             setDocumentNonBlocking(newAdminDocRef, {
                 id: authUser.uid,
                 email: authUser.email,
@@ -56,7 +58,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         router.push('/onboarding/archetype');
       }
     }
-  }, [isLoading, authUser, user, adminData, isAdminUser, router, pathname, firestore]);
+  }, [isLoading, authUser, user, adminData, isAdminLogin, router, pathname, firestore]);
 
 
   // If auth has loaded but there's no authenticated user, send to login.
