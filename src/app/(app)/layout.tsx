@@ -41,7 +41,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             const adminCollection = collection(firestore, 'admins');
             const newAdminDocRef = doc(adminCollection, authUser.uid);
             // This is a special, one-time setup for the super admin.
-            // In a real app, this would be managed by a secure backend process.
             setDocumentNonBlocking(newAdminDocRef, {
                 id: authUser.uid,
                 email: authUser.email,
@@ -49,10 +48,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 createdAt: Date.now(),
             }, {});
         }
-        // Always ensure admin is routed to the admin section, not user onboarding.
-        if (!pathname.startsWith('/admin')) {
-            router.push('/admin');
-        }
+        // BUGFIX: The faulty redirect logic was here. It has been removed.
+        // The AdminLayout handles security, and this was preventing navigation
+        // from the admin view to the user view.
+
       } else if (!user && !pathname.startsWith('/onboarding')) {
         // If a regular user is logged in but has no user document, send to onboarding.
         router.push('/onboarding/archetype');
