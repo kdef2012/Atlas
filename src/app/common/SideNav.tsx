@@ -36,9 +36,20 @@ import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { TwinskieAvatar } from "@/components/twinskie-avatar-openpeeps";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
@@ -73,6 +84,7 @@ export function SideNav() {
   }
 
   const isAdmin = user?.isAdmin === true;
+  const isViewingAdminSection = pathname.startsWith('/admin');
 
   return (
     <>
@@ -86,24 +98,9 @@ export function SideNav() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton
-                asChild
-                isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
-                tooltip={{ children: item.label, side: "right" }}
-              >
-                <Link href={item.href}>
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-           {isAdmin && (
-            <>
-                <SidebarSeparator className="my-2" />
-                 <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
+          {isViewingAdminSection && isAdmin ? (
+             <>
+                <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
                 {adminNavItems.map((item) => (
                      <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton
@@ -118,6 +115,51 @@ export function SideNav() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 ))}
+                <SidebarSeparator className="my-2" />
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname === '/dashboard'}
+                        tooltip={{ children: 'User Dashboard', side: "right" }}
+                    >
+                        <Link href={'/dashboard'}>
+                        <LayoutDashboard className="w-5 h-5" />
+                        <span>User View</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+             </>
+          ) : (
+             navItems.map((item) => (
+                <SidebarMenuItem key={item.href}>
+                <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/')}
+                    tooltip={{ children: item.label, side: "right" }}
+                >
+                    <Link href={item.href}>
+                    <item.icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                    </Link>
+                </SidebarMenuButton>
+                </SidebarMenuItem>
+            ))
+          )}
+           {isAdmin && !isViewingAdminSection && (
+            <>
+                <SidebarSeparator className="my-2" />
+                 <SidebarMenuItem>
+                    <SidebarMenuButton
+                        asChild
+                        isActive={pathname.startsWith('/admin')}
+                        tooltip={{ children: 'Admin Dashboard', side: "right" }}
+                    >
+                        <Link href={'/admin'}>
+                        <Shield className="w-5 h-5" />
+                        <span>Admin View</span>
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
             </>
           )}
         </SidebarMenu>
@@ -130,9 +172,27 @@ export function SideNav() {
               <p className="font-bold text-sm">{user?.userName || 'Username'}</p>
               <p className="text-xs text-muted-foreground">Level {user?.level || 0}</p>
             </div>
-            <button onClick={handleLogout} className="ml-auto group-data-[collapsible=icon]:hidden">
-              <LogOut className="w-5 h-5 text-muted-foreground hover:text-foreground" />
-            </button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <button className="ml-auto group-data-[collapsible=icon]:hidden text-muted-foreground hover:text-destructive">
+                        <LogOut className="w-5 h-5" />
+                    </button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Your journey will be saved, but you will need to sign back in to continue.
+                    </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                    <AlertDialogCancel>Stay in ATLAS</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
+                        Sign Out
+                    </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
       </SidebarFooter>
     </>
