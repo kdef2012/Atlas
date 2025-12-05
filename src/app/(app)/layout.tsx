@@ -24,8 +24,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  // The isLoading check is the most critical part. We must wait for both auth and the user doc read to complete.
-  // We only consider it "not loading" if auth is checked AND, if an authUser exists, their doc has also been checked.
   const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
   if (isLoading) {
@@ -46,7 +44,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   // After loading, if there IS an authenticated user but NO user document,
   // they are a new user who must complete onboarding.
-  // Special case: The admin user might not have a /users doc, so we exclude them from this check.
+  // We check that they aren't an admin, as admins might not have a /users doc.
   if (!user && authUser.email !== 'kdef2012@gmail.com' && !pathname.startsWith('/onboarding')) {
     return redirect('/onboarding/archetype');
   }
