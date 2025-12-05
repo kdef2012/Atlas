@@ -26,7 +26,7 @@ export function SuggestionBox() {
     );
     const { data: userData, isLoading: userLoading } = useDoc<User>(userRef);
     
-    // ✅ Only create query if user is admin
+    // ✅ Only create query if user is a confirmed admin
     const suggestionsQuery = useMemoFirebase(() => {
         return userData?.isAdmin ? query(
             collection(firestore, 'suggestions'), 
@@ -46,7 +46,7 @@ export function SuggestionBox() {
         });
     };
 
-    // Wait for user document to load
+    // Wait for user document to load to check permissions
     if (userLoading) {
         return (
             <Card className="h-full flex flex-col">
@@ -66,7 +66,7 @@ export function SuggestionBox() {
         );
     }
 
-    // ✅ Don't render if not admin
+    // ✅ Don't render if not admin, even after loading
     if (!userData?.isAdmin) {
         return null;
     }
