@@ -63,7 +63,7 @@ const navItems = [
 ];
 
 const adminNavItems = [
-    { href: "/admin", label: "Overview", icon: LayoutDashboard },
+    { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/curation", label: "Curation", icon: Palette },
     { href: "/admin/events", label: "Events", icon: Megaphone },
 ]
@@ -83,8 +83,9 @@ export function SideNav() {
   const { data: adminData } = useDoc(adminRef);
 
   const handleLogout = () => {
+    if (!auth) return;
     signOut(auth).then(() => {
-      router.push('/login');
+      router.push('/');
     });
   }
 
@@ -94,7 +95,9 @@ export function SideNav() {
 
   // Determine what user data to display in the footer
   const displayUser = isViewingAdminSection && isAdmin ? {
-      ...adminData, // Use admin data
+      ...(adminData as object),
+      id: authUser?.uid || '',
+      userName: (adminData as any)?.userName || 'Admin',
       level: 99, // Admins are special
       avatarStyle: undefined, // No avatar for admins in this simple setup
   } : user;
@@ -115,25 +118,27 @@ export function SideNav() {
           {isViewingAdminSection && isAdmin ? (
              <>
                 <div className="px-4 text-xs font-semibold text-muted-foreground uppercase group-data-[collapsible=icon]:hidden">Admin</div>
-                {adminNavItems.map((item) => (
-                     <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton
-                            asChild
-                            isActive={pathname.startsWith(item.href)}
-                            tooltip={{ children: item.label, side: "right" }}
-                        >
-                            <Link href={item.href}>
-                            <item.icon className="w-5 h-5" />
-                            <span>{item.label}</span>
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                ))}
+                {adminNavItems.map((item) => {
+                    const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+                    return (
+                        <SidebarMenuItem key={item.href}>
+                            <SidebarMenuButton
+                                asChild
+                                isActive={isActive}
+                                tooltip={{ children: item.label, side: "right" }}
+                            >
+                                <Link href={item.href}>
+                                <item.icon className="w-5 h-5" />
+                                <span>{item.label}</span>
+                                </Link>
+                            </SidebarMenuButton>
+                        </SidebarMenuItem>
+                    )
+                })}
                 <SidebarSeparator className="my-2" />
                  <SidebarMenuItem>
                     <SidebarMenuButton
                         asChild
-                        isActive={pathname === '/dashboard'}
                         tooltip={{ children: 'User Dashboard', side: "right" }}
                     >
                         <Link href={'/dashboard'}>
@@ -148,7 +153,7 @@ export function SideNav() {
                 <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
                     asChild
-                    isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
+                    isActive={pathname === item.href}
                     tooltip={{ children: item.label, side: "right" }}
                 >
                     <Link href={item.href}>
@@ -181,11 +186,11 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           {displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
-           {displayUser && !displayUser.avatarStyle && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
+           {displayUser && 'avatarStyle' in displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
+           {displayUser && (!('avatarStyle' in displayUser) || !(displayUser as User).avatarStyle) && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{displayUser?.userName || 'User'}</p>
-              <p className="text-xs text-muted-foreground">Level {displayUser?.level || 0}</p>
+              <p className="text-xs text-muted-foreground">Level { (displayUser && 'level' in displayUser) ? displayUser?.level : 0}</p>
             </div>
             <AlertDialog>
                 <AlertDialogTrigger asChild>
