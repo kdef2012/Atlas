@@ -76,7 +76,7 @@ export default function LandingPage() {
         className="text-center z-10"
       >
         <h1 className="font-headline text-2xl md:text-4xl font-bold mb-4" style={{ fontFamily: '"Courier New", Courier, monospace' }}>
-          Your life has been waiting for a <Link href="/login" className="text-primary hover:underline">player</Link>.
+          Your life has been waiting for a player.
         </h1>
         <p className="mb-10 text-lg text-muted-foreground" style={{ fontFamily: '"Courier New", Courier, monospace' }}>
             <UserCounter /> pilots currently active in ATLAS.
@@ -88,6 +88,11 @@ export default function LandingPage() {
         >
           [PRESS START]
         </motion.button>
+        <div className="absolute bottom-4 right-4">
+            <Link href="/login">
+                <Shield className="w-6 h-6 text-muted-foreground/20 hover:text-muted-foreground transition-colors" />
+            </Link>
+        </div>
       </motion.div>
       <div className="absolute inset-0 z-0 opacity-5" style={{ background: 'radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
       <style jsx>{`
