@@ -29,12 +29,8 @@ import {
         const isLoading = isAuthLoading || (authUser && isUserDocLoading);
 
         useEffect(() => {
-          // Wait until all loading is complete before making any decisions.
-          if (isLoading) {
-            return;
-          }
-
           // **ADMIN HOT-PATH**: If the user is the known admin, immediately send to the admin dashboard.
+          // This check is safe to run early because it doesn't depend on the user doc.
           if (authUser && authUser.email === 'kdef2012@gmail.com') {
             if (!pathname.startsWith('/admin')) {
               router.push('/admin');
@@ -42,19 +38,25 @@ import {
             return;
           }
       
-          // Case 1: No authenticated user at all. Redirect to login.
+          // Wait until ALL loading is fully complete before making any other decisions.
+          if (isLoading) {
+            return;
+          }
+      
+          // After loading, if there's no authenticated user, redirect to login.
           if (!authUser) {
             return redirect('/login');
           }
       
-          // Case 2: Authenticated user, but no user document found in Firestore.
-          // This means they are a new user who hasn't completed onboarding.
-          if (!user && !pathname.startsWith('/onboarding')) {
+          // After loading, if there IS an authenticated user but NO user document,
+          // it means they are a new user who needs to complete onboarding.
+          if (authUser && !user && !pathname.startsWith('/onboarding')) {
             router.push('/onboarding/archetype');
             return;
           }
       
-          // Case 3: Existing user trying to access onboarding. Redirect to dashboard.
+          // After loading, if an existing user (auth user + user doc) lands on an onboarding page,
+          // redirect them to the dashboard.
           if (user && pathname.startsWith('/onboarding')) {
             router.push('/dashboard');
             return;
