@@ -141,9 +141,9 @@ export function SideNav() {
                         asChild
                         tooltip={{ children: 'User Dashboard', side: "right" }}
                     >
-                        <Link href={'/admin'}>
+                        <Link href={'/dashboard'}>
                         <LayoutDashboard className="w-5 h-5" />
-                        <span>Admin Dashboard</span>
+                        <span>User View</span>
                         </Link>
                     </SidebarMenuButton>
                 </SidebarMenuItem>
