@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse } from "lucide-react";
-import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam, User, Guild, Trait } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
@@ -62,11 +62,13 @@ export function LogActivityForm() {
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
   const guildsCollectionRef = useMemoFirebase(() => collection(firestore, 'guilds'), [firestore]);
+  const traitsCollectionRef = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
   const { data: allTerritories } = useCollection<Territory>(territoriesCollectionRef);
   const { data: allGuilds } = useCollection<Guild>(guildsCollectionRef);
+  const { data: allTraits } = useCollection<Trait>(traitsCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -86,7 +88,7 @@ export function LogActivityForm() {
         form.setValue('skill', randomActivity);
         toast({
             title: "Device Synced!",
-            description: `Synced activity: "${randomActivity}"`
+            description: `Synced activity: "${'"`'}${randomActivity}"`
         });
         setIsSyncing(false);
     }, 1500);
