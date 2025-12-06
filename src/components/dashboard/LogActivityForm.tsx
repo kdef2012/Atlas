@@ -90,7 +90,7 @@ export function LogActivityForm() {
         form.setValue('skill', randomActivity);
         toast({
             title: "Device Synced!",
-            description: `Synced activity: "${'"'}`}${randomActivity}"`
+            description: `Synced activity: "${randomActivity}"`
         });
         setIsSyncing(false);
     }, 1500);
@@ -98,7 +98,7 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection || !allSkills || !userRef || !userData || !allGuilds || !publicLogsCollection) return;
+    if (!user || !userLogsCollection || !allSkills || !userRef || !userData || !allGuilds || !publicLogsCollection || !allTraits) return;
 
     setIsLoading(true);
     try {
