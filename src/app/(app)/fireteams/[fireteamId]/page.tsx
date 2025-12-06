@@ -11,7 +11,7 @@ import { FireteamChat } from '@/components/fireteams/FireteamChat';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Crown, ShieldOff, Users } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
+import { TwinskieAvatarCompact } from '@/components/TwinskiAvatarCompact';
 
 function MemberList({ fireteam }: { fireteam: Fireteam }) {
     const firestore = useFirestore();

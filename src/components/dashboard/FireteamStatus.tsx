@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -15,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { cn } from '@/lib/utils';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
+import { TwinskieAvatarCompact } from '@/components/TwinskiAvatarCompact';
 
 const SOUL_SWORN_THRESHOLD_DAYS = 7;
 
@@ -179,7 +178,8 @@ export function FireteamStatus() {
         const prevStreakStatus = prevStreakStatusRef.current;
         const currentStreakStatus = fireteam?.streakActive;
 
-        if (prevStreakStatus === true && currentStreakStatus === false) {
+        // ✅ FIXED: Added null check for fireteam
+        if (prevStreakStatus === true && currentStreakStatus === false && fireteam) {
             toast({
                 variant: 'destructive',
                 title: 'Soul Link Broken!',
@@ -187,7 +187,7 @@ export function FireteamStatus() {
             });
         }
         prevStreakStatusRef.current = currentStreakStatus;
-    }, [fireteam?.streakActive, fireteam?.name, toast]);
+    }, [fireteam?.streakActive, fireteam?.name, fireteam, toast]);
 
     const isLoading = isUserLoading || (fireteamId && (isFireteamLoading || areMembersLoading));
     const isStreakActive = fireteam?.streakActive ?? false;

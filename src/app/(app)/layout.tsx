@@ -1,6 +1,6 @@
 'use client';
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -28,23 +28,39 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-  // Track if we've completed the initial load
-  const [hasCompletedInitialLoad, setHasCompletedInitialLoad] = useState(false);
+  // Track if loading has ever started (to distinguish initial false from completed false)
+  const hasUserDocLoadingStarted = useRef(false);
+  const hasAdminDocLoadingStarted = useRef(false);
 
   const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
-  // Mark when initial load is complete
+  // Track when loading starts
   useEffect(() => {
-    if (authUser && !isUserDocLoading && !isAdminDocLoading) {
-      setHasCompletedInitialLoad(true);
+    if (isUserDocLoading) {
+      hasUserDocLoadingStarted.current = true;
     }
-  }, [authUser, isUserDocLoading, isAdminDocLoading]);
+    if (isAdminDocLoading) {
+      hasAdminDocLoadingStarted.current = true;
+    }
+  }, [isUserDocLoading, isAdminDocLoading]);
 
-  // Handle redirects ONLY after initial load is complete
+  // Calculate if we're truly ready (loading started AND finished)
+  const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
+  const isAdminDocReady = authUser && isAdminLogin ? (hasAdminDocLoadingStarted.current && !isAdminDocLoading) : true;
+  const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
+
+  // Handle redirects ONLY when fully ready
   useEffect(() => {
-    if (!hasCompletedInitialLoad || !authUser) {
-      return; // Don't make decisions until we've loaded
+    if (!isReadyToDecide || !authUser) {
+      return; // Wait until we're truly ready
     }
+
+    console.log('🎯 Making routing decision:', {
+      isAdminLogin,
+      hasUser: !!user,
+      hasAdmin: !!adminData,
+      pathname,
+    });
 
     if (isAdminLogin) {
       // Create admin document if needed
@@ -62,15 +78,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     } else {
       // Regular user logic
       if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-        console.log('✅ User document does not exist - redirecting to onboarding');
+        console.log('🔄 No user document - redirecting to onboarding');
         router.replace('/onboarding/archetype');
       } else if (user && pathname.startsWith('/onboarding')) {
-        console.log('✅ User document exists - redirecting to dashboard');
+        console.log('🔄 User exists - redirecting to dashboard');
         router.replace('/dashboard');
+      } else if (user) {
+        console.log('✅ User loaded successfully - rendering app');
       }
     }
   }, [
-    hasCompletedInitialLoad,
+    isReadyToDecide,
     authUser,
     user,
     adminData,
@@ -85,8 +103,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return redirect('/login');
   }
 
-  // Show loading during initial load OR while fetching documents
-  const isLoading = isAuthLoading || !hasCompletedInitialLoad;
+  // Show loading while waiting for data
+  const isLoading = isAuthLoading || !isReadyToDecide;
   
   if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
     return (

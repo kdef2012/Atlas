@@ -1,11 +1,10 @@
-
 'use client';
 
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { TwinskieAvatar } from "@/components/twinskie-avatar-openpeeps";
+import { TwinskieAvatar } from "@/components/TwinskieAvatar";
 import { StatsRadarChart } from "@/components/dashboard/StatsRadarChart";
 import { LogActivityForm } from "@/components/dashboard/LogActivityForm";
 import { QuestCard } from "@/components/dashboard/QuestCard";
@@ -20,7 +19,6 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
-import { isUserInactive } from '@/lib/avatar-system';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -79,7 +77,7 @@ function DashboardPageContent() {
             <CardTitle className="font-headline text-3xl">The Twinskie</CardTitle>
             <CardDescription>Your digital self.</CardDescription>
           </CardHeader>
-          <TwinskieAvatar user={user} size="lg" />
+          <TwinskieAvatar user={user} className="w-full max-w-xs" />
           <TraitBadges />
         </Card>
         <MomentumFlame />
@@ -148,7 +146,7 @@ export default function DashboardPage() {
                       <Skeleton className="h-24 w-full" />
                       <Skeleton className="h-24 w-full" />
                       <Skeleton className="h-24 w-full" />
-                    </div>
+                      </div>
                 </div>
             </div>
         </div>

@@ -14,7 +14,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { TRAIT_ICONS, CATEGORY_ICONS } from '@/lib/types';
-import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
+import { TwinskieAvatarCompact } from '@/components/TwinskiAvatarCompact';
 
 function MemberList({ guild, members }: { guild: Guild, members: User[] }) {
     const firestore = useFirestore();

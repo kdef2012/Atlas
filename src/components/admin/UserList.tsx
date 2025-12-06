@@ -9,7 +9,7 @@ import { collection, doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { formatDistanceToNow } from 'date-fns';
-import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
+import { TwinskieAvatarCompact } from "../TwinskiAvatarCompact";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { GiftGemsDialog } from "./GiftGemsDialog";

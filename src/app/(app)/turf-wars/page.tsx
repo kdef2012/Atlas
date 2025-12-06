@@ -15,7 +15,7 @@ import { Loader2, Plus, Trophy } from 'lucide-react';
 import { generateFactionChallenges } from '@/ai/flows/generate-faction-challenges';
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { TwinskieAvatarCompact } from '@/components/twinskie-avatar-compact';
+import { TwinskieAvatarCompact } from '@/components/TwinskiAvatarCompact';
 
 function Leaderboard({ territory }: { territory: Territory }) {
   const firestore = useFirestore();

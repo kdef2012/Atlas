@@ -9,7 +9,7 @@ import { collection, query, orderBy, limit } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy } from "lucide-react";
-import { TwinskieAvatarCompact } from "@/components/twinskie-avatar-compact";
+import { TwinskieAvatarCompact } from "@/components/TwinskiAvatarCompact";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function LeaderboardTable({ users, isLoading }: { users: User[] | null, isLoading: boolean }) {

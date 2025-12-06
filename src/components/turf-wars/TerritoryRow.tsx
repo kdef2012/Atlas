@@ -8,7 +8,7 @@ import { doc } from "firebase/firestore";
 import { Skeleton } from "../ui/skeleton";
 import { CATEGORY_ICONS, CATEGORY_COLORS } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { TwinskieAvatarCompact } from "../twinskie-avatar-compact";
+import { TwinskieAvatarCompact } from "../TwinskiAvatarCompact";
 
 interface TerritoryRowProps {
     territory: Territory;

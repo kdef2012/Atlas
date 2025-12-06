@@ -1,7 +1,7 @@
 
 'use client';
 
-import { TwinskieAvatar } from '@/components/twinskie-avatar-openpeeps';
+import { TwinskieAvatar } from '@/components/TwinskieAvatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
