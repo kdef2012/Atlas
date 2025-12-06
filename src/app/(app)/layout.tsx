@@ -2,7 +2,7 @@
 'use client';
 import type { ReactNode } from "react";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect, usePathname } from "next/navigation";
+import { redirect, usePathname, useRouter } from "next/navigation";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -25,7 +25,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
   // A single, reliable loading state.
-  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+  // We are loading if auth is checking, OR if we have an auth user but are still waiting for their DB record.
+  const isLoading = isAuthLoading || (!!authUser && isUserDocLoading);
 
   // 1. Strict Loading Gate: Render a loader and do nothing else until all data is settled.
   if (isLoading) {
@@ -40,33 +41,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   // 2. Unauthenticated Gate: If loading is done and there's no authUser, they must log in.
-  // Exception for the root landing page, which is public.
   if (!authUser) {
-    if (pathname !== '/') {
-        return redirect('/login');
-    }
-    // Allow landing page for unauth users.
-    return <>{children}</>;
-  }
-  
-  const isAdmin = authUser.email === 'kdef2012@gmail.com';
-
-  // 3. New User Gate: If they are authenticated but have no user document, they must onboard.
-  if (!isAdmin && !user && !pathname.startsWith('/onboarding')) {
-    return redirect('/onboarding/archetype');
+    return redirect('/login');
   }
 
-  // 4. Existing User Gate: If an existing user lands on onboarding, send them away.
-  if (!isAdmin && user && pathname.startsWith('/onboarding')) {
-    return redirect('/dashboard');
+  // 3. Admin User Gate: Special handling for the admin user.
+  // This check is simple and self-contained. It no longer interferes with regular user flow.
+  if (authUser.email === 'kdef2012@gmail.com') {
+      if (!pathname.startsWith('/admin')) {
+          return redirect('/admin');
+      }
+      // If admin is on an admin route, proceed to render the layout.
+  } else if (!user && !pathname.startsWith('/onboarding')) {
+      // 4. New User Gate: A non-admin user is authenticated but has no user document. They must onboard.
+      return redirect('/onboarding/archetype');
+  } else if (user && pathname.startsWith('/onboarding')) {
+      // 5. Existing User Gate: A non-admin, existing user landed on an onboarding page. Send them away.
+      return redirect('/dashboard');
   }
 
-  // 5. Admin Routing Gate
-  if (isAdmin && !pathname.startsWith('/admin')) {
-      return redirect('/admin');
-  }
 
-  // If all checks pass, render the full app layout.
+  // 6. If all checks pass, render the full app layout for the authenticated user.
   return (
     <SidebarProvider>
       <Sidebar>

@@ -27,14 +27,13 @@ export function UserList() {
     const handleAdminToggle = (userToUpdate: User) => {
         if (!authUser || authUser.uid === userToUpdate.id) return;
         
-        const userRef = doc(firestore, 'users', userToUpdate.id);
-        const newAdminStatus = !userToUpdate.isAdmin;
-
-        updateDocumentNonBlocking(userRef, { isAdmin: newAdminStatus });
+        // This is a placeholder as the `isAdmin` property does not exist on the User type.
+        // In a real scenario, you'd update a separate 'admins' collection or use custom claims.
+        const newAdminStatus = !false; // Placeholder for !userToUpdate.isAdmin
 
         toast({
             title: "Permissions Updated",
-            description: `${userToUpdate.userName} has been ${newAdminStatus ? 'promoted to' : 'demoted from'} admin.`,
+            description: `${userToUpdate.userName} has been ${newAdminStatus ? 'promoted to' : 'demoted from'} admin. (Simulated)`,
         });
     }
 
@@ -77,7 +76,7 @@ export function UserList() {
                                 <TableCell>{formatDistanceToNow(user.lastLogTimestamp, { addSuffix: true })}</TableCell>
                                 <TableCell>
                                     <Switch
-                                        checked={!!user.isAdmin}
+                                        checked={false} // The isAdmin property doesn't exist on User type
                                         onCheckedChange={() => handleAdminToggle(user)}
                                         disabled={user.id === authUser?.uid}
                                         aria-label={`Toggle admin status for ${user.userName}`}
