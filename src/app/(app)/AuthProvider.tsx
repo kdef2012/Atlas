@@ -35,7 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 2. Unauthenticated Gate: If loading is finished and there's no authUser, they must log in.
   if (!authUser) {
-    return redirect('/login');
+    // Exception for the root landing page, which should be public.
+    if (pathname !== '/') {
+        return redirect('/login');
+    }
+    // Allow rendering children if it's the landing page for unauthenticated users.
+    return <>{children}</>;
   }
 
   const isAdmin = authUser.email === 'kdef2012@gmail.com';
