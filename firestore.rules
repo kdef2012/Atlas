@@ -1,6 +1,7 @@
 
 rules_version = '2';
 
+// v1.0 Ruleset
 service cloud.firestore {
   match /databases/{database}/documents {
 
