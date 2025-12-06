@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild, Trait } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
-import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc } from "@/firebase";
+import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, increment, getDoc, writeBatch } from "firebase/firestore";
 
@@ -64,6 +64,8 @@ export function LogActivityForm() {
   const guildsCollectionRef = useMemoFirebase(() => collection(firestore, 'guilds'), [firestore]);
   const traitsCollectionRef = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
   const userLogsCollection = useMemoFirebase(() => user ? collection(firestore, `users/${user.uid}/logs`) : null, [firestore, user]);
+  const publicLogsCollection = useMemoFirebase(() => collection(firestore, `public-logs`), [firestore]);
+
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
   const { data: allTerritories } = useCollection<Territory>(territoriesCollectionRef);
@@ -88,7 +90,7 @@ export function LogActivityForm() {
         form.setValue('skill', randomActivity);
         toast({
             title: "Device Synced!",
-            description: `Synced activity: "${'"`'}${randomActivity}"`
+            description: `Synced activity: "${'"'}`}${randomActivity}"`
         });
         setIsSyncing(false);
     }, 1500);
@@ -96,7 +98,7 @@ export function LogActivityForm() {
 
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !userLogsCollection || !allSkills || !userRef || !userData || !allGuilds) return;
+    if (!user || !userLogsCollection || !allSkills || !userRef || !userData || !allGuilds || !publicLogsCollection) return;
 
     setIsLoading(true);
     try {
@@ -208,13 +210,22 @@ export function LogActivityForm() {
 
       // Step 4: Create a log entry
       const newLogRef = doc(userLogsCollection); // Create a reference with a new ID
+      const timestamp = Date.now();
       batch.set(newLogRef, {
         userId: user.uid,
         skillId: skillId,
-        timestamp: Date.now(),
+        timestamp: timestamp,
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
         isVerified: !hasProof,
+      });
+
+      // Also create a public, anonymous log entry
+      addDocumentNonBlocking(publicLogsCollection, {
+        skillName,
+        category,
+        userRegion: userData.region || 'Unknown Region',
+        timestamp: timestamp,
       });
 
       // Step 5: Update user stats

@@ -1,6 +1,7 @@
 
 rules_version = '2';
 
+// v1.1 Ruleset: Added public-logs collection
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -27,42 +28,47 @@ service cloud.firestore {
     }
 
     // ADMINS COLLECTION
-    // Admins have their own collection for clear and simple privilege checks.
     match /admins/{adminId} {
       allow read: if isOwner(adminId) || isAdmin();
-      // Allow an admin to manage other admins, or a user to create their own admin record.
       allow write: if isAdmin() || isOwner(adminId);
     }
     
     // USERS COLLECTION
     match /users/{userId} {
-      allow get: if isOwner(userId); // A user can only get their own document.
-      allow list: if true; // Allow anyone to count documents, but not read them.
-      allow create: if isOwner(userId); // A user can create their own profile.
-      allow update: if isOwner(userId) || isAdmin(); // A user can update their own profile, or an admin can.
-      allow delete: if isAdmin(); // Only admins can delete user accounts.
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
 
-      // USER SUB-COLLECTIONS (LOGS, QUESTS)
+      // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
       match /{subcollection}/{docId} {
         allow read, write, create, update, delete: if isOwner(userId) || isAdmin();
       }
     }
 
+    // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
+    match /public-logs/{logId} {
+        allow get, list: if isSignedIn();
+        // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
+        // For now, we allow any signed-in user to create.
+        allow create: if isSignedIn(); 
+        allow update, delete: if false; // Nobody can update or delete public logs.
+    }
+
     // SKILLS COLLECTION
     match /skills/{skillId} {
-      allow get, list: if true; // Skills are public knowledge.
-      allow create: if isSignedIn(); // Any user can pioneer a new skill.
-      allow update, delete: if isAdmin(); // Only admins can curate skills.
+      allow get, list: if true;
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
     // FIRETEAMS COLLECTION
     match /fireteams/{fireteamId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isFireteamMember(fireteamId) || isAdmin(); // Members or admins can update.
-      allow delete: if isAdmin(); // Only admins can delete fireteams.
+      allow update: if isFireteamMember(fireteamId) || isAdmin();
+      allow delete: if isAdmin();
 
-      // FIRETEAM MESSAGES
       match /messages/{messageId} {
         allow read, write: if isFireteamMember(fireteamId);
         allow delete: if isAdmin();
@@ -72,11 +78,10 @@ service cloud.firestore {
     // GUILDS COLLECTION
     match /guilds/{guildId} {
       allow get, list: if isSignedIn();
-      allow create: if isAdmin(); // Guilds are created based on pioneered skills, managed by admin/system.
-      allow update: if isGuildMember(guildId) || isAdmin(); // Members or admins can update.
+      allow create: if isAdmin();
+      allow update: if isGuildMember(guildId) || isAdmin();
       allow delete: if isAdmin();
       
-      // GUILD MESSAGES
       match /messages/{messageId} {
         allow read, write: if isGuildMember(guildId);
         allow delete: if isAdmin();
@@ -92,6 +97,12 @@ service cloud.firestore {
     match /traits/{traitId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /suggestions/{suggestionId} {
+      allow get, list: if isAdmin();
+      allow create: if isSignedIn();
+      allow update, delete: if isAdmin();
     }
 
     match /events/{eventId} {

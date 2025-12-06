@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { useUser, useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
 import { collection, doc, query, orderBy, limit } from 'firebase/firestore';
-import type { User, Skill, Fireteam, Log } from '@/lib/types';
+import type { User, Skill, Fireteam, Log, SkillCategory } from '@/lib/types';
 import { Skeleton } from '../ui/skeleton';
 import { Target, Users, Zap, BrainCircuit, Activity } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -16,6 +16,14 @@ type SpotlightItem = {
     description: string;
     icon: React.ReactNode;
 };
+
+// Simplified PublicLog for the echo feature
+interface PublicLog {
+    skillName: string;
+    category: SkillCategory;
+    userRegion: string;
+    timestamp: number;
+}
 
 function useSpotlightData() {
     const firestore = useFirestore();
@@ -38,9 +46,8 @@ function useSpotlightData() {
     const skillsQuery = useMemoFirebase(() => query(collection(firestore, 'skills'), orderBy('xp', 'desc'), limit(1)), [firestore]);
     const { data: trendingSkills, isLoading: skillsLoading } = useCollection<Skill>(skillsQuery);
     
-    // This query is simplified for demonstration. A real implementation might need a more complex query or aggregation.
-    const recentLogsQuery = useMemoFirebase(() => query(collection(firestore, 'users', 'public', 'recentLogs'), orderBy('timestamp', 'desc'), limit(1)), [firestore]);
-    const { data: recentLogs, isLoading: logsLoading } = useCollection<Log>(recentLogsQuery);
+    const publicLogsQuery = useMemoFirebase(() => query(collection(firestore, 'public-logs'), orderBy('timestamp', 'desc'), limit(1)), [firestore]);
+    const { data: recentLogs, isLoading: logsLoading } = useCollection<PublicLog>(publicLogsQuery);
 
 
     const isLoading = userLoading || fireteamLoading || membersLoading || skillsLoading || logsLoading;
@@ -50,7 +57,7 @@ function useSpotlightData() {
 
 
 export function SpotlightCard() {
-    const { user, fireteamMembers, trendingSkill, isLoading } = useSpotlightData();
+    const { user, fireteamMembers, trendingSkill, recentLog, isLoading } = useSpotlightData();
     const [spotlightItems, setSpotlightItems] = useState<SpotlightItem[]>([]);
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
 
@@ -72,6 +79,16 @@ export function SpotlightCard() {
                 title: "Today's Focus",
                 description: `Your ${lowestStat.name} energy is lowest. Time to train!`,
                 icon: <Target className="w-6 h-6 text-red-400" />
+            });
+        }
+        
+        // 5. Echoes of the Nebula
+        if (recentLog) {
+            items.push({
+                type: 'echo',
+                title: "Echoes of the Nebula",
+                description: `A user in ${recentLog.userRegion} just logged "${recentLog.skillName}".`,
+                icon: <Activity className="w-6 h-6 text-green-400" />
             });
         }
 
@@ -109,7 +126,7 @@ export function SpotlightCard() {
         });
         
         setSpotlightItems(items);
-    }, [user, fireteamMembers, trendingSkill]);
+    }, [user, fireteamMembers, trendingSkill, recentLog]);
 
     useEffect(() => {
         if (spotlightItems.length > 0) {
@@ -153,4 +170,3 @@ export function SpotlightCard() {
         </Card>
     );
 }
-

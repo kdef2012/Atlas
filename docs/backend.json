@@ -22,7 +22,6 @@
         "fireteamId": { "type": "string", "description": "Reference to the Fireteam this user belongs to. (Relationship: Fireteam 1:N User)" },
         "guilds": { "type": "object", "description": "A map of Guild IDs this user belongs to.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
         "lastLogTimestamp": { "type": "number", "description": "The Unix timestamp of the user's last logged activity." },
-        "quests": { "type": "array", "items": { "$ref": "#/backend/entities/Quest" } },
         "userSkills": { "type": "object", "description": "A map of skills the user has interacted with.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "object", "properties": { "isUnlocked": { "type": "boolean" }, "xp": { "type": "number" } }, "required": ["isUnlocked", "xp"] } } },
         "avatarLayers": { "type": "object", "description": "A map of visual layers active on the user's avatar.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
         "momentumFlameActive": { "type": "boolean", "description": "Whether the user's daily activity streak (Momentum Flame) is active." },
@@ -32,6 +31,64 @@
         "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." }
       },
       "required": ["id"]
+    },
+    "UserSettings": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User Settings",
+      "type": "object",
+      "description": "Stores user-specific settings and preferences.",
+      "properties": {
+        "notifications": {
+          "type": "object",
+          "properties": {
+            "fireteam": { "type": "boolean", "default": true },
+            "quests": { "type": "boolean", "default": true },
+            "traits": { "type": "boolean", "default": true },
+            "challenges": { "type": "boolean", "default": true },
+            "momentum": { "type": "boolean", "default": true }
+          }
+        },
+        "privacy": {
+          "type": "object",
+          "properties": {
+            "profileVisibility": { "type": "string", "enum": ["Public", "Team Only", "Private"], "default": "Public" }
+          }
+        },
+        "appearance": {
+          "type": "object",
+          "properties": {
+            "theme": { "type": "string", "enum": ["dark", "light"], "default": "dark" }
+          }
+        },
+        "accessibility": {
+          "type": "object",
+          "properties": {
+            "highContrast": { "type": "boolean", "default": false },
+            "dyslexiaFont": { "type": "boolean", "default": false }
+          }
+        },
+        "quietHours": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "start": { "type": "string", "format": "time", "default": "22:00" },
+            "end": { "type": "string", "format": "time", "default": "08:00" }
+          }
+        }
+      }
+    },
+    "PublicLog": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Public Log",
+        "type": "object",
+        "description": "A sanitized, anonymous log entry for public feeds.",
+        "properties": {
+            "skillName": { "type": "string", "description": "The name of the skill." },
+            "category": { "type": "string", "description": "The category of the skill." },
+            "userRegion": { "type": "string", "description": "The region of the user who logged the activity." },
+            "timestamp": { "type": "number", "description": "The timestamp of the activity." }
+        },
+        "required": ["skillName", "category", "userRegion", "timestamp"]
     },
     "Admin": {
         "$schema": "http://json-schema.org/draft-07/schema#",
@@ -69,6 +126,7 @@
   "firestore": {
     "structure": [
       { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user profile data.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }] } },
+      { "path": "/users/{userId}/settings/{settingsId}", "definition": { "entityName": "UserSettings", "schema": { "$ref": "#/backend/entities/UserSettings" }, "description": "Stores user-specific settings.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "settingsId", "description": "A singleton document ID, e.g., 'main'."}] } },
       { "path": "/admins/{adminId}", "definition": { "entityName": "Admin", "schema": { "$ref": "#/backend/entities/Admin" }, "description": "Stores administrator user data.", "params": [{ "name": "adminId", "description": "The unique identifier for the admin." }] } },
       { "path": "/skills/{skillId}", "definition": { "entityName": "Skill", "schema": { "$ref": "#/backend/entities/Skill" }, "description": "Stores skill data created by pioneer user.", "params": [{ "name": "skillId", "description": "The unique identifier for the skill." }] } },
       { "path": "/users/{userId}/logs/{logId}", "definition": { "entityName": "Log", "schema": { "$ref": "#/backend/entities/Log" }, "description": "Stores logs for user activities.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "logId", "description": "The unique identifier for the log." }] } },
@@ -81,7 +139,8 @@
       { "path": "/guilds/{guildId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/backend/entities/Message" }, "description": "Stores chat messages for a specific Guild.", "params": [{ "name": "guildId", "description": "The unique identifier for the guild." }, { "name": "messageId", "description": "The unique identifier for the message." }] } },
       { "path": "/suggestions/{suggestionId}", "definition": { "entityName": "Suggestion", "schema": { "$ref": "#/backend/entities/Suggestion" }, "description": "Stores user-submitted suggestions.", "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }] } },
       { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
-      { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } }
+      { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
+      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } }
     ],
     "reasoning": "The Firestore data structure is designed for clear separation of concerns and scalable security. Regular user data is in `/users/{userId}`. A new, separate `/admins/{adminId}` collection is introduced to cleanly distinguish administrators, eliminating complex security rule checks. Publicly readable data like skills, fireteams, and guilds are in top-level collections for easy access, while their write permissions are tightly controlled. This architecture simplifies security rules, enhances data integrity, and provides a robust foundation for the application's features."
   }
