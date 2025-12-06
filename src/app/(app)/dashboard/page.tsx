@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense } from 'react';
@@ -19,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ArrowRight } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
+import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -48,6 +50,7 @@ function DashboardPageContent() {
                 <Skeleton className="h-24 w-full" />
             </div>
             <div className="lg:col-span-2 space-y-6">
+                 <Skeleton className="h-40 w-full" />
                 <Skeleton className="h-96 w-full" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Skeleton className="h-60 w-full" />
@@ -85,6 +88,7 @@ function DashboardPageContent() {
       </div>
 
       <div className="lg:col-span-2 space-y-6">
+        <SpotlightCard />
         <Card>
           <CardHeader>
             <CardTitle className="font-headline">Core Energies</CardTitle>
@@ -139,6 +143,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-56 w-full" />
             </div>
             <div className="lg:col-span-2 space-y-6">
+                <Skeleton className="h-40 w-full" />
                 <Skeleton className="h-96 w-full" />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Skeleton className="h-60 w-full" />
