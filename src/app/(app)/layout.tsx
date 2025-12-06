@@ -1,8 +1,7 @@
-
 'use client';
 import type { ReactNode } from "react";
 import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect, usePathname, useRouter } from "next/navigation";
+import { redirect, usePathname } from "next/navigation";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -15,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
+import { useEffect } from "react";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -22,13 +22,48 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+  const { data: user, isLoading: isUserDocLoading, error: userDocError } = useDoc<User>(userRef);
 
-  // A single, reliable loading state.
-  // We are loading if auth is checking, OR if we have an auth user but are still waiting for their DB record.
+  // Combined loading state
   const isLoading = isAuthLoading || (!!authUser && isUserDocLoading);
 
-  // 1. Strict Loading Gate: Render a loader and do nothing else until all data is settled.
+  // 🔍 DEBUG - Remove after fixing
+  useEffect(() => {
+    if (authUser) {
+      console.log('🔍 AppLayout Debug:', {
+        timestamp: new Date().toISOString(),
+        authEmail: authUser.email,
+        authUID: authUser.uid,
+        isAuthLoading,
+        isUserDocLoading,
+        combinedLoading: isLoading,
+        userDocLoaded: !!user,
+        userDocError: userDocError?.message,
+        pathname,
+        decision: (() => {
+          if (authUser.email === 'kdef2012@gmail.com') return 'ADMIN HOT-PATH';
+          if (isLoading) return 'LOADING';
+          if (!user && !pathname.startsWith('/onboarding')) return 'REDIRECT TO ONBOARDING';
+          if (user && pathname.startsWith('/onboarding')) return 'REDIRECT TO DASHBOARD';
+          return 'RENDER APP';
+        })()
+      });
+      
+      // 🚨 CRITICAL ERROR LOGGING
+      if (!isLoading && !user && userDocError) {
+        console.error('❌ FIRESTORE ERROR:', {
+          error: userDocError,
+          message: userDocError.message,
+          code: (userDocError as any).code,
+          details: 'User document failed to load. This is likely a Firestore rules issue!',
+          expectedPath: `/users/${authUser.uid}`,
+          solution: 'Check if Firestore rules are published in Firebase Console'
+        });
+      }
+    }
+  }, [authUser, user, isAuthLoading, isUserDocLoading, isLoading, pathname, userDocError]);
+
+  // 1. LOADING GATE - Wait for all data to settle
   if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
@@ -40,28 +75,36 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // 2. Unauthenticated Gate: If loading is done and there's no authUser, they must log in.
+  // 2. UNAUTHENTICATED GATE - No auth user means go to login
   if (!authUser) {
     return redirect('/login');
   }
 
-  // 3. Admin User Gate: Special handling for the admin user.
-  // This check is simple and self-contained. It no longer interferes with regular user flow.
+  // 3. ADMIN GATE - Special handling for admin
   if (authUser.email === 'kdef2012@gmail.com') {
-      if (!pathname.startsWith('/admin')) {
-          return redirect('/admin');
-      }
-      // If admin is on an admin route, proceed to render the layout.
-  } else if (!user && !pathname.startsWith('/onboarding')) {
-      // 4. New User Gate: A non-admin user is authenticated but has no user document. They must onboard.
-      return redirect('/onboarding/archetype');
-  } else if (user && pathname.startsWith('/onboarding')) {
-      // 5. Existing User Gate: A non-admin, existing user landed on an onboarding page. Send them away.
-      return redirect('/dashboard');
+    console.log('✅ Admin user detected:', authUser.email);
+    if (!pathname.startsWith('/admin')) {
+      console.log('🔄 Redirecting admin to /admin');
+      return redirect('/admin');
+    }
+    // Admin is on admin route, proceed to render
+  } 
+  // 4. NEW USER GATE - User has no Firestore document
+  else if (!user && !pathname.startsWith('/onboarding')) {
+    console.log('🆕 New user detected, redirecting to onboarding');
+    console.log('   Reason: user document is null');
+    console.log('   Error:', userDocError?.message || 'No error');
+    return redirect('/onboarding/archetype');
+  } 
+  // 5. EXISTING USER GATE - User has document but is on onboarding
+  else if (user && pathname.startsWith('/onboarding')) {
+    console.log('✅ Existing user on onboarding page, redirecting to dashboard');
+    return redirect('/dashboard');
   }
 
+  console.log('✅ Rendering app layout');
 
-  // 6. If all checks pass, render the full app layout for the authenticated user.
+  // 6. RENDER APP LAYOUT
   return (
     <SidebarProvider>
       <Sidebar>
