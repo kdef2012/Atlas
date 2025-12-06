@@ -24,9 +24,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  // 1. Wait for auth to finish loading. If not logged in, redirect to login.
-  // This is the first gate.
-  if (isAuthLoading) {
+  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+
+  // 1. First, wait for auth and user data to be fully loaded.
+  // This is the most critical gate to prevent premature redirects.
+  if (isLoading) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -34,37 +36,30 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  // 2. After loading, if there's no authenticated user, redirect to login.
+  // This is the primary protection for the app.
   if (!authUser) {
-    return redirect('/login');
-  }
-
-  // 2. Auth user exists. Now, check for the user's data document in Firestore.
-  // This is the second gate. Show a loader while we check the database.
-  if (isUserDocLoading) {
-    // Avoid showing the loader for admin pages, as they have their own auth layout.
-    if (!pathname.startsWith('/admin')) {
-      return (
-        <div className="flex h-screen w-screen items-center justify-center">
-          <Skeleton className="h-16 w-16 rounded-full" />
-        </div>
-      );
-    }
-  }
-
-  // 3. We have a definitive answer about the user document.
-  // If it doesn't exist, and they aren't already in onboarding or admin, send them there.
-  if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-    redirect('/onboarding/archetype');
+    redirect('/login');
     return null; // Return null after redirect
   }
+
+  // 3. If there IS an auth user, but they don't have a user document in Firestore,
+  // it means they are a new user who hasn't completed onboarding.
+  // We should send them there, unless they are an admin trying to access the admin section.
+  if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+    redirect('/onboarding/archetype');
+    return null;
+  }
   
-  // If they are an existing user but somehow land on onboarding, send them away.
+  // 4. If an existing user (with a user doc) somehow lands on the onboarding pages,
+  // send them to the dashboard where they belong.
   if (user && pathname.startsWith('/onboarding')) {
       redirect('/dashboard');
       return null;
   }
 
-  // 4. If all checks pass, render the main application layout.
+  // 5. If all checks pass, the user is authenticated and has a valid user document.
+  // Render the full application layout.
   return (
     <SidebarProvider>
       <Sidebar>
