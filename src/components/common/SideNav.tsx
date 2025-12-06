@@ -85,7 +85,7 @@ export function SideNav() {
   const handleLogout = () => {
     if (!auth) return;
     signOut(auth).then(() => {
-      router.push('/');
+      router.push('/logout');
     });
   }
 
@@ -186,7 +186,7 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           {displayUser && 'avatarStyle' in displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
+           {displayUser && 'avatarStyle' in displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" />}
            {displayUser && (!('avatarStyle' in displayUser) || !(displayUser as User).avatarStyle) && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{displayUser?.userName || 'User'}</p>
