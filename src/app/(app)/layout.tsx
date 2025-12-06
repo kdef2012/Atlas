@@ -82,27 +82,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   // 3. ADMIN GATE - Special handling for admin
   if (authUser.email === 'kdef2012@gmail.com') {
-    console.log('✅ Admin user detected:', authUser.email);
     if (!pathname.startsWith('/admin')) {
-      console.log('🔄 Redirecting admin to /admin');
       return redirect('/admin');
     }
     // Admin is on admin route, proceed to render
   } 
   // 4. NEW USER GATE - User has no Firestore document
   else if (!user && !pathname.startsWith('/onboarding')) {
-    console.log('🆕 New user detected, redirecting to onboarding');
-    console.log('   Reason: user document is null');
-    console.log('   Error:', userDocError?.message || 'No error');
     return redirect('/onboarding/archetype');
   } 
   // 5. EXISTING USER GATE - User has document but is on onboarding
   else if (user && pathname.startsWith('/onboarding')) {
-    console.log('✅ Existing user on onboarding page, redirecting to dashboard');
     return redirect('/dashboard');
   }
-
-  console.log('✅ Rendering app layout');
 
   // 6. RENDER APP LAYOUT
   return (
