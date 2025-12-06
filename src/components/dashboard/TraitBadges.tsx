@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useDoc, useUser, useMemoFirebase, useCollection } from '@/firebase';
@@ -49,10 +48,17 @@ export function TraitBadges() {
             }));
 
             // 3. Call the AI flow
+            // ✅ FIXED: Filter out undefined values from traits to match Record<string, boolean>
+            const cleanTraits = user.traits 
+                ? Object.fromEntries(
+                    Object.entries(user.traits).filter(([_, v]) => v !== undefined)
+                  ) as Record<string, boolean>
+                : undefined;
+
             const result = await assignPersonalityTraits({
                 user: {
                     id: user.id,
-                    traits: user.traits,
+                    traits: cleanTraits,
                     momentumFlameActive: user.momentumFlameActive,
                     createdAt: user.createdAt,
                 },

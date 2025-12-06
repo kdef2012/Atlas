@@ -1,4 +1,3 @@
-
 "use client";
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
@@ -81,7 +80,12 @@ export function StatsRadarChart() {
 
             return (
                 <g transform={`translate(${x},${y})`}>
-                    <Icon style={{ fill: color, color: color }} className="h-6 w-6 text-white translate-x-[-12px] translate-y-[-30px]" />
+                    {/* ✅ FIXED: Removed style prop, use foreignObject for better control */}
+                    <foreignObject x={-12} y={-30} width={24} height={24}>
+                        <div style={{ color }}>
+                            <Icon className="h-6 w-6" />
+                        </div>
+                    </foreignObject>
                     <text
                         x={0}
                         y={0}
