@@ -77,6 +77,19 @@
         }
       }
     },
+    "PublicLog": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Public Log",
+        "type": "object",
+        "description": "A sanitized, anonymous log entry for public feeds.",
+        "properties": {
+            "skillName": { "type": "string", "description": "The name of the skill." },
+            "category": { "type": "string", "description": "The category of the skill." },
+            "userRegion": { "type": "string", "description": "The region of the user who logged the activity." },
+            "timestamp": { "type": "number", "description": "The timestamp of the activity." }
+        },
+        "required": ["skillName", "category", "userRegion", "timestamp"]
+    },
     "Admin": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "Admin",
@@ -126,7 +139,8 @@
       { "path": "/guilds/{guildId}/messages/{messageId}", "definition": { "entityName": "Message", "schema": { "$ref": "#/backend/entities/Message" }, "description": "Stores chat messages for a specific Guild.", "params": [{ "name": "guildId", "description": "The unique identifier for the guild." }, { "name": "messageId", "description": "The unique identifier for the message." }] } },
       { "path": "/suggestions/{suggestionId}", "definition": { "entityName": "Suggestion", "schema": { "$ref": "#/backend/entities/Suggestion" }, "description": "Stores user-submitted suggestions.", "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }] } },
       { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
-      { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } }
+      { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
+      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } }
     ],
     "reasoning": "The Firestore data structure is designed for clear separation of concerns and scalable security. Regular user data is in `/users/{userId}`. A new, separate `/admins/{adminId}` collection is introduced to cleanly distinguish administrators, eliminating complex security rule checks. Publicly readable data like skills, fireteams, and guilds are in top-level collections for easy access, while their write permissions are tightly controlled. This architecture simplifies security rules, enhances data integrity, and provides a robust foundation for the application's features."
   }

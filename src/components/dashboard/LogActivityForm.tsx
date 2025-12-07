@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -192,7 +191,8 @@ export function LogActivityForm() {
       const skillRef = doc(firestore, 'skills', skillId);
       // Step 3: Handle file upload if proof is provided
       let proofUrl = '';
-      if (hasProof) {
+      // ✅ FIX 1: Added null check for values.proof
+      if (hasProof && values.proof) {
         const file = values.proof[0];
         try {
           proofUrl = await uploadProofOfWork(user.uid, file);
@@ -314,6 +314,7 @@ export function LogActivityForm() {
 
       // Step 9: Show feedback toast
       const Icon = CATEGORY_ICONS[category as SkillCategory];
+      const iconColor = CATEGORY_COLORS[category as SkillCategory];
       let toastDescription = `Your '${skillName}' activity was logged as <strong>${category}</strong>.`;
       if (!hasProof) {
          toastDescription += ` (+${xpGained} XP)`;
@@ -331,7 +332,10 @@ export function LogActivityForm() {
         title: "Activity Logged!",
         description: (
           <div className="flex items-center gap-2">
-            <Icon className="h-5 w-5" style={{ color: CATEGORY_COLORS[category as SkillCategory] }}/>
+            {/* ✅ FIX 2: Wrapped Icon in div with inline style */}
+            <div style={{ color: iconColor }}>
+              <Icon className="h-5 w-5" />
+            </div>
             <span dangerouslySetInnerHTML={{ __html: toastDescription }} />
           </div>
         )

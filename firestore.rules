@@ -1,7 +1,7 @@
 
 rules_version = '2';
 
-// v1.0 Ruleset
+// v1.1 Ruleset: Added public-logs collection
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -28,10 +28,8 @@ service cloud.firestore {
     }
 
     // ADMINS COLLECTION
-    // Admins have their own collection for clear and simple privilege checks.
     match /admins/{adminId} {
       allow read: if isOwner(adminId) || isAdmin();
-      // Allow an admin to manage other admins, or a user to create their own admin record.
       allow write: if isAdmin() || isOwner(adminId);
     }
     
@@ -46,6 +44,15 @@ service cloud.firestore {
       match /{subcollection}/{docId} {
         allow read, write, create, update, delete: if isOwner(userId) || isAdmin();
       }
+    }
+
+    // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
+    match /public-logs/{logId} {
+        allow get, list: if isSignedIn();
+        // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
+        // For now, we allow any signed-in user to create.
+        allow create: if isSignedIn(); 
+        allow update, delete: if false; // Nobody can update or delete public logs.
     }
 
     // SKILLS COLLECTION

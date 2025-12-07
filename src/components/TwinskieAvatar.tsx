@@ -9,6 +9,7 @@ interface TwinskieAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   scene?: 'fullbody-portrait-v1' | 'halfbody-portrait-v1' | 'bust-portrait-v1';
+  showInactiveLabel?: boolean; // ✅ ADDED
 }
 
 const SIZE_MAP = {
@@ -26,9 +27,14 @@ export function TwinskieAvatar({
   user, 
   size = 'md',
   className,
-  scene = 'fullbody-portrait-v1'
+  scene = 'fullbody-portrait-v1',
+  showInactiveLabel = false // ✅ ADDED
 }: TwinskieAvatarProps) {
   const pixelSize = SIZE_MAP[size];
+
+  // Check if user is inactive (no activity in 24 hours)
+  const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
+  const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
   // Check if user has an avatar URL
   if (!user.avatarUrl) {
@@ -53,8 +59,18 @@ export function TwinskieAvatar({
         avatarUrl={user.avatarUrl}
         size={pixelSize}
         scene={scene}
-        className="rounded-lg"
+        className={cn(
+          "rounded-lg",
+          isInactive && "opacity-50 grayscale"
+        )}
       />
+      
+      {/* Inactive Label */}
+      {isInactive && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold">
+          INACTIVE
+        </div>
+      )}
       
       {/* Level Badge */}
       {user.level && (

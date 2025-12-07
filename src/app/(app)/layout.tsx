@@ -1,6 +1,6 @@
-
 'use client';
 import type { ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -8,58 +8,112 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { useUser, useDoc, useMemoFirebase } from "@/firebase";
-import { redirect, usePathname } from "next/navigation";
+import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
+import { redirect, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
-import { doc } from "firebase/firestore";
+import { collection, doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
+  const router = useRouter();
   const pathname = usePathname();
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+  const { data: user, isLoading: isUserDocLoading, error: userDocError } = useDoc<User>(userRef);
 
-  const isLoading = isAuthLoading || (authUser && isUserDocLoading);
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-  // 1. First, wait for auth and user data to be fully loaded.
-  // This is the most critical gate to prevent premature redirects.
-  if (isLoading) {
+  // Track if loading has ever started (to distinguish initial false from completed false)
+  const hasUserDocLoadingStarted = useRef(false);
+  const hasAdminDocLoadingStarted = useRef(false);
+
+  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
+
+  // Track when loading starts
+  useEffect(() => {
+    if (isUserDocLoading) {
+      hasUserDocLoadingStarted.current = true;
+    }
+    if (isAdminDocLoading) {
+      hasAdminDocLoadingStarted.current = true;
+    }
+  }, [isUserDocLoading, isAdminDocLoading]);
+
+  // Calculate if we're truly ready (loading started AND finished)
+  const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
+  const isAdminDocReady = authUser && isAdminLogin ? (hasAdminDocLoadingStarted.current && !isAdminDocLoading) : true;
+  const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
+
+  // Handle redirects ONLY when fully ready
+  useEffect(() => {
+    if (!isReadyToDecide || !authUser) {
+      return; // Wait until we're truly ready
+    }
+
+    console.log('🎯 Making routing decision:', {
+      isAdminLogin,
+      hasUser: !!user,
+      hasAdmin: !!adminData,
+      pathname,
+    });
+
+    if (isAdminLogin) {
+      // Create admin document if needed
+      if (!adminData) {
+        console.log('🔧 Creating admin document for:', authUser.email);
+        const adminCollection = collection(firestore, 'admins');
+        const newAdminDocRef = doc(adminCollection, authUser.uid);
+        setDocumentNonBlocking(newAdminDocRef, {
+          id: authUser.uid,
+          email: authUser.email,
+          userName: 'SuperAdmin',
+          createdAt: Date.now(),
+        }, {});
+      }
+    } else {
+      // Regular user logic
+      if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+        console.log('🔄 No user document - redirecting to onboarding');
+        router.replace('/onboarding/archetype');
+      } else if (user && pathname.startsWith('/onboarding')) {
+        console.log('🔄 User exists - redirecting to dashboard');
+        router.replace('/dashboard');
+      } else if (user) {
+        console.log('✅ User loaded successfully - rendering app');
+      }
+    }
+  }, [
+    isReadyToDecide,
+    authUser,
+    user,
+    adminData,
+    isAdminLogin,
+    router,
+    pathname,
+    firestore
+  ]);
+
+  // Redirect to login if not authenticated
+  if (!isAuthLoading && !authUser) {
+    return redirect('/login');
+  }
+
+  // Show loading while waiting for data
+  const isLoading = isAuthLoading || !isReadyToDecide;
+  
+  if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
       </div>
     );
   }
-
-  // 2. After loading, if there's no authenticated user, redirect to login.
-  // This is the primary protection for the app.
-  if (!authUser) {
-    redirect('/login');
-    return null; // Return null after redirect
-  }
-
-  // 3. If there IS an auth user, but they don't have a user document in Firestore,
-  // it means they are a new user who hasn't completed onboarding.
-  // We should send them there, unless they are an admin trying to access the admin section.
-  if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-    redirect('/onboarding/archetype');
-    return null;
-  }
   
-  // 4. If an existing user (with a user doc) somehow lands on the onboarding pages,
-  // send them to the dashboard where they belong.
-  if (user && pathname.startsWith('/onboarding')) {
-      redirect('/dashboard');
-      return null;
-  }
-
-  // 5. If all checks pass, the user is authenticated and has a valid user document.
-  // Render the full application layout.
   return (
     <SidebarProvider>
       <Sidebar>
