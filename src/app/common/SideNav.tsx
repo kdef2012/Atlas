@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -34,7 +33,6 @@ import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { TwinskieAvatar } from "@/components/TwinskieAvatar";
 import {
   AlertDialog,
@@ -70,7 +68,6 @@ const adminNavItems = [
 
 export function SideNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const auth = useAuth();
   const { user: authUser } = useUser();
   const firestore = useFirestore();
@@ -82,12 +79,18 @@ export function SideNav() {
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData } = useDoc(adminRef);
 
-  const handleLogout = () => {
+  // ✅ FIXED: Use window.location.href to avoid hooks error
+  const handleLogout = async () => {
     if (!auth) return;
-    signOut(auth).then(() => {
-      router.push('/');
-    });
-  }
+    
+    try {
+      await signOut(auth);
+      // Hard redirect - forces full page reload, avoids React hooks issues
+      window.location.href = '/logout';
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   // Determine if the user is an admin based on the existence of their doc in /admins
   const isAdmin = !!adminData;
