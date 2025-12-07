@@ -1,6 +1,6 @@
 'use client';
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -8,105 +8,59 @@ import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/ui/sidebar";
-import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
-import { redirect, useRouter, usePathname } from "next/navigation";
+import { useUser, useDoc, useMemoFirebase } from "@/firebase";
+import { redirect, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
-import { collection, doc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
   const pathname = usePathname();
 
+  // FIX: These hooks are now called unconditionally to satisfy the Rules of Hooks.
+  // useMemoFirebase is designed to return null if authUser is null, which useDoc handles gracefully.
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: user, isLoading: isUserDocLoading, error: userDocError } = useDoc<User>(userRef);
+  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
-  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
+  const { data: adminData } = useDoc(adminRef);
 
-  // Track if loading has ever started (to distinguish initial false from completed false)
-  const hasUserDocLoadingStarted = useRef(false);
-  const hasAdminDocLoadingStarted = useRef(false);
-
-  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
-
-  // Track when loading starts
+  // Handle redirects ONLY when all auth/data checks are complete
   useEffect(() => {
-    if (isUserDocLoading) {
-      hasUserDocLoadingStarted.current = true;
+    // Wait until the initial auth check AND the user document load are complete
+    if (isAuthLoading || (authUser && isUserDocLoading)) {
+      return;
     }
-    if (isAdminDocLoading) {
-      hasAdminDocLoadingStarted.current = true;
-    }
-  }, [isUserDocLoading, isAdminDocLoading]);
-
-  // Calculate if we're truly ready (loading started AND finished)
-  const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
-  const isAdminDocReady = authUser && isAdminLogin ? (hasAdminDocLoadingStarted.current && !isAdminDocLoading) : true;
-  const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
-
-  // Handle redirects ONLY when fully ready
-  useEffect(() => {
-    if (!isReadyToDecide || !authUser) {
-      return; // Wait until we're truly ready
+    
+    // If not authenticated, redirect to login (unless already there or on a public page)
+    if (!authUser && !pathname.startsWith('/login') && !pathname.startsWith('/logout')) {
+      redirect('/login');
+      return;
     }
 
-    console.log('🎯 Making routing decision:', {
-      isAdminLogin,
-      hasUser: !!user,
-      hasAdmin: !!adminData,
-      pathname,
-    });
-
-    if (isAdminLogin) {
-      // Create admin document if needed
-      if (!adminData) {
-        console.log('🔧 Creating admin document for:', authUser.email);
-        const adminCollection = collection(firestore, 'admins');
-        const newAdminDocRef = doc(adminCollection, authUser.uid);
-        setDocumentNonBlocking(newAdminDocRef, {
-          id: authUser.uid,
-          email: authUser.email,
-          userName: 'SuperAdmin',
-          createdAt: Date.now(),
-        }, {});
-      }
-    } else {
-      // Regular user logic
-      if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-        console.log('🔄 No user document - redirecting to onboarding');
-        router.replace('/onboarding/archetype');
-      } else if (user && pathname.startsWith('/onboarding')) {
-        console.log('🔄 User exists - redirecting to dashboard');
-        router.replace('/dashboard');
-      } else if (user) {
-        console.log('✅ User loaded successfully - rendering app');
-      }
+    // If authenticated...
+    if (authUser) {
+        // ...but has no user document, they need to go through onboarding.
+        // We explicitly allow them to access /admin routes in case they are an admin without a user profile.
+        if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+            redirect('/onboarding/archetype');
+        }
+        // ...and they have a user document but land on an onboarding page, send them to the dashboard.
+        else if (user && pathname.startsWith('/onboarding')) {
+            redirect('/dashboard');
+        }
     }
-  }, [
-    isReadyToDecide,
-    authUser,
-    user,
-    adminData,
-    isAdminLogin,
-    router,
-    pathname,
-    firestore
-  ]);
 
-  // Redirect to login if not authenticated
-  if (!isAuthLoading && !authUser) {
-    return redirect('/login');
-  }
+  }, [authUser, isAuthLoading, user, isUserDocLoading, pathname]);
 
-  // Show loading while waiting for data
-  const isLoading = isAuthLoading || !isReadyToDecide;
   
-  if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+  // Show a loading state while waiting for the initial auth status or user document.
+  // This prevents layout shifts and rendering protected content prematurely.
+  if (isAuthLoading || (authUser && isUserDocLoading && !user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin'))) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
@@ -114,6 +68,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     );
   }
   
+  // If not loading and not authenticated, we will be redirected by the effect,
+  // but we can return null to prevent rendering the layout for a split second.
+  if (!authUser) {
+    return null;
+  }
+
   return (
     <SidebarProvider>
       <Sidebar>
@@ -127,4 +87,3 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
