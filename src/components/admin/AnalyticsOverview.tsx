@@ -37,29 +37,28 @@ export function AnalyticsOverview() {
     const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
     const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-    const shouldQuery = !!adminData;
-    
-    const skillsCollection = useMemoFirebase(
-        () => shouldQuery ? collection(firestore, 'skills') : null,
-        [firestore, shouldQuery]
-    );
-    const { data: skills, isLoading: skillsLoading } = useCollection<Skill>(skillsCollection);
-    
-    const fireteamsCollection = useMemoFirebase(
-        () => shouldQuery ? collection(firestore, 'fireteams') : null,
-        [firestore, shouldQuery]
-    );
-    const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(fireteamsCollection);
-    
-    const guildsCollection = useMemoFirebase(
-        () => shouldQuery ? collection(firestore, 'guilds') : null,
-        [firestore, shouldQuery]
-    );
-    const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(guildsCollection);
-    
-    const isLoading = isAuthLoading || isAdminDocLoading || (shouldQuery && (skillsLoading || fireteamsLoading || guildsLoading));
+    // This useMemo is the key fix. It ensures that the queries are only created
+    // when we know the user is an admin, but the hooks themselves are still called
+    // on every render. The hooks will simply receive 'null' if the user isn't an admin,
+    // which they are designed to handle gracefully.
+    const queries = useMemoFirebase(() => {
+        if (adminData) {
+            return {
+                skills: collection(firestore, 'skills'),
+                fireteams: collection(firestore, 'fireteams'),
+                guilds: collection(firestore, 'guilds')
+            }
+        }
+        return { skills: null, fireteams: null, guilds: null };
+    }, [adminData, firestore]);
 
-    if (!shouldQuery && !isLoading) {
+    const { data: skills, isLoading: skillsLoading } = useCollection<Skill>(queries.skills);
+    const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(queries.fireteams);
+    const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(queries.guilds);
+    
+    const isLoading = isAuthLoading || isAdminDocLoading || skillsLoading || fireteamsLoading || guildsLoading;
+
+    if (!adminData && !isLoading) {
         return null; // Don't render if not an admin and not loading
     }
     

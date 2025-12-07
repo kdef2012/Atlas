@@ -166,5 +166,3 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
     </Dialog>
   );
 }
-
-    
