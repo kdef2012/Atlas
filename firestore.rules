@@ -1,7 +1,7 @@
 
 rules_version = '2';
 
-// v1.1 Ruleset: Added public-logs collection
+// v1.2 Ruleset: Secured user list permission
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -35,12 +35,18 @@ service cloud.firestore {
     
     // USERS COLLECTION
     match /users/{userId} {
-      allow read, list: if isSignedIn(); // Allow any signed in user to read/list user profiles.
-      allow create: if isOwner(userId); // A user can create their own profile.
-      allow update: if isOwner(userId) || isAdmin(); // A user can update their own profile, or an admin can.
-      allow delete: if isAdmin(); // Only admins can delete user accounts.
+      // Any signed-in user can read an individual user's profile.
+      allow read: if isSignedIn();
+      // Only admins can list all users. Regular users cannot.
+      allow list: if isAdmin();
+      // A user can create their own profile.
+      allow create: if isOwner(userId);
+      // A user can update their own profile, or an admin can.
+      allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete user accounts.
+      allow delete: if isAdmin();
 
-      // USER SUB-COLLECTIONS (LOGS, QUESTS)
+      // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
       match /{subcollection}/{docId} {
         allow read, write, create, update, delete: if isOwner(userId) || isAdmin();
       }
@@ -67,9 +73,8 @@ service cloud.firestore {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isFireteamMember(fireteamId) || isAdmin(); // Members or admins can update.
-      allow delete: if isAdmin(); // Only admins can delete fireteams.
+      allow delete: if isAdmin();
 
-      // FIRETEAM MESSAGES
       match /messages/{messageId} {
         allow read, write: if isFireteamMember(fireteamId);
         allow delete: if isAdmin();
@@ -83,7 +88,6 @@ service cloud.firestore {
       allow update: if isGuildMember(guildId) || isAdmin(); // Members or admins can update.
       allow delete: if isAdmin();
       
-      // GUILD MESSAGES
       match /messages/{messageId} {
         allow read, write: if isGuildMember(guildId);
         allow delete: if isAdmin();
