@@ -77,7 +77,7 @@ function DashboardPageContent() {
       <div className="lg:col-span-1 space-y-6">
         <Card className="flex flex-col items-center justify-center text-center p-6">
           <CardHeader className="p-0 mb-4">
-            <CardTitle className="font-headline text-3xl">The Twinskie</CardTitle>
+            <CardTitle className="font-headline text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Twinskie</CardTitle>
             <CardDescription>Your digital self.</CardDescription>
           </CardHeader>
           <TwinskieAvatar user={user} className="w-full max-w-xs" />
