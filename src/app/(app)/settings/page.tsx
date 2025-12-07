@@ -19,6 +19,7 @@ import { sendPasswordResetEmail } from 'firebase/auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 
 // Define the shape of the settings object
 interface UserSettings {
@@ -65,6 +66,11 @@ const settingsSchema = z.object({
     highContrast: z.boolean(),
     dyslexiaFont: z.boolean(),
   }),
+  quietHours: z.object({
+    enabled: z.boolean(),
+    start: z.string(),
+    end: z.string(),
+  }),
 });
 
 
@@ -86,6 +92,7 @@ export default function SettingsPage() {
       privacy: settingsData?.privacy ?? { profileVisibility: 'Public' },
       appearance: settingsData?.appearance ?? { theme: 'dark' },
       accessibility: settingsData?.accessibility ?? { highContrast: false, dyslexiaFont: false },
+      quietHours: settingsData?.quietHours ?? { enabled: false, start: '22:00', end: '08:00' },
     },
   });
 
@@ -247,6 +254,29 @@ export default function SettingsPage() {
                   </CardContent>
               </Card>
           </div>
+
+          <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Clock /> Quiet Hours</CardTitle>
+                <CardDescription>Set a "do not disturb" window to silence all push notifications.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="quiet-enabled">Enable Quiet Hours</Label>
+                    <Controller name="quietHours.enabled" control={control} render={({ field }) => <Switch id="quiet-enabled" checked={field.value} onCheckedChange={field.onChange} />} />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <Label htmlFor="quiet-start">Start Time</Label>
+                        <Controller name="quietHours.start" control={control} render={({ field }) => <Input id="quiet-start" type="time" {...field} />} />
+                    </div>
+                    <div>
+                        <Label htmlFor="quiet-end">End Time</Label>
+                        <Controller name="quietHours.end" control={control} render={({ field }) => <Input id="quiet-end" type="time" {...field} />} />
+                    </div>
+                </div>
+            </CardContent>
+          </Card>
           
           {/* Account Management */}
           <Card>
