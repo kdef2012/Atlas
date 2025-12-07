@@ -22,6 +22,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // ✅ ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading, error: userDocError } = useDoc<User>(userRef);
 
@@ -31,6 +32,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Track if loading has ever started (to distinguish initial false from completed false)
   const hasUserDocLoadingStarted = useRef(false);
   const hasAdminDocLoadingStarted = useRef(false);
+  
+  // ✅ NEW: Track previous auth state to detect logout
+  const prevAuthUser = useRef(authUser);
 
   const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
@@ -98,8 +102,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     firestore
   ]);
 
+  // ✅ NOW we can do conditional returns AFTER all hooks are called
+  
+  // ✅ CRITICAL FIX: Detect if user just logged out
+  // If we had a user and now we don't, we're logging out - don't redirect immediately
+  const justLoggedOut = prevAuthUser.current && !authUser;
+  
+  // Update the ref for next render
+  useEffect(() => {
+    prevAuthUser.current = authUser;
+  }, [authUser]);
+  
   // Redirect to login if not authenticated
-  if (!isAuthLoading && !authUser) {
+  // BUT: Don't redirect if we just logged out (let the logout flow complete)
+  if (!isAuthLoading && !authUser && !justLoggedOut && !pathname.startsWith('/logout') && !pathname.startsWith('/login')) {
     return redirect('/login');
   }
 
