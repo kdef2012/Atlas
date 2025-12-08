@@ -234,18 +234,11 @@ export function getActiveCosmetics(avatarLayers?: Record<string, boolean>): Cosm
   return COSMETIC_ITEMS.filter(item => avatarLayers[item.id] === true);
 }
 
-// ✅ UPDATED: Now supports transparent background
 export function buildAvatarUrl(
   baseUrl: string, 
-  cosmetics: CosmeticItem[],
-  options?: { 
-    transparentBackground?: boolean;
-  }
+  cosmetics: CosmeticItem[]
 ): string {
   const urlMods = cosmetics.filter(c => c.type === 'url-mod' && c.urlModifications);
-  
-  // Check if any background cosmetics are active
-  const hasBackgroundCosmetic = cosmetics.some(c => c.type === 'background');
   
   const params = new URLSearchParams();
   const morphTargets: string[] = [];
@@ -281,12 +274,8 @@ export function buildAvatarUrl(
     params.set('pose', pose);
   }
   
-  // ✅ CRITICAL: Add transparent background if:
-  // 1. Explicitly requested via options, OR
-  // 2. User has a background cosmetic active
-  if (options?.transparentBackground || hasBackgroundCosmetic) {
-    params.set('background', 'transparent');
-  }
+  // Always make the background transparent
+  params.set('background', 'transparent');
   
   const queryString = params.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
