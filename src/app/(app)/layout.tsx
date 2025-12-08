@@ -27,7 +27,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading, error: userDocError } = useDoc<User>(userRef);
 
-  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
+
+  const adminRef = useMemoFirebase(() => {
+    // Only check for admin document if it's the specific admin user
+    if (authUser && isAdminLogin) {
+      return doc(firestore, 'admins', authUser.uid);
+    }
+    return null;
+  }, [firestore, authUser, isAdminLogin]);
+
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
   // Track if loading has ever started (to distinguish initial false from completed false)
@@ -36,8 +45,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   
   // ✅ NEW: Track previous auth state to detect logout
   const prevAuthUser = useRef(authUser);
-
-  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
   // Track when loading starts
   useEffect(() => {
