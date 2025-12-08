@@ -5,11 +5,13 @@
  * @fileOverview Defines a Genkit flow to generate a script for an ATLAS Radio broadcast.
  *
  * This flow acts as an AI DJ, creating an engaging radio show script based on
- * recent events and data from within the ATLAS world.
+ * recent events and data from within the ATLAS world, and then converts that script to audio.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
+import wav from 'wav';
 
 // Define the input data schemas for the different types of news
 const FactionChallengeWinnerSchema = z.object({
@@ -42,6 +44,7 @@ export type GenerateRadioBroadcastInput = z.infer<typeof GenerateRadioBroadcastI
 // Define the output schema for the flow
 const GenerateRadioBroadcastOutputSchema = z.object({
   script: z.string().describe('The complete, formatted script for the radio broadcast.'),
+  audioUrl: z.string().describe('A base64 encoded data URI of the generated WAV audio.'),
 });
 export type GenerateRadioBroadcastOutput = z.infer<typeof GenerateRadioBroadcastOutputSchema>;
 
@@ -58,7 +61,8 @@ export async function generateRadioBroadcast(
 const generateRadioScriptPrompt = ai.definePrompt({
   name: 'generateRadioScriptPrompt',
   input: { schema: GenerateRadioBroadcastInputSchema },
-  output: { schema: GenerateRadioBroadcastOutputSchema },
+  // The output of this prompt is just the script text
+  output: { schema: z.object({ script: z.string() }) },
   prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
 
 Your task is to generate a short (2-3 minute) radio script based on the following data. You must weave these data points into a coherent and entertaining broadcast.
@@ -92,10 +96,38 @@ Your task is to generate a short (2-3 minute) radio script based on the followin
 4.  Celebrate the pioneers of new skills. Emphasize how they are expanding the world for everyone.
 5.  End with a positive and motivational sign-off.
 6.  Keep the language exciting and use in-world slang (e.g., "log those stats," "climbing the leaderboards," "sync up," "new data streams").
-7.  The final output should be a single block of text representing the entire script.
+7.  The final output should be a single JSON object containing the entire script in the 'script' field.
 
 Now, generate the broadcast script!`,
 });
+
+
+async function toWav(
+  pcmData: Buffer,
+  channels = 1,
+  rate = 24000,
+  sampleWidth = 2
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const writer = new wav.Writer({
+      channels,
+      sampleRate: rate,
+      bitDepth: sampleWidth * 8,
+    });
+
+    let bufs: any[] = [];
+    writer.on('error', reject);
+    writer.on('data', function (d) {
+      bufs.push(d);
+    });
+    writer.on('end', function () {
+      resolve(Buffer.concat(bufs).toString('base64'));
+    });
+
+    writer.write(pcmData);
+    writer.end();
+  });
+}
 
 
 // Define the Genkit flow
@@ -106,7 +138,44 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     outputSchema: GenerateRadioBroadcastOutputSchema,
   },
   async (input) => {
-    const { output } = await generateRadioScriptPrompt(input);
-    return output!;
+    // Step 1: Generate the script
+    const { output: scriptOutput } = await generateRadioScriptPrompt(input);
+    if (!scriptOutput) {
+        throw new Error('Failed to generate radio script.');
+    }
+    const script = scriptOutput.script;
+
+    // Step 2: Generate audio from the script
+    const { media } = await ai.generate({
+        model: googleAI.model('gemini-2.5-flash-preview-tts'),
+        config: {
+            responseModalities: ['AUDIO'],
+            speechConfig: {
+                voiceConfig: {
+                    prebuiltVoiceConfig: { voiceName: 'Algenib' }, // An energetic, clear voice
+                },
+            },
+        },
+        prompt: script,
+    });
+    
+    if (!media) {
+        throw new Error('TTS model did not return any audio media.');
+    }
+    
+    // Step 3: Convert raw PCM audio to WAV format
+    const audioBuffer = Buffer.from(
+      media.url.substring(media.url.indexOf(',') + 1),
+      'base64'
+    );
+
+    const wavBase64 = await toWav(audioBuffer);
+    const audioUrl = `data:audio/wav;base64,${wavBase64}`;
+
+    // Step 4: Return both script and audio URL
+    return {
+      script,
+      audioUrl,
+    };
   }
 );
