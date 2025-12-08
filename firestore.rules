@@ -1,7 +1,6 @@
 
 rules_version = '2';
 
-// v1.5 Ruleset: Adds collection group query for 'logs' and a correct '/users' list rule.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -20,22 +19,23 @@ service cloud.firestore {
     }
 
     function isFireteamMember(fireteamId) {
-      return isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+      // Correctly check if the user's UID is a key in the members map
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members;
     }
 
     function isGuildMember(guildId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
+      // Correctly check if the guildId is a key in the user's guilds map
+      return isSignedIn() && guildId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds;
     }
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read: if isOwner(adminId) || isAdmin();
-      allow write: if isAdmin() || isOwner(adminId);
+      allow read, write: if isAdmin();
     }
     
     // USERS COLLECTION & SUB-COLLECTIONS
     match /users/{userId} {
-      // Any signed-in user can read individual user profiles.
+      // Any signed-in user can read an individual user profile.
       allow get: if isSignedIn();
       // A user can create their own profile.
       allow create: if isOwner(userId);
@@ -46,8 +46,7 @@ service cloud.firestore {
 
       // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
       match /logs/{logId} {
-        // Owner can do anything. Admins can read and update.
-        allow read, update, delete, create: if isOwner(userId) || isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
       }
 
       match /quests/{questId} {
@@ -59,12 +58,14 @@ service cloud.firestore {
       }
     }
     
-    // Explicit rule to allow listing the /users collection for the leaderboard.
+    // --- CRITICAL FIX: EXPLICIT RULES FOR COLLECTION QUERIES ---
+
+    // 1. Leaderboard Fix: Allows any signed-in user to query the /users collection.
     match /users {
         allow list: if isSignedIn();
     }
     
-    // Explicit rule for collection group query on 'logs' for the verification page.
+    // 2. Verify Page Fix: Allows a collection group query on 'logs'.
     match /{path=**}/logs/{logId} {
       allow read: if isSignedIn();
     }
@@ -73,22 +74,23 @@ service cloud.firestore {
     match /public-logs/{logId} {
         allow get, list: if isSignedIn();
         // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
+        // This allows any user to create, which is what the app does now.
         allow create: if isSignedIn(); 
-        allow update, delete: if false; // Nobody can update or delete public logs.
+        allow update, delete: if false;
     }
 
     // SKILLS COLLECTION
     match /skills/{skillId} {
       allow get, list: if true; // Skills are public knowledge.
       allow create: if isSignedIn(); // Any user can pioneer a new skill.
-      allow update, delete: if isAdmin(); // Only admins can curate skills.
+      allow update, delete: if isAdmin();
     }
 
     // FIRETEAMS COLLECTION
     match /fireteams/{fireteamId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isFireteamMember(fireteamId) || isAdmin(); // Members or admins can update.
+      allow update: if isFireteamMember(fireteamId) || isAdmin();
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
@@ -100,8 +102,8 @@ service cloud.firestore {
     // GUILDS COLLECTION
     match /guilds/{guildId} {
       allow get, list: if isSignedIn();
-      allow create: if isAdmin(); // Guilds are created based on pioneered skills, managed by admin/system.
-      allow update: if isGuildMember(guildId) || isAdmin(); // Members or admins can update.
+      allow create: if isAdmin(); // Only admins can create guilds.
+      allow update: if isGuildMember(guildId) || isAdmin();
       allow delete: if isAdmin();
       
       match /messages/{messageId} {
@@ -110,7 +112,7 @@ service cloud.firestore {
       }
     }
 
-    // PUBLIC/ADMIN-MANAGED COLLECTIONS
+    // PUBLIC & ADMIN-MANAGED COLLECTIONS
     match /territories/{territoryId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
