@@ -18,44 +18,19 @@ interface Submission {
 export default function VerifyPage() {
   const VerifyIcon = CATEGORY_ICONS['Verify'];
   const firestore = useFirestore();
-  const { user: authUser, isUserLoading: isLoadingAuth } = useUser();
+  const { user: authUser } = useUser();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [authTokenReady, setAuthTokenReady] = useState(false);
 
-  // CRITICAL: Wait for auth token to be fully propagated
-  useEffect(() => {
-    async function ensureAuthToken() {
-      if (!authUser || isLoadingAuth) {
-        setAuthTokenReady(false);
-        return;
-      }
-      
-      try {
-        // Force token refresh to ensure it's valid
-        await authUser.getIdToken(true);
-        // Add small delay to ensure token propagates to Firestore backend
-        await new Promise(resolve => setTimeout(resolve, 100));
-        setAuthTokenReady(true);
-      } catch (error) {
-        console.error('Error refreshing auth token:', error);
-        setAuthTokenReady(false);
-      }
-    }
-    
-    ensureAuthToken();
-  }, [authUser, isLoadingAuth]);
-
-  // Only create query AFTER auth token is confirmed ready
+  // The useCollection hook is now auth-aware, so we don't need extra guards here.
   const unverifiedLogsQuery = useMemoFirebase(() => {
-    if (!authTokenReady) return null;
     return query(
       collectionGroup(firestore, 'logs'), 
       where('isVerified', '==', false),
       where('verificationPhotoUrl', '!=', ''),
       limit(20)
     );
-  }, [firestore, authTokenReady]);
+  }, [firestore]);
 
   const { data: logs, isLoading: isLoadingLogs } = useCollection<Log>(unverifiedLogsQuery);
 
@@ -89,14 +64,14 @@ export default function VerifyPage() {
         }
         setSubmissions(detailedSubmissions.slice(0, 10));
         setIsLoading(false);
-      } else if (!isLoadingLogs && !isLoadingAuth && authTokenReady) {
+      } else if (!isLoadingLogs) { // If logs have finished loading (even if null)
         setSubmissions([]);
         setIsLoading(false);
       }
     }
 
     fetchSubmissionDetails();
-  }, [logs, firestore, authUser, isLoadingLogs, isLoadingAuth, authTokenReady]);
+  }, [logs, firestore, authUser, isLoadingLogs]);
 
   const handleVote = (logId: string) => {
     setSubmissions(prev => prev.filter(s => s.log.id !== logId));
@@ -117,7 +92,7 @@ export default function VerifyPage() {
       </CardHeader>
       <CardContent>
         <div className="max-w-2xl mx-auto">
-            {isLoading || isLoadingLogs || isLoadingAuth || !authTokenReady ? (
+            {isLoading || isLoadingLogs ? (
                 <div className="space-y-4">
                     <Skeleton className="h-96 w-full"/>
                     <Skeleton className="h-10 w-full" />
