@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -19,23 +18,44 @@ interface Submission {
 export default function VerifyPage() {
   const VerifyIcon = CATEGORY_ICONS['Verify'];
   const firestore = useFirestore();
-  const { user: authUser } = useUser();
+  const { user: authUser, isUserLoading: isLoadingAuth } = useUser();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [authTokenReady, setAuthTokenReady] = useState(false);
 
-  // Query for unverified logs that have a photo.
-  // We can't filter out the current user's logs here because Firestore
-  // does not allow two '!=' or 'not-in' filters in the same query.
-  // We will filter them out on the client side.
+  // CRITICAL: Wait for auth token to be fully propagated
+  useEffect(() => {
+    async function ensureAuthToken() {
+      if (!authUser || isLoadingAuth) {
+        setAuthTokenReady(false);
+        return;
+      }
+      
+      try {
+        // Force token refresh to ensure it's valid
+        await authUser.getIdToken(true);
+        // Add small delay to ensure token propagates to Firestore backend
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setAuthTokenReady(true);
+      } catch (error) {
+        console.error('Error refreshing auth token:', error);
+        setAuthTokenReady(false);
+      }
+    }
+    
+    ensureAuthToken();
+  }, [authUser, isLoadingAuth]);
+
+  // Only create query AFTER auth token is confirmed ready
   const unverifiedLogsQuery = useMemoFirebase(() => {
-    if (!authUser) return null; // CRITICAL FIX: Do not run query until user is authenticated
+    if (!authTokenReady) return null;
     return query(
       collectionGroup(firestore, 'logs'), 
       where('isVerified', '==', false),
       where('verificationPhotoUrl', '!=', ''),
-      limit(20) // Fetch a bit more to account for client-side filtering
-    )
-  }, [firestore, authUser]);
+      limit(20)
+    );
+  }, [firestore, authTokenReady]);
 
   const { data: logs, isLoading: isLoadingLogs } = useCollection<Log>(unverifiedLogsQuery);
 
@@ -67,20 +87,18 @@ export default function VerifyPage() {
             console.error("Error fetching submission details:", error);
           }
         }
-        setSubmissions(detailedSubmissions.slice(0, 10)); // Limit to 10 after processing
+        setSubmissions(detailedSubmissions.slice(0, 10));
         setIsLoading(false);
-      } else if (!isLoadingLogs) {
-        // If logs are done loading and are null/empty
+      } else if (!isLoadingLogs && !isLoadingAuth && authTokenReady) {
         setSubmissions([]);
         setIsLoading(false);
       }
     }
 
     fetchSubmissionDetails();
-  }, [logs, firestore, authUser, isLoadingLogs]);
+  }, [logs, firestore, authUser, isLoadingLogs, isLoadingAuth, authTokenReady]);
 
   const handleVote = (logId: string) => {
-    // Remove the voted submission from the local state to show the next one
     setSubmissions(prev => prev.filter(s => s.log.id !== logId));
   };
   
@@ -99,7 +117,7 @@ export default function VerifyPage() {
       </CardHeader>
       <CardContent>
         <div className="max-w-2xl mx-auto">
-            {isLoading || isLoadingLogs ? (
+            {isLoading || isLoadingLogs || isLoadingAuth || !authTokenReady ? (
                 <div className="space-y-4">
                     <Skeleton className="h-96 w-full"/>
                     <Skeleton className="h-10 w-full" />

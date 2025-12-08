@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,20 +65,31 @@ function LeaderboardTable({ users, isLoading }: { users: User[] | null, isLoadin
 
 export default function LeaderboardPage() {
     const firestore = useFirestore();
-    const { user: authUser } = useUser(); // Get the authenticated user
+    const { user: authUser, isUserLoading: isLoadingAuth } = useUser(); // CRITICAL: Also get isLoading from useUser
 
-    // The query now depends on authUser being available
-    const topByLevelQuery = useMemoFirebase(() =>
-        authUser ? query(collection(firestore, 'users'), orderBy('level', 'desc'), orderBy('xp', 'desc'), limit(100)) : null,
-        [firestore, authUser]
-    );
+    // CRITICAL FIX: Don't create query until auth is loaded AND user exists
+    const topByLevelQuery = useMemoFirebase(() => {
+        if (isLoadingAuth || !authUser) return null;
+        return query(
+            collection(firestore, 'users'), 
+            orderBy('level', 'desc'), 
+            orderBy('xp', 'desc'), 
+            limit(100)
+        );
+    }, [firestore, authUser, isLoadingAuth]);
+    
     const { data: topByLevel, isLoading: isLoadingLevel } = useCollection<User>(topByLevelQuery);
     
-    // The query now depends on authUser being available
-    const topByXpQuery = useMemoFirebase(() =>
-        authUser ? query(collection(firestore, 'users'), orderBy('xp', 'desc'), limit(100)) : null,
-        [firestore, authUser]
-    );
+    // CRITICAL FIX: Don't create query until auth is loaded AND user exists
+    const topByXpQuery = useMemoFirebase(() => {
+        if (isLoadingAuth || !authUser) return null;
+        return query(
+            collection(firestore, 'users'), 
+            orderBy('xp', 'desc'), 
+            limit(100)
+        );
+    }, [firestore, authUser, isLoadingAuth]);
+    
     const { data: topByXp, isLoading: isLoadingXp } = useCollection<User>(topByXpQuery);
 
     return (
@@ -102,10 +112,10 @@ export default function LeaderboardPage() {
                 </CardHeader>
                 <CardContent>
                     <TabsContent value="level">
-                       <LeaderboardTable users={topByLevel} isLoading={isLoadingLevel} />
+                       <LeaderboardTable users={topByLevel} isLoading={isLoadingLevel || isLoadingAuth} />
                     </TabsContent>
                     <TabsContent value="xp">
-                        <LeaderboardTable users={topByXp} isLoading={isLoadingXp} />
+                        <LeaderboardTable users={topByXp} isLoading={isLoadingXp || isLoadingAuth} />
                     </TabsContent>
                 </CardContent>
             </Card>
