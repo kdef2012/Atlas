@@ -1,10 +1,11 @@
+
 'use client';
 
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useCollection, useMemoFirebase, useUser } from "@/firebase";
-import { useFirestore } from "@/firebase/provider";
-import { collection, query, orderBy, limit } from "firebase/firestore";
+import { useFirestore, useUser } from "@/firebase/provider";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy } from "lucide-react";
@@ -65,27 +66,51 @@ function LeaderboardTable({ users, isLoading }: { users: User[] | null, isLoadin
 
 export default function LeaderboardPage() {
     const firestore = useFirestore();
+    const { user: authUser, isUserLoading } = useUser();
+    const [topByLevel, setTopByLevel] = useState<User[] | null>(null);
+    const [topByXp, setTopByXp] = useState<User[] | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const topByLevelQuery = useMemoFirebase(() => {
-        return query(
-            collection(firestore, 'users'), 
-            orderBy('level', 'desc'), 
-            orderBy('xp', 'desc'), 
-            limit(100)
-        );
-    }, [firestore]);
-    
-    const { data: topByLevel, isLoading: isLoadingLevel } = useCollection<User>(topByLevelQuery);
-    
-    const topByXpQuery = useMemoFirebase(() => {
-        return query(
-            collection(firestore, 'users'), 
-            orderBy('xp', 'desc'), 
-            limit(100)
-        );
-    }, [firestore]);
-    
-    const { data: topByXp, isLoading: isLoadingXp } = useCollection<User>(topByXpQuery);
+    useEffect(() => {
+        if (isUserLoading || !authUser) {
+            // Wait until authentication check is complete and user is logged in
+            return;
+        }
+
+        const fetchLeaderboards = async () => {
+            setIsLoading(true);
+            try {
+                // Query for top by level
+                const levelQuery = query(
+                    collection(firestore, 'users'), 
+                    orderBy('level', 'desc'), 
+                    orderBy('xp', 'desc'), 
+                    limit(100)
+                );
+                const levelSnapshot = await getDocs(levelQuery);
+                const levelData = levelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                setTopByLevel(levelData);
+
+                // Query for top by XP
+                const xpQuery = query(
+                    collection(firestore, 'users'), 
+                    orderBy('xp', 'desc'), 
+                    limit(100)
+                );
+                const xpSnapshot = await getDocs(xpQuery);
+                const xpData = xpSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+                setTopByXp(xpData);
+
+            } catch (error) {
+                console.error("Failed to fetch leaderboards:", error);
+                // In a real app, you'd want to show an error state to the user
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchLeaderboards();
+    }, [firestore, authUser, isUserLoading]);
 
     return (
         <Tabs defaultValue="level">
@@ -107,10 +132,10 @@ export default function LeaderboardPage() {
                 </CardHeader>
                 <CardContent>
                     <TabsContent value="level">
-                       <LeaderboardTable users={topByLevel} isLoading={isLoadingLevel} />
+                       <LeaderboardTable users={topByLevel} isLoading={isLoading} />
                     </TabsContent>
                     <TabsContent value="xp">
-                        <LeaderboardTable users={topByXp} isLoading={isLoadingXp} />
+                        <LeaderboardTable users={topByXp} isLoading={isLoading} />
                     </TabsContent>
                 </CardContent>
             </Card>
