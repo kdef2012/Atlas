@@ -62,7 +62,7 @@ const navItems = [
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },
-  { href: "/mentors", label: "Mentors", icon: BookUser },
+  { href: "/mentorships", label: "Mentorships", icon: BookUser },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
