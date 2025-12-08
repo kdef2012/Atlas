@@ -62,12 +62,10 @@ export function useCollection<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // **CRITICAL FIX**: If the query is null or undefined, do not proceed.
-    // Set loading to false and return early. This prevents the hook from
-    // attempting to use a stale or invalid query object.
+    // If the query is not ready, reset state and do nothing.
     if (!memoizedTargetRefOrQuery) {
       setData(null);
-      setIsLoading(false);
+      setIsLoading(true); // Set to true because we are "loading" the query itself.
       setError(null);
       return;
     }
@@ -87,7 +85,6 @@ export function useCollection<T = any>(
         setIsLoading(false);
       },
       (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
         const path: string =
           memoizedTargetRefOrQuery.type === 'collection'
             ? (memoizedTargetRefOrQuery as CollectionReference).path
@@ -102,7 +99,6 @@ export function useCollection<T = any>(
         setData(null)
         setIsLoading(false)
 
-        // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
       }
     );
@@ -114,8 +110,5 @@ export function useCollection<T = any>(
     throw new Error(memoizedTargetRefOrQuery + ' was not properly memoized using useMemoFirebase');
   }
 
-  // **CRITICAL FIX**: If the query is null, we should explicitly be in a loading state.
-  const finalIsLoading = isLoading || !memoizedTargetRefOrQuery;
-
-  return { data: finalIsLoading ? null : data, isLoading: finalIsLoading, error };
+  return { data, isLoading, error };
 }
