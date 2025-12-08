@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useFirestore, useUser } from "@/firebase/provider";
+import { useFirestore, useUser, FirestorePermissionError, errorEmitter } from "@/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,40 +77,51 @@ export default function LeaderboardPage() {
             return;
         }
 
-        const fetchLeaderboards = async () => {
+        const fetchLeaderboards = () => {
             setIsLoading(true);
-            try {
-                // Query for top by level
-                const levelQuery = query(
-                    collection(firestore, 'users'), 
-                    orderBy('level', 'desc'), 
-                    orderBy('xp', 'desc'), 
-                    limit(100)
-                );
-                const levelSnapshot = await getDocs(levelQuery);
+            
+            // Query for top by level
+            const levelQuery = query(
+                collection(firestore, 'users'), 
+                orderBy('level', 'desc'), 
+                orderBy('xp', 'desc'), 
+                limit(100)
+            );
+            getDocs(levelQuery).then(levelSnapshot => {
                 const levelData = levelSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
                 setTopByLevel(levelData);
+                if (topByXp) setIsLoading(false);
+            }).catch(serverError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: 'users',
+                    operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
+                setIsLoading(false);
+            });
 
-                // Query for top by XP
-                const xpQuery = query(
-                    collection(firestore, 'users'), 
-                    orderBy('xp', 'desc'), 
-                    limit(100)
-                );
-                const xpSnapshot = await getDocs(xpQuery);
+            // Query for top by XP
+            const xpQuery = query(
+                collection(firestore, 'users'), 
+                orderBy('xp', 'desc'), 
+                limit(100)
+            );
+            getDocs(xpQuery).then(xpSnapshot => {
                 const xpData = xpSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
                 setTopByXp(xpData);
-
-            } catch (error) {
-                console.error("Failed to fetch leaderboards:", error);
-                // In a real app, you'd want to show an error state to the user
-            } finally {
+                if (topByLevel) setIsLoading(false);
+            }).catch(serverError => {
+                 const permissionError = new FirestorePermissionError({
+                    path: 'users',
+                    operation: 'list',
+                });
+                errorEmitter.emit('permission-error', permissionError);
                 setIsLoading(false);
-            }
+            });
         };
 
         fetchLeaderboards();
-    }, [firestore, authUser, isUserLoading]);
+    }, [firestore, authUser, isUserLoading, topByLevel, topByXp]);
 
     return (
         <Tabs defaultValue="level">
