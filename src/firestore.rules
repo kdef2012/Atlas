@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -17,33 +18,34 @@ service cloud.firestore {
     }
 
     function isFireteamMember(fireteamId) {
-      return isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+      // Correctly check if the user's UID is a key in the members map
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members;
     }
 
     function isGuildMember(guildId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
-    }
-
-    // COLLECTION GROUP QUERY for logs (Verify page)
-    match /{path=**}/logs/{logId} {
-      allow read: if isSignedIn();
+      // Correctly check if the guildId is a key in the user's guilds map
+      return isSignedIn() && guildId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds;
     }
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read: if isOwner(adminId) || isAdmin();
-      allow write: if isAdmin() || isOwner(adminId);
+      allow read, write: if isAdmin();
     }
     
-    // USERS COLLECTION
+    // USERS COLLECTION & SUB-COLLECTIONS
     match /users/{userId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
+      // Any signed-in user can read an individual user profile or list the entire collection for leaderboards.
+      // This is the key fix: 'read' permission covers both 'get' and 'list'.
+      allow read: if isSignedIn();
+      
+      // A user can create their own profile.
       allow create: if isOwner(userId);
+      // A user can update their own profile, or an admin can.
       allow update: if isOwner(userId) || isAdmin();
+      // Only admins can delete user accounts.
       allow delete: if isAdmin();
 
-      // USER SUB-COLLECTIONS
+      // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
       match /logs/{logId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
@@ -52,28 +54,37 @@ service cloud.firestore {
          allow read, write: if isOwner(userId) || isAdmin();
       }
 
-      match /settings/{settingsId} {
+       match /settings/{settingsId} {
          allow read, write: if isOwner(userId) || isAdmin();
       }
     }
+    
+    // --- CRITICAL FIX: EXPLICIT RULE FOR COLLECTION GROUP QUERY ---
+    // This rule specifically allows the 'Verify' page to query the 'logs' collection
+    // across all users.
+    match /{path=**}/logs/{logId} {
+      allow read: if isSignedIn();
+    }
 
-    // PUBLIC LOGS COLLECTION
+    // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
     match /public-logs/{logId} {
-        allow read: if isSignedIn();
+        allow get, list: if isSignedIn();
+        // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
+        // This allows any user to create, which is what the app does now.
         allow create: if isSignedIn(); 
         allow update, delete: if false;
     }
 
     // SKILLS COLLECTION
     match /skills/{skillId} {
-      allow read: if true;
-      allow create: if isSignedIn();
+      allow get, list: if true; // Skills are public knowledge.
+      allow create: if isSignedIn(); // Any user can pioneer a new skill.
       allow update, delete: if isAdmin();
     }
 
     // FIRETEAMS COLLECTION
     match /fireteams/{fireteamId} {
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isFireteamMember(fireteamId) || isAdmin();
       allow delete: if isAdmin();
@@ -86,8 +97,8 @@ service cloud.firestore {
 
     // GUILDS COLLECTION
     match /guilds/{guildId} {
-      allow read: if isSignedIn();
-      allow create: if isAdmin();
+      allow get, list: if isSignedIn();
+      allow create: if isAdmin(); // Only admins can create guilds.
       allow update: if isGuildMember(guildId) || isAdmin();
       allow delete: if isAdmin();
       
@@ -97,34 +108,30 @@ service cloud.firestore {
       }
     }
 
-    // TERRITORIES COLLECTION
+    // PUBLIC & ADMIN-MANAGED COLLECTIONS
     match /territories/{territoryId} {
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
-    // TRAITS COLLECTION
     match /traits/{traitId} {
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
 
-    // SUGGESTIONS COLLECTION
     match /suggestions/{suggestionId} {
-      allow read: if isAdmin();
+      allow get, list: if isAdmin();
       allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
 
-    // EVENTS COLLECTION
     match /events/{eventId} {
-      allow read: if true;
+      allow get, list: if true;
       allow create, update, delete: if isAdmin();
     }
     
-    // STORE ITEMS COLLECTION
     match /store-items/{itemId} {
-      allow read: if isSignedIn();
+      allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
     }
   }
