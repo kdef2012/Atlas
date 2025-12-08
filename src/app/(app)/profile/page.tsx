@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { useUser, useDoc, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
-import { COSMETIC_ITEMS } from '@/lib/avatar-system-openpeeps';
+import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 import { Loader2, ShoppingBag, Check, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
