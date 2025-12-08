@@ -82,12 +82,17 @@ export function SideNav() {
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData } = useDoc(adminRef);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (!auth) return;
-    signOut(auth).then(() => {
-      router.push('/logout');
-    });
-  }
+    
+    try {
+      await signOut(auth);
+      // Hard redirect - forces full page reload, avoids React hooks issues
+      window.location.href = '/logout';
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   // Determine if the user is an admin based on the existence of their doc in /admins
   const isAdmin = !!adminData;
