@@ -1,3 +1,4 @@
+
 'use client';
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -59,17 +60,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       return; // Wait until we're truly ready
     }
 
-    console.log('🎯 Making routing decision:', {
-      isAdminLogin,
-      hasUser: !!user,
-      hasAdmin: !!adminData,
-      pathname,
-    });
-
     if (isAdminLogin) {
       // Create admin document if needed
       if (!adminData) {
-        console.log('🔧 Creating admin document for:', authUser.email);
         const adminCollection = collection(firestore, 'admins');
         const newAdminDocRef = doc(adminCollection, authUser.uid);
         setDocumentNonBlocking(newAdminDocRef, {
@@ -82,13 +75,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     } else {
       // Regular user logic
       if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
-        console.log('🔄 No user document - redirecting to onboarding');
         router.replace('/onboarding/archetype');
       } else if (user && pathname.startsWith('/onboarding')) {
-        console.log('🔄 User exists - redirecting to dashboard');
         router.replace('/dashboard');
-      } else if (user) {
-        console.log('✅ User loaded successfully - rendering app');
       }
     }
   }, [
@@ -122,7 +111,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Show loading while waiting for data
   const isLoading = isAuthLoading || !isReadyToDecide;
   
-  if (isLoading && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+  // Don't show skeleton for onboarding or admin routes as they have their own loaders
+  const shouldShowSkeleton = !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin');
+
+  if (isLoading && shouldShowSkeleton) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
         <Skeleton className="h-16 w-16 rounded-full" />
