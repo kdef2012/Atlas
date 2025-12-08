@@ -41,6 +41,7 @@ export function TwinskieAvatar({
   );
   
   // Build modified avatar URL with URL parameters
+  // ✅ buildAvatarUrl now automatically adds ?background=transparent if background cosmetics are active!
   const modifiedAvatarUrl = useMemo(() => {
     if (!user.avatarUrl) return null;
     return buildAvatarUrl(user.avatarUrl, cosmetics);
@@ -70,42 +71,62 @@ export function TwinskieAvatar({
   }
 
   return (
-    <div 
-      className={cn(
-        "relative rounded-lg overflow-visible",
-        effects.animationClasses.join(' '),
-        isInactive && "opacity-50 grayscale",
-        className
-      )}
-      style={{ 
-        width: pixelSize, 
-        height: pixelSize,
-        background: effects.background,
-        boxShadow: effects.boxShadow,
-        ...(effects.border && { border: effects.border })
-      }}
-    >
-      {/* Avatar with URL modifications applied */}
-      <ReadyPlayerMeAvatar
-        avatarUrl={modifiedAvatarUrl} // ✅ Uses modified URL with query parameters!
-        size={pixelSize}
-        scene={scene}
-        className="transition-all duration-300 rounded-lg"
-      />
+    <>
+      {/* 
+        ✅ SOLUTION: With transparent background, this is simple!
+        - Outer div: Handles glow (box-shadow)
+        - Inner div: Handles background + border
+        - Avatar has transparent background so it doesn't cover the gradient!
+      */}
       
-      {/* Inactive Label */}
-      {isInactive && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-20">
-          INACTIVE
+      {/* Outer container - for glow effect */}
+      <div 
+        className={cn(
+          "relative",
+          effects.animationClasses.join(' '),
+          isInactive && "opacity-50 grayscale",
+          className
+        )}
+        style={{ 
+          width: pixelSize, 
+          height: pixelSize,
+          // ✅ Box-shadow (glow) on outer container
+          boxShadow: effects.boxShadow,
+        }}
+      >
+        {/* Inner container - for background and border */}
+        <div
+          className="relative w-full h-full rounded-lg overflow-hidden"
+          style={{
+            // ✅ Background on inner container - now visible through transparent avatar!
+            background: effects.background,
+            // ✅ Border on inner container
+            ...(effects.border && { border: effects.border })
+          }}
+        >
+          {/* Avatar with transparent background */}
+          <ReadyPlayerMeAvatar
+            avatarUrl={modifiedAvatarUrl} // ✅ Has ?background=transparent parameter!
+            size={pixelSize}
+            scene={scene}
+            className="transition-all duration-300"
+          />
+          
+          {/* Inactive Label */}
+          {isInactive && (
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-20">
+              INACTIVE
+            </div>
+          )}
+          
+          {/* Level Badge */}
+          {user.level != null && (
+            <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20">
+              {user.level}
+            </div>
+          )}
         </div>
-      )}
-      
-      {/* Level Badge */}
-      {user.level != null && (
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20">
-          {user.level}
-        </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 }

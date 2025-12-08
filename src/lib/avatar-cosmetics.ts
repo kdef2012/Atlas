@@ -1,24 +1,21 @@
 import type { SkillCategory } from './types';
 
-// Cosmetic items for Ready Player Me avatars
 export interface CosmeticItem {
   id: string;
   name: string;
   description: string;
   type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod';
   
-  // Visual effects (applied to container)
   boxShadow?: string;
   border?: string;
   backgroundGradient?: string;
   animationClass?: string;
   
-  // URL modifications (applied to avatar URL)
   urlModifications?: {
-    textureAtlas?: number;      // 256, 512, 1024, 2048
-    morphTargets?: string[];    // ['ARKit', 'Oculus', etc]
-    lod?: number;               // 0 (high), 1 (med), 2 (low)
-    pose?: 'A' | 'T';          // A-pose or T-pose
+    textureAtlas?: number;
+    morphTargets?: string[];
+    lod?: number;
+    pose?: 'A' | 'T';
   };
   
   costGems?: number;
@@ -47,7 +44,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     requirement: { type: 'starter', value: 1 },
   },
   
-  // ===== URL MODIFICATIONS (FREE & INSTANT!) =====
+  // ===== URL MODIFICATIONS =====
   {
     id: 'performance_mode',
     name: 'Performance Mode',
@@ -57,7 +54,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
       textureAtlas: 512,
       lod: 2,
     },
-    costGems: 0, // Free for everyone!
+    costGems: 0,
   },
   {
     id: 'balanced_mode',
@@ -68,7 +65,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
       textureAtlas: 1024,
       lod: 1,
     },
-    costGems: 0, // Free!
+    costGems: 0,
   },
   {
     id: 'ultra_quality',
@@ -154,13 +151,13 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     costGems: 200,
   },
   
-  // ===== BACKGROUNDS =====
+  // ===== BACKGROUNDS (NOW WORK WITH TRANSPARENT AVATAR!) =====
   {
     id: 'fire_background',
     name: 'Inferno Backdrop',
     description: 'Surrounded by flames',
     type: 'background',
-    backgroundGradient: 'radial-gradient(circle at center, rgba(249, 115, 22, 0.4) 0%, rgba(239, 68, 68, 0.2) 40%, transparent 70%)',
+    backgroundGradient: 'radial-gradient(circle at center, rgba(249, 115, 22, 0.9) 0%, rgba(239, 68, 68, 0.7) 50%, rgba(120, 30, 30, 0.5) 100%)',
     requirement: { type: 'trait', value: 'streaker' },
   },
   {
@@ -168,7 +165,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     name: 'Cosmic Backdrop',
     description: 'Among the stars',
     type: 'background',
-    backgroundGradient: 'radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.3) 0%, transparent 50%), radial-gradient(circle at 70% 60%, rgba(59, 130, 246, 0.3) 0%, transparent 50%)',
+    backgroundGradient: 'radial-gradient(circle at 30% 40%, rgba(139, 92, 246, 0.9) 0%, transparent 40%), radial-gradient(circle at 70% 60%, rgba(59, 130, 246, 0.9) 0%, transparent 40%), linear-gradient(180deg, rgba(10, 10, 50, 1) 0%, rgba(0, 0, 20, 1) 100%)',
     costGems: 150,
   },
   {
@@ -176,7 +173,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     name: 'Digital Rain',
     description: 'Enter the matrix',
     type: 'background',
-    backgroundGradient: 'linear-gradient(0deg, rgba(0, 255, 65, 0.1) 0%, transparent 100%)',
+    backgroundGradient: 'linear-gradient(0deg, rgba(0, 255, 65, 0.8) 0%, rgba(0, 100, 30, 0.9) 100%)',
     costGems: 200,
   },
   {
@@ -184,8 +181,24 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     name: 'Golden Radiance',
     description: 'Bathed in success',
     type: 'background',
-    backgroundGradient: 'radial-gradient(circle at center, rgba(251, 191, 36, 0.4) 0%, rgba(251, 191, 36, 0.1) 50%, transparent 70%)',
+    backgroundGradient: 'radial-gradient(circle at center, rgba(251, 191, 36, 1) 0%, rgba(251, 191, 36, 0.8) 50%, rgba(180, 100, 0, 0.6) 100%)',
     requirement: { type: 'level', value: 10 },
+  },
+  {
+    id: 'ice_background',
+    name: 'Frozen Tundra',
+    description: 'Cold and calculated',
+    type: 'background',
+    backgroundGradient: 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(147, 197, 253, 0.9) 50%, rgba(191, 219, 254, 0.8) 100%)',
+    costGems: 150,
+  },
+  {
+    id: 'shadow_background',
+    name: 'Shadow Realm',
+    description: 'Darkness embraces you',
+    type: 'background',
+    backgroundGradient: 'radial-gradient(circle at center, rgba(88, 28, 135, 0.9) 0%, rgba(49, 46, 129, 0.95) 50%, rgba(17, 24, 39, 1) 100%)',
+    costGems: 175,
   },
   
   // ===== BORDERS & FRAMES =====
@@ -216,18 +229,23 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
   },
 ];
 
-// Helper to get active cosmetics
 export function getActiveCosmetics(avatarLayers?: Record<string, boolean>): CosmeticItem[] {
   if (!avatarLayers) return [];
-  
   return COSMETIC_ITEMS.filter(item => avatarLayers[item.id] === true);
 }
 
-// Build avatar URL with all URL modifications
-export function buildAvatarUrl(baseUrl: string, cosmetics: CosmeticItem[]): string {
+// ✅ UPDATED: Now supports transparent background
+export function buildAvatarUrl(
+  baseUrl: string, 
+  cosmetics: CosmeticItem[],
+  options?: { 
+    transparentBackground?: boolean;
+  }
+): string {
   const urlMods = cosmetics.filter(c => c.type === 'url-mod' && c.urlModifications);
   
-  if (urlMods.length === 0) return baseUrl;
+  // Check if any background cosmetics are active
+  const hasBackgroundCosmetic = cosmetics.some(c => c.type === 'background');
   
   const params = new URLSearchParams();
   const morphTargets: string[] = [];
@@ -235,17 +253,14 @@ export function buildAvatarUrl(baseUrl: string, cosmetics: CosmeticItem[]): stri
   let lod: number | undefined;
   let pose: string | undefined;
   
-  // Combine all URL modifications
   urlMods.forEach(mod => {
     if (mod.urlModifications?.morphTargets) {
       morphTargets.push(...mod.urlModifications.morphTargets);
     }
     if (mod.urlModifications?.textureAtlas !== undefined) {
-      // Use highest quality requested
       textureAtlas = Math.max(textureAtlas || 0, mod.urlModifications.textureAtlas);
     }
     if (mod.urlModifications?.lod !== undefined) {
-      // Use lowest LOD (highest quality)
       lod = Math.min(lod ?? 2, mod.urlModifications.lod);
     }
     if (mod.urlModifications?.pose) {
@@ -253,7 +268,6 @@ export function buildAvatarUrl(baseUrl: string, cosmetics: CosmeticItem[]): stri
     }
   });
   
-  // Build query string
   if (morphTargets.length > 0) {
     params.set('morphTargets', [...new Set(morphTargets)].join(','));
   }
@@ -267,11 +281,17 @@ export function buildAvatarUrl(baseUrl: string, cosmetics: CosmeticItem[]): stri
     params.set('pose', pose);
   }
   
+  // ✅ CRITICAL: Add transparent background if:
+  // 1. Explicitly requested via options, OR
+  // 2. User has a background cosmetic active
+  if (options?.transparentBackground || hasBackgroundCosmetic) {
+    params.set('background', 'transparent');
+  }
+  
   const queryString = params.toString();
   return queryString ? `${baseUrl}?${queryString}` : baseUrl;
 }
 
-// Helper to combine visual effects (non-URL cosmetics)
 export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
   boxShadow: string;
   background: string;
@@ -284,22 +304,18 @@ export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
   const animationClasses: string[] = [];
   
   cosmetics.forEach(cosmetic => {
-    // Glows and auras
     if ((cosmetic.type === 'glow' || cosmetic.type === 'aura') && cosmetic.boxShadow) {
       boxShadows.push(cosmetic.boxShadow);
     }
     
-    // Backgrounds
     if (cosmetic.type === 'background' && cosmetic.backgroundGradient) {
       backgrounds.push(cosmetic.backgroundGradient);
     }
     
-    // Borders (only use the last one applied)
     if (cosmetic.type === 'border' && cosmetic.border) {
       border = cosmetic.border;
     }
     
-    // Animations
     if (cosmetic.animationClass) {
       animationClasses.push(cosmetic.animationClass);
     }
@@ -313,7 +329,6 @@ export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
   };
 }
 
-// Utility functions
 export function getDominantSkill(stats: {
   physicalStat: number;
   mentalStat: number;
