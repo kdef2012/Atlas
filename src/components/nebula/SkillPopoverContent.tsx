@@ -9,7 +9,7 @@ import { CATEGORY_ICONS, CATEGORY_COLORS, type Skill, type User, type SkillCateg
 import { useUser, useDoc, useMemoFirebase, useFirestore, updateDocumentNonBlocking, useCollection } from '@/firebase';
 import { collection, doc, increment } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
-import { Check, Key, Loader2, Lock, ArrowRight } from 'lucide-react';
+import { Check, Key, Loader2, Lock, ArrowRight, BookUser } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface SkillPopoverContentProps {
@@ -127,9 +127,10 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
         </div>
 
         {isUnlocked ? (
-          <Button variant="outline" size="sm" className="w-full" disabled>
-            <Check className="mr-2" />
-            Unlocked
+          <Button asChild variant="outline" size="sm" className="w-full">
+            <Link href={`/mentors?skillId=${node.id}`}>
+              <BookUser className="mr-2" /> Find a Mentor
+            </Link>
           </Button>
         ) : !prereqsMet ? (
              <Button variant="destructive" size="sm" className="w-full" disabled>

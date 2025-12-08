@@ -5,7 +5,6 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // HELPER FUNCTIONS
-
     function isSignedIn() {
       return request.auth != null;
     }
@@ -30,61 +29,44 @@ service cloud.firestore {
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read: if isOwner(adminId);
-      allow write: if isAdmin();
-    }
-    
-    // COLLECTION GROUP QUERY for logs (needed for Verify page)
-    // ✅ MUST be defined BEFORE the /users/{userId} rule
-    match /{path=**}/logs/{logId} {
-      allow read: if isSignedIn();
+      allow read, write: if isAdmin();
     }
     
     // USERS COLLECTION & SUB-COLLECTIONS
     match /users/{userId} {
-      // ✅ CRITICAL FIX: Split read permissions for leaderboards
-      // Any signed-in user can GET any individual user profile
-      allow get: if isSignedIn();
-      
-      // ✅ CRITICAL FIX: Allow LIST operations for leaderboard queries
-      allow list: if isSignedIn();
-      
-      // A user can create their own profile
+      allow read: if isSignedIn();
       allow create: if isOwner(userId);
-      
-      // A user can update their own profile, or an admin can
       allow update: if isOwner(userId) || isAdmin();
-      
-      // Only admins can delete user accounts
       allow delete: if isAdmin();
 
-      // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
       match /logs/{logId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
 
       match /quests/{questId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+         allow read, write: if isOwner(userId) || isAdmin();
       }
 
-      match /settings/{settingsId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+       match /settings/{settingsId} {
+         allow read, write: if isOwner(userId) || isAdmin();
       }
     }
+    
+    match /{path=**}/logs/{logId} {
+      allow read: if isSignedIn();
+    }
 
-    // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
+    // PUBLIC LOGS COLLECTION
     match /public-logs/{logId} {
-      allow get, list: if isSignedIn();
-      // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
-      // This allows any user to create, which is what the app does now.
-      allow create: if isSignedIn(); 
-      allow update, delete: if false;
+        allow get, list: if isSignedIn();
+        allow create: if isSignedIn(); 
+        allow update, delete: if false;
     }
 
     // SKILLS COLLECTION
     match /skills/{skillId} {
-      allow get, list: if true; // Skills are public knowledge.
-      allow create: if isSignedIn(); // Any user can pioneer a new skill.
+      allow get, list: if true;
+      allow create: if isSignedIn();
       allow update, delete: if isAdmin();
     }
 
@@ -104,7 +86,7 @@ service cloud.firestore {
     // GUILDS COLLECTION
     match /guilds/{guildId} {
       allow get, list: if isSignedIn();
-      allow create: if isAdmin(); // Only admins can create guilds.
+      allow create: if isAdmin();
       allow update: if isGuildMember(guildId) || isAdmin();
       allow delete: if isAdmin();
       
@@ -112,6 +94,24 @@ service cloud.firestore {
         allow read, write: if isGuildMember(guildId);
         allow delete: if isAdmin();
       }
+    }
+    
+    // MENTORSHIPS COLLECTION
+    match /mentorships/{mentorshipId} {
+      // Users can see mentorships they are part of
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
+      // A user can request to be a mentee
+      allow create: if isSignedIn() && request.auth.uid == request.resource.data.menteeId;
+      // Mentor can accept/deny, either can complete/cancel
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
+      allow delete: if false; // Mentorships are archived, not deleted
+    }
+
+    // RADIO BROADCASTS COLLECTION
+    match /radio-broadcasts/{broadcastId} {
+        allow get, list: if isSignedIn();
+        // Writes are handled by the trusted server-side AI flow
+        allow write: if false;
     }
 
     // PUBLIC & ADMIN-MANAGED COLLECTIONS
