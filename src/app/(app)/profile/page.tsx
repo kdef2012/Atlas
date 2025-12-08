@@ -110,7 +110,7 @@ export default function ProfilePage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center">
-              <TwinskieAvatar user={userData} size="md" />
+              <TwinskieAvatar user={userData} size="sm" />
               
               <div className="mt-6 w-full space-y-2">
                 <div className="flex justify-between text-sm">
@@ -250,5 +250,3 @@ export default function ProfilePage() {
     </main>
   );
 }
-
-    
