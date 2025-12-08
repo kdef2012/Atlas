@@ -1,15 +1,18 @@
+
 'use client';
 
 import { ReadyPlayerMeAvatar } from './ready-player-me';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { COSMETIC_ITEMS } from '@/lib/avatar-system-openpeeps';
+import { useMemo } from 'react';
 
 interface TwinskieAvatarProps {
   user: User;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   scene?: 'fullbody-portrait-v1' | 'halfbody-portrait-v1' | 'bust-portrait-v1';
-  showInactiveLabel?: boolean; // ✅ ADDED
+  showInactiveLabel?: boolean;
 }
 
 const SIZE_MAP = {
@@ -28,13 +31,25 @@ export function TwinskieAvatar({
   size = 'md',
   className,
   scene = 'fullbody-portrait-v1',
-  showInactiveLabel = false // ✅ ADDED
+  showInactiveLabel = false
 }: TwinskieAvatarProps) {
   const pixelSize = SIZE_MAP[size];
 
   // Check if user is inactive (no activity in 24 hours)
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
+
+  const activeEffects = useMemo(() => {
+    if (!user.avatarLayers) return [];
+    
+    return COSMETIC_ITEMS.filter(item => 
+      item.type === 'effect' && user.avatarLayers?.[item.id]
+    );
+  }, [user.avatarLayers]);
+
+  const avatarStyle: React.CSSProperties = {
+    filter: activeEffects.map(effect => effect.cssEffect).join(' ') || 'none',
+  };
 
   // Check if user has an avatar URL
   if (!user.avatarUrl) {
@@ -60,9 +75,10 @@ export function TwinskieAvatar({
         size={pixelSize}
         scene={scene}
         className={cn(
-          "rounded-lg",
+          "rounded-lg transition-all duration-300",
           isInactive && "opacity-50 grayscale"
         )}
+        style={avatarStyle}
       />
       
       {/* Inactive Label */}
@@ -73,7 +89,7 @@ export function TwinskieAvatar({
       )}
       
       {/* Level Badge */}
-      {user.level && (
+      {user.level != null && (
         <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
           {user.level}
         </div>
