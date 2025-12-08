@@ -105,7 +105,7 @@ function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
 
     return (
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 border-t">
+            <div className="space-y-4 pt-4 border-t">
                  <FormField
                     control={form.control}
                     name="userName"
@@ -116,7 +116,7 @@ function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
                              <FormControl>
                                 <Input placeholder="New username" {...field} />
                             </FormControl>
-                            <Button type="submit" disabled={isSaving}>
+                            <Button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
                                 {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
                                 <span className="ml-2 hidden sm:inline">Save</span>
                             </Button>
@@ -126,7 +126,7 @@ function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
                         </FormItem>
                     )}
                 />
-            </form>
+            </div>
         </Form>
     )
 }
@@ -338,39 +338,39 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
           
-          {/* Account Management */}
-          <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><ShieldQuestion /> Account</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                  {userData && userRef && <UsernameForm user={userData} userRef={userRef} />}
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
-                    <Button type="button" variant="outline" onClick={handlePasswordReset}>Change Password</Button>
-                    <Button type="button" variant="outline"><Download className="mr-2"/>Export My Data</Button>
-                    <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button type="button" variant="destructive"><Trash2 className="mr-2"/>Reset Onboarding</Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This action cannot be undone. This will permanently delete your character, stats, and progress, allowing you to start the onboarding process over.
-                                </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Yes, Reset My Journey</AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-              </CardContent>
-          </Card>
-          
           <Button type="submit" size="lg" className="w-full">Save Settings</Button>
       </form>
+
+      {/* Account Management is outside the main form */}
+      <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2"><ShieldQuestion /> Account</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+              {userData && userRef && <UsernameForm user={userData} userRef={userRef} />}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={handlePasswordReset}>Change Password</Button>
+                <Button type="button" variant="outline"><Download className="mr-2"/>Export My Data</Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button type="button" variant="destructive"><Trash2 className="mr-2"/>Reset Onboarding</Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your character, stats, and progress, allowing you to start the onboarding process over.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Yes, Reset My Journey</AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
+              </div>
+          </CardContent>
+      </Card>
     </div>
   );
 }
