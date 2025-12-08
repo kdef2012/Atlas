@@ -1,3 +1,4 @@
+
 import type { Gender, SkillCategory } from './types';
 
 // Open Peeps customization options
@@ -273,7 +274,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     description: 'Your first steps shine bright',
     type: 'effect',
     cssEffect: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.6))',
-    requirement: { type: 'quest', value: 'first_log' },
+    requirement: { type: 'level', value: 1 },
   },
   {
     id: 'shadow_aura',

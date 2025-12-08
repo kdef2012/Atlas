@@ -106,6 +106,7 @@ export default function RewardPage({}: RewardPageProps) {
             gems: 3,
             streakFreezes: 1,
             'avatarLayers.newbie_sweatband': true,
+            'avatarLayers.newbie_glow': true, // Award the newbie glow!
           };
           // This part is fast and happens immediately
           updateDocumentNonBlocking(userRef, updates);
