@@ -45,15 +45,6 @@ export function TwinskieAvatar({
     [cosmetics]
   );
 
-  // Build the filter effect
-  const filterEffect = isInactive ? 'grayscale(1) opacity(0.5)' : effects.filter;
-
-  // Parse border from CSS effect string
-  const borderStyle = effects.border.replace('border: ', '');
-
-  // Generate unique ID for this avatar instance
-  const avatarId = useMemo(() => `twinskie-${user.id}-${Date.now()}`, [user.id]);
-
   // Check if user has an avatar URL
   if (!user.avatarUrl) {
     return (
@@ -72,54 +63,41 @@ export function TwinskieAvatar({
   }
 
   return (
-    <>
-      {/* 
-        ✅ CRITICAL FIX: Inject CSS that targets the img tag directly
-        This ensures the filter is applied to the actual image, not just a wrapper
-      */}
-      {filterEffect !== 'none' && (
-        <style>{`
-          #${avatarId} img {
-            filter: ${filterEffect} !important;
-          }
-        `}</style>
+    <div 
+      className={cn(
+        "relative rounded-lg overflow-visible", // CHANGED: overflow-visible for box-shadow
+        effects.animationClasses.join(' '),
+        isInactive && "opacity-50 grayscale",
+        className
+      )}
+      style={{ 
+        width: pixelSize, 
+        height: pixelSize,
+        background: effects.background,
+        boxShadow: effects.boxShadow, // ✅ BOX-SHADOW for glow effects!
+        ...(effects.border && { border: effects.border })
+      }}
+    >
+      <ReadyPlayerMeAvatar
+        avatarUrl={user.avatarUrl}
+        size={pixelSize}
+        scene={scene}
+        className="transition-all duration-300 rounded-lg"
+      />
+      
+      {/* Inactive Label */}
+      {isInactive && (
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-10">
+          INACTIVE
+        </div>
       )}
       
-      <div 
-        id={avatarId}
-        className={cn(
-          "relative rounded-lg overflow-hidden",
-          effects.animationClasses.join(' '),
-          className
-        )}
-        style={{ 
-          width: pixelSize, 
-          height: pixelSize,
-          background: effects.background,
-          ...(borderStyle && { border: borderStyle })
-        }}
-      >
-        <ReadyPlayerMeAvatar
-          avatarUrl={user.avatarUrl}
-          size={pixelSize}
-          scene={scene}
-          className="transition-all duration-300"
-        />
-        
-        {/* Inactive Label */}
-        {isInactive && (
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-10">
-            INACTIVE
-          </div>
-        )}
-        
-        {/* Level Badge */}
-        {user.level != null && (
-          <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10">
-            {user.level}
-          </div>
-        )}
-      </div>
-    </>
+      {/* Level Badge */}
+      {user.level != null && (
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10">
+          {user.level}
+        </div>
+      )}
+    </div>
   );
 }
