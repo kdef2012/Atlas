@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -27,6 +28,7 @@ import {
   Palette,
   Megaphone,
   Trophy,
+  MessageSquare,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -52,6 +54,7 @@ const navItems = [
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/echoes", label: "Echoes", icon: MessageSquare },
   { href: "/store", label: "Store", icon: Store },
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
