@@ -31,7 +31,8 @@ service cloud.firestore {
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read, write: if isAdmin();
+      allow create: if isOwner(adminId);
+      allow read, update, delete: if isAdmin();
     }
     
     // USERS COLLECTION & SUB-COLLECTIONS
