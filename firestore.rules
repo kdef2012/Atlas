@@ -1,3 +1,4 @@
+
 rules_version = '2';
 
 service cloud.firestore {
@@ -29,7 +30,8 @@ service cloud.firestore {
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read, write: if isAdmin();
+      allow read: if isOwner(adminId);
+      allow write: if isAdmin();
     }
     
     // COLLECTION GROUP QUERY for logs (needed for Verify page)
@@ -140,4 +142,3 @@ service cloud.firestore {
     }
   }
 }
-
