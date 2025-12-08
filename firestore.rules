@@ -14,7 +14,9 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isSignedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+      // The super admin's UID is hardcoded to bootstrap permissions.
+      // All other admins are verified by checking for their document's existence.
+      return isSignedIn() && (request.auth.uid == "D2q0IIDPXXaXzVRhG1hFURv0Awe2" || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
     }
 
     function isFireteamMember(fireteamId) {
