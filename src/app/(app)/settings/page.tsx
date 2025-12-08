@@ -14,12 +14,13 @@ import { useAuth, useDoc, useFirestore, useUser, useMemoFirebase, updateDocument
 import { doc, deleteDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Bell, Eye, Palette, Clock, Settings2, ShieldQuestion, Trash2, LogOut, Download } from 'lucide-react';
+import { Loader2, Bell, Eye, Palette, Clock, Settings2, ShieldQuestion, Trash2, LogOut, Download, Save } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 // Define the shape of the settings object
 interface UserSettings {
@@ -73,6 +74,63 @@ const settingsSchema = z.object({
   }),
 });
 
+// New schema for the username form
+const usernameSchema = z.object({
+  userName: z.string().min(3, 'Username must be at least 3 characters.').max(30, 'Username is too long.'),
+});
+
+function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
+    const { toast } = useToast();
+    const [isSaving, setIsSaving] = useState(false);
+    const form = useForm<z.infer<typeof usernameSchema>>({
+        resolver: zodResolver(usernameSchema),
+        defaultValues: {
+            userName: user.userName,
+        },
+    });
+
+    function onSubmit(data: z.infer<typeof usernameSchema>) {
+        if (!userRef) return;
+        setIsSaving(true);
+        updateDocumentNonBlocking(userRef, { userName: data.userName });
+        
+        setTimeout(() => {
+             toast({
+                title: "Username Updated",
+                description: `Your display name has been changed to ${data.userName}.`,
+            });
+            setIsSaving(false);
+        }, 1000);
+    }
+
+    return (
+        <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4 border-t">
+                 <FormField
+                    control={form.control}
+                    name="userName"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Change Username</FormLabel>
+                        <div className="flex gap-2">
+                             <FormControl>
+                                <Input placeholder="New username" {...field} />
+                            </FormControl>
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                                <span className="ml-2 hidden sm:inline">Save</span>
+                            </Button>
+                        </div>
+                       
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </form>
+        </Form>
+    )
+}
+
 
 export default function SettingsPage() {
   const { user: authUser } = useUser();
@@ -81,9 +139,11 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const router = useRouter();
 
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const settingsRef = useMemoFirebase(() => authUser ? doc(firestore, `users/${authUser.uid}/settings/main`) : null, [firestore, authUser]);
+  
   const { data: settingsData, isLoading: isSettingsLoading } = useDoc<UserSettings>(settingsRef);
-  const { data: userData, isLoading: isUserLoading } = useDoc<User>(useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]));
+  const { data: userData, isLoading: isUserLoading } = useDoc<User>(userRef);
 
   const { control, handleSubmit, reset } = useForm<z.infer<typeof settingsSchema>>({
     resolver: zodResolver(settingsSchema),
@@ -283,26 +343,29 @@ export default function SettingsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><ShieldQuestion /> Account</CardTitle>
               </CardHeader>
-              <CardContent className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Button type="button" variant="outline" onClick={handlePasswordReset}>Change Password</Button>
-                  <Button type="button" variant="outline"><Download className="mr-2"/>Export My Data</Button>
-                  <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                          <Button type="button" variant="destructive"><Trash2 className="mr-2"/>Reset Onboarding</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                          <AlertDialogHeader>
-                              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                  This action cannot be undone. This will permanently delete your character, stats, and progress, allowing you to start the onboarding process over.
-                              </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Yes, Reset My Journey</AlertDialogAction>
-                          </AlertDialogFooter>
-                      </AlertDialogContent>
-                  </AlertDialog>
+              <CardContent className="space-y-4">
+                  {userData && userRef && <UsernameForm user={userData} userRef={userRef} />}
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
+                    <Button type="button" variant="outline" onClick={handlePasswordReset}>Change Password</Button>
+                    <Button type="button" variant="outline"><Download className="mr-2"/>Export My Data</Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button type="button" variant="destructive"><Trash2 className="mr-2"/>Reset Onboarding</Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete your character, stats, and progress, allowing you to start the onboarding process over.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Yes, Reset My Journey</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
               </CardContent>
           </Card>
           
