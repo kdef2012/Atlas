@@ -1,117 +1,132 @@
+import type { SkillCategory } from './types';
 
-import type { User } from './types';
-
-// Represents a single cosmetic item in the game
+// Cosmetic items for Ready Player Me avatars
 export interface CosmeticItem {
   id: string;
   name: string;
   description: string;
-  type: 'effect' | 'background' | 'overlay' | 'animation';
-  cssEffect?: string; // For CSS filter effects like drop-shadow, blur, etc.
-  cssBackground?: string; // For background gradients or images
-  animationClass?: string; // For CSS animation classes
+  type: 'glow' | 'aura' | 'background' | 'overlay' | 'border' | 'particle';
+  cssEffect?: string;
+  backgroundGradient?: string;
+  animationClass?: string;
   costGems?: number;
   requirement?: {
-    type: 'quest' | 'level' | 'skill' | 'trait';
+    type: 'quest' | 'level' | 'skill' | 'trait' | 'starter';
     value: string | number;
   };
 }
 
-// The master list of all available cosmetic items in the game.
 export const COSMETIC_ITEMS: CosmeticItem[] = [
+  // STARTER ITEMS (Free/Quest Rewards)
   {
     id: 'newbie_glow',
     name: 'Newbie Glow',
-    description: 'Your first steps shine bright.',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.6))', // A soft green glow
-    requirement: { type: 'level', value: 1 },
+    description: 'Your first steps shine bright',
+    type: 'glow',
+    cssEffect: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.6))',
+    requirement: { type: 'starter', value: 1 },
   },
-   {
+  {
     id: 'newbie_border',
     name: 'Newbie Frame',
-    description: 'A frame for new adventurers.',
-    type: 'effect',
-    cssEffect: 'border: 2px solid rgba(34, 197, 94, 0.5);', // A green border
-    requirement: { type: 'level', value: 1 },
+    description: 'A fresh start',
+    type: 'border',
+    cssEffect: 'border: 3px solid rgba(34, 197, 94, 0.6)',
+    requirement: { type: 'starter', value: 1 },
   },
+  
+  // MORE COSMETICS
   {
     id: 'shadow_aura',
     name: 'Shadow Aura',
-    description: 'Embrace the darkness.',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.8))', // Purple glow
+    description: 'Embrace the darkness',
+    type: 'aura',
+    cssEffect: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.8))',
     costGems: 100,
   },
   {
     id: 'champion_aura',
     name: 'Champion Aura',
-    description: 'The mark of greatness.',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 25px rgba(251, 191, 36, 0.9))', // Gold glow
+    description: 'The mark of greatness',
+    type: 'aura',
+    cssEffect: 'drop-shadow(0 0 25px rgba(251, 191, 36, 0.9))',
     costGems: 150,
   },
   {
     id: 'fire_background',
-    name: 'Flames of Momentum',
-    description: 'Burning with determination.',
+    name: 'Inferno Background',
+    description: 'Surrounded by flames',
     type: 'background',
-    cssBackground: 'radial-gradient(circle, rgba(249, 115, 22, 0.3) 0%, transparent 70%)',
+    backgroundGradient: 'radial-gradient(circle at center, rgba(249, 115, 22, 0.4) 0%, rgba(239, 68, 68, 0.2) 40%, transparent 70%)',
     requirement: { type: 'trait', value: 'streaker' },
   },
 ];
 
-/**
- * Returns a list of active cosmetic items based on the user's avatarLayers.
- * @param avatarLayers - The user's record of active cosmetic layers.
- * @returns An array of active CosmeticItem objects.
- */
-export function getActiveCosmetics(avatarLayers?: Partial<Record<string, boolean>>): CosmeticItem[] {
-  if (!avatarLayers) {
-    return [];
-  }
-
-  const activeLayerIds = Object.keys(avatarLayers).filter(key => avatarLayers[key]);
+// Helper to get active cosmetics
+export function getActiveCosmetics(avatarLayers?: Record<string, boolean>): CosmeticItem[] {
+  if (!avatarLayers) return [];
   
-  return COSMETIC_ITEMS.filter(item => activeLayerIds.includes(item.id));
+  return COSMETIC_ITEMS.filter(item => avatarLayers[item.id] === true);
 }
 
-
-/**
- * Represents the combined visual effects from multiple cosmetics.
- */
-interface CombinedEffects {
+// Helper to combine CSS effects
+export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
   filter: string;
   background: string;
   border: string;
   animationClasses: string[];
+} {
+  const filters: string[] = [];
+  const backgrounds: string[] = [];
+  let border = '';
+  const animationClasses: string[] = [];
+  
+  cosmetics.forEach(cosmetic => {
+    if (cosmetic.type === 'glow' || cosmetic.type === 'aura') {
+      if (cosmetic.cssEffect) filters.push(cosmetic.cssEffect);
+    }
+    if (cosmetic.type === 'background' && cosmetic.backgroundGradient) {
+      backgrounds.push(cosmetic.backgroundGradient);
+    }
+    if (cosmetic.type === 'border' && cosmetic.cssEffect) {
+      border = cosmetic.cssEffect;
+    }
+    if (cosmetic.animationClass) {
+      animationClasses.push(cosmetic.animationClass);
+    }
+  });
+  
+  return {
+    filter: filters.join(' ') || 'none',
+    background: backgrounds.join(', ') || 'transparent',
+    border,
+    animationClasses,
+  };
 }
 
-/**
- * Combines the CSS effects from a list of active cosmetic items.
- * @param activeCosmetics - An array of active CosmeticItem objects.
- * @returns An object containing combined CSS strings for styling.
- */
-export function combineCosmeticEffects(activeCosmetics: CosmeticItem[]): CombinedEffects {
-  const effects = activeCosmetics.reduce<CombinedEffects>((acc, item) => {
-    if (item.type === 'effect' && item.cssEffect) {
-      if (item.cssEffect.startsWith('border:')) {
-          acc.border = item.cssEffect;
-      } else {
-        acc.filter += ` ${item.cssEffect}`;
-      }
-    }
-    if (item.type === 'background' && item.cssBackground) {
-      acc.background = acc.background ? `${acc.background}, ${item.cssBackground}` : item.cssBackground;
-    }
-    if (item.type === 'animation' && item.animationClass) {
-        acc.animationClasses.push(item.animationClass);
-    }
-    return acc;
-  }, { filter: '', background: '', border: '', animationClasses: [] });
+// Keep these utility functions
+export function getDominantSkill(stats: {
+  physicalStat: number;
+  mentalStat: number;
+  socialStat: number;
+  practicalStat: number;
+  creativeStat: number;
+}): SkillCategory {
+  const entries = [
+    { category: 'Physical' as SkillCategory, value: stats.physicalStat },
+    { category: 'Mental' as SkillCategory, value: stats.mentalStat },
+    { category: 'Social' as SkillCategory, value: stats.socialStat },
+    { category: 'Practical' as SkillCategory, value: stats.practicalStat },
+    { category: 'Creative' as SkillCategory, value: stats.creativeStat },
+  ];
 
-  // Trim leading/trailing whitespace
-  effects.filter = effects.filter.trim();
-  
-  return effects;
+  return entries.reduce((prev, current) => 
+    current.value > prev.value ? current : prev
+  ).category;
+}
+
+export function isUserInactive(lastLogTimestamp: number): boolean {
+  const now = Date.now();
+  const twentyFourHours = 24 * 60 * 60 * 1000;
+  return (now - lastLogTimestamp) > twentyFourHours;
 }

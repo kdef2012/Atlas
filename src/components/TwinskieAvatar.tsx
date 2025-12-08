@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ReadyPlayerMeAvatar } from './ready-player-me';
@@ -22,10 +21,6 @@ const SIZE_MAP = {
   xl: 450,
 };
 
-/**
- * TwinskieAvatar - Displays user's Ready Player Me avatar with cosmetic effects
- * Wrapper component for ReadyPlayerMeAvatar that works with User objects
- */
 export function TwinskieAvatar({ 
   user, 
   size = 'md',
@@ -35,13 +30,14 @@ export function TwinskieAvatar({
 }: TwinskieAvatarProps) {
   const pixelSize = SIZE_MAP[size];
 
-  // Check if user is inactive (no activity in 24 hours)
+  // Check if user is inactive
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
   // Get active cosmetics and combine their effects
+  // ✅ FIX 1: Cast to the correct type
   const cosmetics = useMemo(() => 
-    getActiveCosmetics(user.avatarLayers),
+    getActiveCosmetics(user.avatarLayers as Record<string, boolean> | undefined),
     [user.avatarLayers]
   );
   
@@ -50,15 +46,8 @@ export function TwinskieAvatar({
     [cosmetics]
   );
 
-  // Build container style for background effects
-  const containerStyle: React.CSSProperties = {
-    background: effects.background,
-  };
-
-  // Build avatar style for filter effects
-  const avatarStyle: React.CSSProperties = {
-    filter: isInactive ? 'grayscale(1) opacity(0.5)' : effects.filter,
-  };
+  // Build the filter effect (CSS filter for the wrapper, not the component)
+  const filterEffect = isInactive ? 'grayscale(1) opacity(0.5)' : effects.filter;
 
   // Parse border from CSS effect string
   const borderStyle = effects.border.replace('border: ', '');
@@ -90,38 +79,21 @@ export function TwinskieAvatar({
       style={{ 
         width: pixelSize, 
         height: pixelSize,
-        ...containerStyle,
+        background: effects.background,
+        filter: filterEffect, // ✅ FIX 2: Apply filter to wrapper instead
         ...(borderStyle && { border: borderStyle })
       }}
     >
-      {/* Avatar with glow/aura effects */}
+      {/* Avatar without inline style prop */}
       <ReadyPlayerMeAvatar
         avatarUrl={user.avatarUrl}
         size={pixelSize}
         scene={scene}
-        className="transition-all duration-300"
-        style={avatarStyle}
+        className={cn(
+          "transition-all duration-300",
+          isInactive && "opacity-50 grayscale"
+        )}
       />
-      
-      {/* Particle effects overlay */}
-      {cosmetics.some(c => c.type === 'particle') && (
-        <div className="absolute inset-0 pointer-events-none">
-          {cosmetics
-            .filter(c => c.type === 'particle')
-            .map(c => (
-              <div
-                key={c.id}
-                className={cn(
-                  "absolute inset-0",
-                  c.animationClass
-                )}
-                style={{
-                  background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
-                }}
-              />
-            ))}
-        </div>
-      )}
       
       {/* Inactive Label */}
       {isInactive && (
