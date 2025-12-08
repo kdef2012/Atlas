@@ -17,7 +17,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-  const isLoading = isAuthLoading || (authUser && isAdminDocLoading);
+  const isLoading = isAuthLoading || (!!authUser && isAdminDocLoading);
 
   // While we verify auth and admin status, show a loader.
   if (isLoading) {
