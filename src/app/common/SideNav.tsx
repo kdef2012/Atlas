@@ -30,6 +30,7 @@ import {
   Trophy,
   MessageSquare,
   Radio,
+  BookUser,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -61,6 +62,7 @@ const navItems = [
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },
+  { href: "/mentors", label: "Mentors", icon: BookUser },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
