@@ -3,7 +3,7 @@
 import { ReadyPlayerMeAvatar } from './ready-player-me';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { getActiveCosmetics, combineCosmeticEffects } from '@/lib/avatar-cosmetics';
+import { getActiveCosmetics, combineCosmeticEffects, buildAvatarUrl } from '@/lib/avatar-cosmetics';
 import { useMemo } from 'react';
 
 interface TwinskieAvatarProps {
@@ -34,19 +34,26 @@ export function TwinskieAvatar({
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
-  // Get active cosmetics and combine their effects
+  // Get active cosmetics
   const cosmetics = useMemo(() => 
     getActiveCosmetics(user.avatarLayers as Record<string, boolean> | undefined),
     [user.avatarLayers]
   );
   
+  // Build modified avatar URL with URL parameters
+  const modifiedAvatarUrl = useMemo(() => {
+    if (!user.avatarUrl) return null;
+    return buildAvatarUrl(user.avatarUrl, cosmetics);
+  }, [user.avatarUrl, cosmetics]);
+  
+  // Get visual effects (glows, borders, backgrounds)
   const effects = useMemo(() => 
     combineCosmeticEffects(cosmetics),
     [cosmetics]
   );
 
   // Check if user has an avatar URL
-  if (!user.avatarUrl) {
+  if (!user.avatarUrl || !modifiedAvatarUrl) {
     return (
       <div 
         className={cn(
@@ -65,7 +72,7 @@ export function TwinskieAvatar({
   return (
     <div 
       className={cn(
-        "relative rounded-lg overflow-visible", // CHANGED: overflow-visible for box-shadow
+        "relative rounded-lg overflow-visible",
         effects.animationClasses.join(' '),
         isInactive && "opacity-50 grayscale",
         className
@@ -74,12 +81,13 @@ export function TwinskieAvatar({
         width: pixelSize, 
         height: pixelSize,
         background: effects.background,
-        boxShadow: effects.boxShadow, // ✅ BOX-SHADOW for glow effects!
+        boxShadow: effects.boxShadow,
         ...(effects.border && { border: effects.border })
       }}
     >
+      {/* Avatar with URL modifications applied */}
       <ReadyPlayerMeAvatar
-        avatarUrl={user.avatarUrl}
+        avatarUrl={modifiedAvatarUrl} // ✅ Uses modified URL with query parameters!
         size={pixelSize}
         scene={scene}
         className="transition-all duration-300 rounded-lg"
@@ -87,14 +95,14 @@ export function TwinskieAvatar({
       
       {/* Inactive Label */}
       {isInactive && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-10">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-20">
           INACTIVE
         </div>
       )}
       
       {/* Level Badge */}
       {user.level != null && (
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10">
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20">
           {user.level}
         </div>
       )}

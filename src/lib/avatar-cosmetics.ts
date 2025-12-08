@@ -5,26 +5,22 @@ export interface CosmeticItem {
   id: string;
   name: string;
   description: string;
-  type: 'glow' | 'aura' | 'background' | 'overlay' | 'border' | 'particle' | 'hat' | 'accessory';
+  type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod';
   
-  // Visual effects
-  boxShadow?: string;           // For glows/auras
-  border?: string;              // For borders/frames
-  backgroundGradient?: string;  // For background effects
-  backgroundImage?: string;     // For image backgrounds
-  overlayImage?: string;        // For hats, accessories, etc (PNG with transparency)
-  overlayPosition?: {           // Position of overlay relative to avatar
-    top?: string;
-    bottom?: string;
-    left?: string;
-    right?: string;
-    transform?: string;
-    width?: string;
-    height?: string;
-    zIndex?: number;
+  // Visual effects (applied to container)
+  boxShadow?: string;
+  border?: string;
+  backgroundGradient?: string;
+  animationClass?: string;
+  
+  // URL modifications (applied to avatar URL)
+  urlModifications?: {
+    textureAtlas?: number;      // 256, 512, 1024, 2048
+    morphTargets?: string[];    // ['ARKit', 'Oculus', etc]
+    lod?: number;               // 0 (high), 1 (med), 2 (low)
+    pose?: 'A' | 'T';          // A-pose or T-pose
   };
   
-  animationClass?: string;
   costGems?: number;
   requirement?: {
     type: 'quest' | 'level' | 'skill' | 'trait' | 'starter';
@@ -49,6 +45,71 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     type: 'border',
     border: '3px solid rgba(34, 197, 94, 0.6)',
     requirement: { type: 'starter', value: 1 },
+  },
+  
+  // ===== URL MODIFICATIONS (FREE & INSTANT!) =====
+  {
+    id: 'performance_mode',
+    name: 'Performance Mode',
+    description: 'Faster loading with lower quality textures',
+    type: 'url-mod',
+    urlModifications: {
+      textureAtlas: 512,
+      lod: 2,
+    },
+    costGems: 0, // Free for everyone!
+  },
+  {
+    id: 'balanced_mode',
+    name: 'Balanced Quality',
+    description: 'Good balance of quality and performance',
+    type: 'url-mod',
+    urlModifications: {
+      textureAtlas: 1024,
+      lod: 1,
+    },
+    costGems: 0, // Free!
+  },
+  {
+    id: 'ultra_quality',
+    name: 'Ultra HD Mode',
+    description: 'Maximum quality rendering for your avatar',
+    type: 'url-mod',
+    urlModifications: {
+      textureAtlas: 2048,
+      lod: 0,
+    },
+    costGems: 50,
+  },
+  {
+    id: 'expressive_mode',
+    name: 'Expressive Face',
+    description: 'Enable advanced facial expression support',
+    type: 'url-mod',
+    urlModifications: {
+      morphTargets: ['ARKit', 'Oculus'],
+    },
+    costGems: 75,
+  },
+  {
+    id: 'a_pose',
+    name: 'Power Stance',
+    description: 'Display your avatar in an A-pose',
+    type: 'url-mod',
+    urlModifications: {
+      pose: 'A',
+    },
+    costGems: 25,
+  },
+  {
+    id: 't_pose',
+    name: 'T-Pose Dominance',
+    description: 'Assert dominance with the classic T-pose',
+    type: 'url-mod',
+    urlModifications: {
+      pose: 'T',
+    },
+    costGems: 25,
   },
   
   // ===== GLOWS & AURAS =====
@@ -84,6 +145,14 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     boxShadow: '0 0 25px 8px rgba(249, 115, 22, 0.8), 0 0 50px 15px rgba(239, 68, 68, 0.5)',
     requirement: { type: 'trait', value: 'streaker' },
   },
+  {
+    id: 'rainbow_glow',
+    name: 'Prismatic Glow',
+    description: 'All colors of achievement',
+    type: 'glow',
+    boxShadow: '0 0 20px 5px rgba(168, 85, 247, 0.6), 0 0 40px 10px rgba(251, 191, 36, 0.6)',
+    costGems: 200,
+  },
   
   // ===== BACKGROUNDS =====
   {
@@ -110,67 +179,13 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     backgroundGradient: 'linear-gradient(0deg, rgba(0, 255, 65, 0.1) 0%, transparent 100%)',
     costGems: 200,
   },
-  
-  // ===== HATS & ACCESSORIES (Placeholder - you'll add real images) =====
   {
-    id: 'wizard_hat',
-    name: 'Wizard Hat',
-    description: 'Master of the arcane',
-    type: 'hat',
-    overlayImage: '/cosmetics/wizard-hat.png', // You'll create this
-    overlayPosition: {
-      top: '-10%',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '60%',
-      zIndex: 10,
-    },
-    costGems: 250,
-  },
-  {
-    id: 'crown',
-    name: 'Golden Crown',
-    description: 'Royalty recognized',
-    type: 'hat',
-    overlayImage: '/cosmetics/crown.png',
-    overlayPosition: {
-      top: '-5%',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '50%',
-      zIndex: 10,
-    },
-    requirement: { type: 'level', value: 25 },
-  },
-  {
-    id: 'halo',
-    name: 'Divine Halo',
-    description: 'Blessed by the gods',
-    type: 'accessory',
-    overlayImage: '/cosmetics/halo.png',
-    overlayPosition: {
-      top: '-15%',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '80%',
-      zIndex: 5,
-    },
-    costGems: 300,
-  },
-  {
-    id: 'sunglasses',
-    name: 'Cool Shades',
-    description: 'Too cool for school',
-    type: 'accessory',
-    overlayImage: '/cosmetics/sunglasses.png',
-    overlayPosition: {
-      top: '35%', // Adjust based on where face is
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '40%',
-      zIndex: 15,
-    },
-    costGems: 150,
+    id: 'gold_background',
+    name: 'Golden Radiance',
+    description: 'Bathed in success',
+    type: 'background',
+    backgroundGradient: 'radial-gradient(circle at center, rgba(251, 191, 36, 0.4) 0%, rgba(251, 191, 36, 0.1) 50%, transparent 70%)',
+    requirement: { type: 'level', value: 10 },
   },
   
   // ===== BORDERS & FRAMES =====
@@ -191,6 +206,14 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     animationClass: 'animate-pulse',
     costGems: 125,
   },
+  {
+    id: 'crimson_border',
+    name: 'Crimson Edge',
+    description: 'Bold and powerful',
+    type: 'border',
+    border: '4px solid rgba(239, 68, 68, 0.9)',
+    costGems: 100,
+  },
 ];
 
 // Helper to get active cosmetics
@@ -200,19 +223,65 @@ export function getActiveCosmetics(avatarLayers?: Record<string, boolean>): Cosm
   return COSMETIC_ITEMS.filter(item => avatarLayers[item.id] === true);
 }
 
-// Helper to combine CSS effects
+// Build avatar URL with all URL modifications
+export function buildAvatarUrl(baseUrl: string, cosmetics: CosmeticItem[]): string {
+  const urlMods = cosmetics.filter(c => c.type === 'url-mod' && c.urlModifications);
+  
+  if (urlMods.length === 0) return baseUrl;
+  
+  const params = new URLSearchParams();
+  const morphTargets: string[] = [];
+  let textureAtlas: number | undefined;
+  let lod: number | undefined;
+  let pose: string | undefined;
+  
+  // Combine all URL modifications
+  urlMods.forEach(mod => {
+    if (mod.urlModifications?.morphTargets) {
+      morphTargets.push(...mod.urlModifications.morphTargets);
+    }
+    if (mod.urlModifications?.textureAtlas !== undefined) {
+      // Use highest quality requested
+      textureAtlas = Math.max(textureAtlas || 0, mod.urlModifications.textureAtlas);
+    }
+    if (mod.urlModifications?.lod !== undefined) {
+      // Use lowest LOD (highest quality)
+      lod = Math.min(lod ?? 2, mod.urlModifications.lod);
+    }
+    if (mod.urlModifications?.pose) {
+      pose = mod.urlModifications.pose;
+    }
+  });
+  
+  // Build query string
+  if (morphTargets.length > 0) {
+    params.set('morphTargets', [...new Set(morphTargets)].join(','));
+  }
+  if (textureAtlas !== undefined) {
+    params.set('textureAtlas', textureAtlas.toString());
+  }
+  if (lod !== undefined) {
+    params.set('lod', lod.toString());
+  }
+  if (pose) {
+    params.set('pose', pose);
+  }
+  
+  const queryString = params.toString();
+  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+}
+
+// Helper to combine visual effects (non-URL cosmetics)
 export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
   boxShadow: string;
   background: string;
   border: string;
   animationClasses: string[];
-  overlays: CosmeticItem[]; // Items that need to be rendered as overlays
 } {
   const boxShadows: string[] = [];
   const backgrounds: string[] = [];
   let border = '';
   const animationClasses: string[] = [];
-  const overlays: CosmeticItem[] = [];
   
   cosmetics.forEach(cosmetic => {
     // Glows and auras
@@ -221,16 +290,11 @@ export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
     }
     
     // Backgrounds
-    if (cosmetic.type === 'background') {
-      if (cosmetic.backgroundGradient) {
-        backgrounds.push(cosmetic.backgroundGradient);
-      }
-      if (cosmetic.backgroundImage) {
-        backgrounds.push(`url(${cosmetic.backgroundImage})`);
-      }
+    if (cosmetic.type === 'background' && cosmetic.backgroundGradient) {
+      backgrounds.push(cosmetic.backgroundGradient);
     }
     
-    // Borders
+    // Borders (only use the last one applied)
     if (cosmetic.type === 'border' && cosmetic.border) {
       border = cosmetic.border;
     }
@@ -239,12 +303,6 @@ export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
     if (cosmetic.animationClass) {
       animationClasses.push(cosmetic.animationClass);
     }
-    
-    // Overlays (hats, accessories)
-    if ((cosmetic.type === 'hat' || cosmetic.type === 'accessory' || cosmetic.type === 'overlay') 
-        && cosmetic.overlayImage) {
-      overlays.push(cosmetic);
-    }
   });
   
   return {
@@ -252,11 +310,10 @@ export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
     background: backgrounds.join(', ') || 'transparent',
     border,
     animationClasses,
-    overlays,
   };
 }
 
-// Keep utility functions
+// Utility functions
 export function getDominantSkill(stats: {
   physicalStat: number;
   mentalStat: number;
