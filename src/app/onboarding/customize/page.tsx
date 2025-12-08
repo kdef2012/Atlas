@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -74,15 +73,14 @@ export default function CustomizeAvatarPage() {
     setIsLoading(true);
 
     const userRef = doc(firestore, 'users', user.uid);
-    const updates: { avatarUrl?: string, avatarStyle: string } = {
-        avatarStyle: 'openpeeps-default' // Fallback style
+    
+    // ✅ FIXED: Simplified avatar style logic
+    const updates: { avatarUrl?: string; avatarStyle: string } = {
+      avatarStyle: avatarUrl ? 'readyplayerme' : 'default',
     };
 
-    if (skipped) {
-        updates.avatarStyle = 'openpeeps';
-    } else if (avatarUrl) {
-        updates.avatarStyle = 'readyplayerme';
-        updates.avatarUrl = avatarUrl;
+    if (avatarUrl) {
+      updates.avatarUrl = avatarUrl;
     }
     
     updateDocumentNonBlocking(userRef, updates);
