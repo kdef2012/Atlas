@@ -1,14 +1,11 @@
-
 rules_version = '2';
 
-// v1.1 Ruleset: Added public-logs collection
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // HELPER FUNCTIONS
-
     function isSignedIn() {
-      return request.auth != null;
+      return request.auth != null && request.auth.uid != null;
     }
 
     function isOwner(userId) {
@@ -20,11 +17,11 @@ service cloud.firestore {
     }
 
     function isFireteamMember(fireteamId) {
-      return isSignedIn() && get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members[request.auth.uid] == true;
+      return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members;
     }
 
     function isGuildMember(guildId) {
-      return isSignedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds[guildId] == true;
+      return isSignedIn() && guildId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds;
     }
 
     // ADMINS COLLECTION
@@ -35,84 +32,135 @@ service cloud.firestore {
     
     // USERS COLLECTION
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isOwner(userId);
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
 
-      // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
+      // USER SUB-COLLECTIONS
       match /{subcollection}/{docId} {
-        allow read, write, create, update, delete: if isOwner(userId) || isAdmin();
+        allow get: if isOwner(userId) || isAdmin();
+        allow list: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId) || isAdmin();
+        allow update: if isOwner(userId) || isAdmin();
+        allow delete: if isOwner(userId) || isAdmin();
       }
     }
 
-    // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
+    // PUBLIC LOGS COLLECTION
     match /public-logs/{logId} {
-        allow get, list: if isSignedIn();
-        // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
-        // For now, we allow any signed-in user to create.
-        allow create: if isSignedIn(); 
-        allow update, delete: if false; // Nobody can update or delete public logs.
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn(); 
+      allow update: if false;
+      allow delete: if false;
     }
 
     // SKILLS COLLECTION
     match /skills/{skillId} {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if true;
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // VERIFICATIONS COLLECTION
+    match /verifications/{verificationId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+    
+    // ACTIVITIES COLLECTION
+    match /activities/{activityId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.userId == request.auth.uid);
     }
 
     // FIRETEAMS COLLECTION
     match /fireteams/{fireteamId} {
-      allow get, list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isSignedIn();
       allow update: if isFireteamMember(fireteamId) || isAdmin();
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        allow read, write: if isFireteamMember(fireteamId);
+        allow get: if isFireteamMember(fireteamId) || isAdmin();
+        allow list: if isFireteamMember(fireteamId) || isAdmin();
+        allow create: if isFireteamMember(fireteamId);
+        allow update: if isFireteamMember(fireteamId) || isAdmin();
         allow delete: if isAdmin();
       }
     }
 
     // GUILDS COLLECTION
     match /guilds/{guildId} {
-      allow get, list: if isSignedIn();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
       allow create: if isAdmin();
       allow update: if isGuildMember(guildId) || isAdmin();
       allow delete: if isAdmin();
       
       match /messages/{messageId} {
-        allow read, write: if isGuildMember(guildId);
+        allow get: if isGuildMember(guildId) || isAdmin();
+        allow list: if isGuildMember(guildId) || isAdmin();
+        allow create: if isGuildMember(guildId);
+        allow update: if isGuildMember(guildId) || isAdmin();
         allow delete: if isAdmin();
       }
     }
 
-    // PUBLIC/ADMIN-MANAGED COLLECTIONS
+    // TERRITORIES COLLECTION
     match /territories/{territoryId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
+    // TRAITS COLLECTION
     match /traits/{traitId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
+    // SUGGESTIONS COLLECTION
     match /suggestions/{suggestionId} {
-      allow get, list: if isAdmin();
+      allow get: if isAdmin();
+      allow list: if isAdmin();
       allow create: if isSignedIn();
-      allow update, delete: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
 
+    // EVENTS COLLECTION
     match /events/{eventId} {
-      allow get, list: if true;
-      allow create, update, delete: if isAdmin();
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
     
+    // STORE ITEMS COLLECTION
     match /store-items/{itemId} {
-      allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
     }
   }
 }
