@@ -26,15 +26,23 @@ export default function WorldMap() {
     }
     
     // Convert a region name into a consistent, pseudo-random coordinate.
+    // This is a simple hashing function to ensure the pin is placed in a general but not exact location.
     const getPositionFromRegion = (region: string): [number, number] => {
         let hash = 0;
         for (let i = 0; i < region.length; i++) {
             hash = region.charCodeAt(i) + ((hash << 5) - hash);
+            hash = hash & hash; // Convert to 32bit integer
         }
-        // Use a fixed seed to make the "randomness" consistent
-        const seed = hash;
-        const lat = (Math.sin(seed) * 90);
-        const lon = (Math.cos(seed) * 180);
+        
+        // Use a seeded pseudo-random number generator for consistency
+        const pseudoRandom = (seed: number) => {
+            let x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        };
+
+        const lat = (pseudoRandom(hash) * 170) - 85; // Latitude between -85 and 85
+        const lon = (pseudoRandom(hash / 2) * 360) - 180; // Longitude between -180 and 180
+        
         return [lat, lon];
     }
 
@@ -45,6 +53,9 @@ export default function WorldMap() {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
             />
             {guilds?.map(guild => {
+                // We only place a marker if the region exists to avoid errors.
+                if (!guild.region) return null;
+                
                 const position = getPositionFromRegion(guild.region);
                 return (
                     <Marker key={guild.id} position={position} icon={icon}>
