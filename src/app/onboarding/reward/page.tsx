@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -105,8 +104,9 @@ export default function RewardPage({}: RewardPageProps) {
             xp: 50,
             gems: 3,
             streakFreezes: 1,
-            'avatarLayers.newbie_sweatband': true,
-            'avatarLayers.newbie_glow': true, // Award the newbie glow!
+            // ✅ GRANT COSMETICS - These will now work with Ready Player Me!
+            'avatarLayers.newbie_glow': true,
+            'avatarLayers.newbie_border': true,
           };
           // This part is fast and happens immediately
           updateDocumentNonBlocking(userRef, updates);
@@ -161,12 +161,28 @@ export default function RewardPage({}: RewardPageProps) {
                     className="grid grid-cols-2 gap-4 text-center w-full"
                 >
                     <div className="bg-black/20 p-3 rounded-lg">
-                        <p className="font-bold text-lg text-primary flex items-center justify-center gap-2"><Shirt className="w-4 h-4"/> Newbie Sweatband</p>
-                        <p className="text-sm text-muted-foreground">(Cosmetic)</p>
+                        <p className="font-bold text-lg text-green-400 flex items-center justify-center gap-2">
+                          <Sparkles className="w-4 h-4"/> Newbie Glow
+                        </p>
+                        <p className="text-sm text-muted-foreground">(Cosmetic Effect)</p>
                     </div>
-                     <div className="bg-black/20 p-3 rounded-lg">
-                        <p className="font-bold text-lg text-accent flex items-center justify-center gap-2"><Gem className="w-4 h-4" /> Gems</p>
+                    <div className="bg-black/20 p-3 rounded-lg">
+                        <p className="font-bold text-lg text-green-400 flex items-center justify-center gap-2">
+                          ⭐ Newbie Frame
+                        </p>
+                        <p className="text-sm text-muted-foreground">(Cosmetic Border)</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-lg">
+                        <p className="font-bold text-lg text-accent flex items-center justify-center gap-2">
+                          <Gem className="w-4 h-4" /> Gems
+                        </p>
                         <p className="text-sm text-muted-foreground">(x3)</p>
+                    </div>
+                    <div className="bg-black/20 p-3 rounded-lg">
+                        <p className="font-bold text-lg text-blue-400 flex items-center justify-center gap-2">
+                          <ShieldAlert className="w-4 h-4" /> Streak Freeze
+                        </p>
+                        <p className="text-sm text-muted-foreground">(x1)</p>
                     </div>
                 </motion.div>
             )}

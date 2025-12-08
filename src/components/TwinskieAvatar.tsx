@@ -4,7 +4,7 @@
 import { ReadyPlayerMeAvatar } from './ready-player-me';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
-import { COSMETIC_ITEMS } from '@/lib/avatar-system-openpeeps';
+import { getActiveCosmetics, combineCosmeticEffects } from '@/lib/avatar-cosmetics';
 import { useMemo } from 'react';
 
 interface TwinskieAvatarProps {
@@ -23,7 +23,7 @@ const SIZE_MAP = {
 };
 
 /**
- * TwinskieAvatar - Displays user's Ready Player Me avatar
+ * TwinskieAvatar - Displays user's Ready Player Me avatar with cosmetic effects
  * Wrapper component for ReadyPlayerMeAvatar that works with User objects
  */
 export function TwinskieAvatar({ 
@@ -39,17 +39,29 @@ export function TwinskieAvatar({
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
-  const activeEffects = useMemo(() => {
-    if (!user.avatarLayers) return [];
-    
-    return COSMETIC_ITEMS.filter(item => 
-      item.type === 'effect' && user.avatarLayers?.[item.id]
-    );
-  }, [user.avatarLayers]);
+  // Get active cosmetics and combine their effects
+  const cosmetics = useMemo(() => 
+    getActiveCosmetics(user.avatarLayers),
+    [user.avatarLayers]
+  );
+  
+  const effects = useMemo(() => 
+    combineCosmeticEffects(cosmetics),
+    [cosmetics]
+  );
 
-  const avatarStyle: React.CSSProperties = {
-    filter: activeEffects.map(effect => effect.cssEffect).join(' ') || 'none',
+  // Build container style for background effects
+  const containerStyle: React.CSSProperties = {
+    background: effects.background,
   };
+
+  // Build avatar style for filter effects
+  const avatarStyle: React.CSSProperties = {
+    filter: isInactive ? 'grayscale(1) opacity(0.5)' : effects.filter,
+  };
+
+  // Parse border from CSS effect string
+  const borderStyle = effects.border.replace('border: ', '');
 
   // Check if user has an avatar URL
   if (!user.avatarUrl) {
@@ -69,28 +81,58 @@ export function TwinskieAvatar({
   }
 
   return (
-    <div className={cn("relative", className)}>
+    <div 
+      className={cn(
+        "relative rounded-lg overflow-hidden",
+        effects.animationClasses.join(' '),
+        className
+      )}
+      style={{ 
+        width: pixelSize, 
+        height: pixelSize,
+        ...containerStyle,
+        ...(borderStyle && { border: borderStyle })
+      }}
+    >
+      {/* Avatar with glow/aura effects */}
       <ReadyPlayerMeAvatar
         avatarUrl={user.avatarUrl}
         size={pixelSize}
         scene={scene}
-        className={cn(
-          "rounded-lg transition-all duration-300",
-          isInactive && "opacity-50 grayscale"
-        )}
+        className="transition-all duration-300"
         style={avatarStyle}
       />
       
+      {/* Particle effects overlay */}
+      {cosmetics.some(c => c.type === 'particle') && (
+        <div className="absolute inset-0 pointer-events-none">
+          {cosmetics
+            .filter(c => c.type === 'particle')
+            .map(c => (
+              <div
+                key={c.id}
+                className={cn(
+                  "absolute inset-0",
+                  c.animationClass
+                )}
+                style={{
+                  background: 'radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%)',
+                }}
+              />
+            ))}
+        </div>
+      )}
+      
       {/* Inactive Label */}
       {isInactive && (
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold">
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-10">
           INACTIVE
         </div>
       )}
       
       {/* Level Badge */}
       {user.level != null && (
-        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg">
+        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-10">
           {user.level}
         </div>
       )}

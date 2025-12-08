@@ -1,4 +1,5 @@
 
+
 import type { Gender, SkillCategory } from './types';
 
 // Open Peeps customization options
@@ -251,61 +252,3 @@ export const PRESET_CONFIGS: Record<string, Partial<OpenPeepsConfig>> = {
     accessories: ['glasses'],
   },
 };
-
-// Cosmetic items (for the wardrobe system)
-export interface CosmeticItem {
-  id: string;
-  name: string;
-  description: string;
-  type: 'effect' | 'background' | 'overlay';
-  cssEffect?: string; // For CSS-based effects
-  imageUrl?: string; // For image overlays (future AI-generated)
-  costGems?: number;
-  requirement?: {
-    type: 'quest' | 'level' | 'skill' | 'trait';
-    value: string | number;
-  };
-}
-
-export const COSMETIC_ITEMS: CosmeticItem[] = [
-  {
-    id: 'newbie_glow',
-    name: 'Newbie Glow',
-    description: 'Your first steps shine bright',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 10px rgba(34, 197, 94, 0.6))',
-    requirement: { type: 'level', value: 1 },
-  },
-  {
-    id: 'shadow_aura',
-    name: 'Shadow Aura',
-    description: 'Embrace the darkness',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.8))',
-    costGems: 100,
-  },
-  {
-    id: 'champion_aura',
-    name: 'Champion Aura',
-    description: 'The mark of greatness',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 25px rgba(251, 191, 36, 0.9))',
-    costGems: 150,
-  },
-  {
-    id: 'fire_background',
-    name: 'Flames of Momentum',
-    description: 'Burning with determination',
-    type: 'background',
-    cssEffect: 'radial-gradient(circle, rgba(249, 115, 22, 0.3) 0%, transparent 70%)',
-    requirement: { type: 'trait', value: 'streaker' },
-  },
-  {
-    id: 'ice_aura',
-    name: 'Frozen Focus',
-    description: 'Cool, calm, collected',
-    type: 'effect',
-    cssEffect: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.7))',
-    costGems: 100,
-  },
-];
