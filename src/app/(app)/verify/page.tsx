@@ -28,7 +28,7 @@ export default function VerifyPage() {
   // does not allow two '!=' or 'not-in' filters in the same query.
   // We will filter them out on the client side.
   const unverifiedLogsQuery = useMemoFirebase(() => {
-    if (!authUser) return null;
+    if (!authUser) return null; // CRITICAL FIX: Do not run query until user is authenticated
     return query(
       collectionGroup(firestore, 'logs'), 
       where('isVerified', '==', false),
