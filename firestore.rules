@@ -1,4 +1,3 @@
-
 rules_version = '2';
 
 service cloud.firestore {
@@ -33,15 +32,28 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
     
+    // COLLECTION GROUP QUERY for logs (needed for Verify page)
+    // ✅ MUST be defined BEFORE the /users/{userId} rule
+    match /{path=**}/logs/{logId} {
+      allow read: if isSignedIn();
+    }
+    
     // USERS COLLECTION & SUB-COLLECTIONS
     match /users/{userId} {
-      // Any signed-in user can read an individual user profile.
+      // ✅ CRITICAL FIX: Split read permissions for leaderboards
+      // Any signed-in user can GET any individual user profile
       allow get: if isSignedIn();
-      // A user can create their own profile.
+      
+      // ✅ CRITICAL FIX: Allow LIST operations for leaderboard queries
+      allow list: if isSignedIn();
+      
+      // A user can create their own profile
       allow create: if isOwner(userId);
-      // A user can update their own profile, or an admin can.
+      
+      // A user can update their own profile, or an admin can
       allow update: if isOwner(userId) || isAdmin();
-      // Only admins can delete user accounts.
+      
+      // Only admins can delete user accounts
       allow delete: if isAdmin();
 
       // USER SUB-COLLECTIONS (LOGS, QUESTS, SETTINGS)
@@ -50,33 +62,21 @@ service cloud.firestore {
       }
 
       match /quests/{questId} {
-         allow read, write: if isOwner(userId) || isAdmin();
+        allow read, write: if isOwner(userId) || isAdmin();
       }
 
-       match /settings/{settingsId} {
-         allow read, write: if isOwner(userId) || isAdmin();
+      match /settings/{settingsId} {
+        allow read, write: if isOwner(userId) || isAdmin();
       }
-    }
-    
-    // --- CRITICAL FIX: EXPLICIT RULES FOR COLLECTION QUERIES ---
-
-    // 1. Leaderboard Fix: Allows any signed-in user to query the /users collection.
-    match /users {
-        allow list: if isSignedIn();
-    }
-    
-    // 2. Verify Page Fix: Allows a collection group query on 'logs'.
-    match /{path=**}/logs/{logId} {
-      allow read: if isSignedIn();
     }
 
     // PUBLIC LOGS COLLECTION (for "Echoes of the Nebula" feed)
     match /public-logs/{logId} {
-        allow get, list: if isSignedIn();
-        // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
-        // This allows any user to create, which is what the app does now.
-        allow create: if isSignedIn(); 
-        allow update, delete: if false;
+      allow get, list: if isSignedIn();
+      // Writes should ideally be handled by a trusted backend (e.g., Cloud Function)
+      // This allows any user to create, which is what the app does now.
+      allow create: if isSignedIn(); 
+      allow update, delete: if false;
     }
 
     // SKILLS COLLECTION
@@ -140,3 +140,4 @@ service cloud.firestore {
     }
   }
 }
+
