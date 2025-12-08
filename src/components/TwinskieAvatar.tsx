@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ReadyPlayerMeAvatar } from './ready-player-me';
@@ -35,7 +36,6 @@ export function TwinskieAvatar({
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
   // Get active cosmetics and combine their effects
-  // ✅ FIX 1: Cast to the correct type
   const cosmetics = useMemo(() => 
     getActiveCosmetics(user.avatarLayers as Record<string, boolean> | undefined),
     [user.avatarLayers]
@@ -46,7 +46,7 @@ export function TwinskieAvatar({
     [cosmetics]
   );
 
-  // Build the filter effect (CSS filter for the wrapper, not the component)
+  // Build the filter effect
   const filterEffect = isInactive ? 'grayscale(1) opacity(0.5)' : effects.filter;
 
   // Parse border from CSS effect string
@@ -80,19 +80,19 @@ export function TwinskieAvatar({
         width: pixelSize, 
         height: pixelSize,
         background: effects.background,
-        filter: filterEffect, // ✅ FIX 2: Apply filter to wrapper instead
         ...(borderStyle && { border: borderStyle })
       }}
     >
-      {/* Avatar without inline style prop */}
       <ReadyPlayerMeAvatar
         avatarUrl={user.avatarUrl}
         size={pixelSize}
         scene={scene}
         className={cn(
-          "transition-all duration-300",
-          isInactive && "opacity-50 grayscale"
+          "transition-all duration-300 w-full h-full object-contain"
         )}
+        style={{
+          filter: filterEffect,
+        }}
       />
       
       {/* Inactive Label */}
