@@ -217,7 +217,7 @@ export function SideNav() {
                     <AlertDialogFooter>
                     <AlertDialogCancel>Stay in ATLAS</AlertDialogCancel>
                     <AlertDialogAction onClick={handleLogout} className="bg-destructive hover:bg-destructive/90">
-                        goodbye atlas
+                        Goodbye ATLAS
                     </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
