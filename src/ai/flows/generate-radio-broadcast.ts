@@ -12,6 +12,9 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
+import { collection, addDoc } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
+import { initializeFirebase } from '@/firebase/index';
 
 // Define the input data schemas for the different types of news
 const FactionChallengeWinnerSchema = z.object({
@@ -43,8 +46,10 @@ export type GenerateRadioBroadcastInput = z.infer<typeof GenerateRadioBroadcastI
 
 // Define the output schema for the flow
 const GenerateRadioBroadcastOutputSchema = z.object({
+  id: z.string(),
   script: z.string().describe('The complete, formatted script for the radio broadcast.'),
   audioUrl: z.string().describe('A base64 encoded data URI of the generated WAV audio.'),
+  timestamp: z.number(),
 });
 export type GenerateRadioBroadcastOutput = z.infer<typeof GenerateRadioBroadcastOutputSchema>;
 
@@ -172,10 +177,22 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     const wavBase64 = await toWav(audioBuffer);
     const audioUrl = `data:audio/wav;base64,${wavBase64}`;
 
-    // Step 4: Return both script and audio URL
-    return {
+    // Step 4: Save the broadcast to Firestore
+    const { firestore } = initializeFirebase();
+    const broadcastsCollection = collection(firestore, 'radio-broadcasts');
+    const newBroadcastData = {
+      timestamp: Date.now(),
       script,
       audioUrl,
     };
+    const docRef = await addDoc(broadcastsCollection, newBroadcastData);
+
+    // Step 5: Return both script and audio URL along with the new document ID
+    return {
+      id: docRef.id,
+      ...newBroadcastData,
+    };
   }
 );
+
+    

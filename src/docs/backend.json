@@ -137,6 +137,7 @@
   "auth": { "providers": ["password"] },
   "storage": { "rules": "storage.rules" },
   "firestore": {
+    "rules": "firestore.rules",
     "structure": [
       { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user profile data.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }] } },
       { "path": "/users/{userId}/settings/{settingsId}", "definition": { "entityName": "UserSettings", "schema": { "$ref": "#/backend/entities/UserSettings" }, "description": "Stores user-specific settings.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "settingsId", "description": "A singleton document ID, e.g., 'main'."}] } },
@@ -155,7 +156,8 @@
       { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
       { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } },
       { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } }
-    ],
-    "reasoning": "The Firestore data structure is designed for clear separation of concerns and scalable security. Regular user data is in `/users/{userId}`. A new, separate `/admins/{adminId}` collection is introduced to cleanly distinguish administrators, eliminating complex security rule checks. Publicly readable data like skills, fireteams, and guilds are in top-level collections for easy access, while their write permissions are tightly controlled. This architecture simplifies security rules, enhances data integrity, and provides a robust foundation for the application's features."
+    ]
   }
 }
+
+    

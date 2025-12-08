@@ -1,6 +1,6 @@
 
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -150,8 +150,15 @@ export interface StoreItem {
   layerKey: string;
 }
 
+export interface AtlasRadioBroadcast {
+  id: string;
+  timestamp: number;
+  script: string;
+  audioUrl: string;
+}
 
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Events', React.ComponentType<{ className?: string }>> = {
+
+export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Events' | 'Radio', React.ComponentType<{ className?: string }>> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
@@ -164,6 +171,7 @@ export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Ge
   Guilds: Building2,
   Store: Store,
   Events: Megaphone,
+  Radio: Radio,
 };
 
 export const CATEGORY_COLORS: Record<SkillCategory, string> = {
@@ -198,3 +206,5 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
+
+    
