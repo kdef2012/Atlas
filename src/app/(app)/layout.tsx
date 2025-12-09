@@ -29,6 +29,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
   const adminRef = useMemoFirebase(() => {
+    // Only check for admin doc if the email matches
     if (authUser && isAdminLogin) {
       return doc(firestore, 'admins', authUser.uid);
     }
@@ -49,9 +50,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       hasAdminDocLoadingStarted.current = true;
     }
   }, [isUserDocLoading, isAdminDocLoading]);
-
+  
+  // The admin doc is only "ready" if it wasn't supposed to be loaded in the first place, OR if it has finished loading.
+  const isAdminDocReady = !isAdminLogin || (hasAdminDocLoadingStarted.current && !isAdminDocLoading);
   const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
-  const isAdminDocReady = authUser && isAdminLogin ? (hasAdminDocLoadingStarted.current && !isAdminDocLoading) : true;
   const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
 
   useEffect(() => {
@@ -71,7 +73,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       }
       // Do not redirect to /admin automatically, let the user choose via sidebar.
     } else {
-      if (!user && !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin')) {
+      if (!user && !pathname.startsWith('/onboarding')) {
         router.replace('/onboarding/archetype');
       } else if (user && pathname.startsWith('/onboarding')) {
         router.replace('/dashboard');
@@ -98,7 +100,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     return redirect('/login');
   }
 
-  const isLoading = isAuthLoading || (authUser && (isUserDocLoading && !user));
+  const isLoading = isAuthLoading || (authUser && !isAdminDocReady) || (authUser && !isUserDocReady && !pathname.startsWith('/onboarding'));
   const shouldShowSkeleton = !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin');
 
   if (isLoading && shouldShowSkeleton) {
