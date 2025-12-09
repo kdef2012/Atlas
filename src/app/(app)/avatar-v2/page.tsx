@@ -12,6 +12,7 @@ import type { User } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Loader2, Wand2 } from 'lucide-react';
 import { TwinskieV2 } from '@/components/TwinskieV2';
+import { Badge } from '@/components/ui/badge';
 
 export default function AvatarV2ShowcasePage() {
   const { user: authUser, isUserLoading } = useUser();
@@ -20,7 +21,7 @@ export default function AvatarV2ShowcasePage() {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: userData, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  const [prompt, setPrompt] = useState('A vibrant, fiery aura');
+  const [prompt, setPrompt] = useState('A powerful Titan with a fiery aura');
   const [submittedPrompt, setSubmittedPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -50,15 +51,16 @@ export default function AvatarV2ShowcasePage() {
         <CardHeader>
           <CardTitle className="font-headline text-3xl">Avatar V2 Showcase</CardTitle>
           <CardDescription>
-            Test the new AI-powered avatar generation system. Describe a cosmetic effect and see it applied.
+            Test the new AI-powered avatar generation system. Describe a character and cosmetic effect to generate a new avatar portrait.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+            <p className="text-sm font-medium">Your Archetype: <Badge variant="outline">{userData.archetype}</Badge></p>
             <div className="flex gap-2">
                  <Input 
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    placeholder="e.g., surrounded by a blue, electric glow"
+                    placeholder="e.g., A wise Sage surrounded by a blue, electric glow"
                 />
                  <Button onClick={handleGenerate} disabled={isLoading}>
                     {isLoading ? <Loader2 className="animate-spin" /> : <Wand2 />}

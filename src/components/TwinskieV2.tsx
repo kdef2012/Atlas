@@ -15,13 +15,18 @@ interface TwinskieV2Props {
 }
 
 export function TwinskieV2({ user, prompt, onFinishedLoading }: TwinskieV2Props) {
-  const [imageUrl, setImageUrl] = useState<string | null>(user.avatarUrl || null);
+  const [imageUrl, setImageUrl] = useState<string | null>('/placeholder.png'); // Default placeholder
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!prompt || !user.avatarUrl) {
-      if(isLoading) onFinishedLoading();
+    // Don't run on initial empty prompt
+    if (!prompt) {
+      // If an image was already generated, keep it. Otherwise, show placeholder.
+      if (!imageUrl || imageUrl === '/placeholder.png') {
+        setImageUrl('/placeholder.png');
+      }
+      if (isLoading) onFinishedLoading();
       setIsLoading(false);
       return;
     };
@@ -30,7 +35,7 @@ export function TwinskieV2({ user, prompt, onFinishedLoading }: TwinskieV2Props)
       setIsLoading(true);
       try {
         const result = await generateAvatarImage({
-          imageUrl: user.avatarUrl as string, // We already checked this is not null
+          archetype: user.archetype,
           prompt: prompt,
         });
         setImageUrl(result.generatedImageUrl);
@@ -39,10 +44,10 @@ export function TwinskieV2({ user, prompt, onFinishedLoading }: TwinskieV2Props)
         toast({
           variant: 'destructive',
           title: 'Image Generation Failed',
-          description: 'The AI failed to generate the image. Please try again.',
+          description: 'The AI failed to generate the image. This may be due to rate limits. Please try again later.',
         });
-        // Revert to original image on failure
-        setImageUrl(user.avatarUrl || null);
+        // Revert to placeholder on failure
+        setImageUrl('/placeholder.png');
       } finally {
         setIsLoading(false);
         onFinishedLoading();
@@ -50,13 +55,13 @@ export function TwinskieV2({ user, prompt, onFinishedLoading }: TwinskieV2Props)
     };
 
     generateImage();
-  }, [prompt, user.avatarUrl, toast, onFinishedLoading]);
+  }, [prompt, user.archetype, toast, onFinishedLoading]);
 
 
   if (!imageUrl) {
     return (
       <div className="flex items-center justify-center w-full h-full bg-muted rounded-lg">
-        <p className="text-muted-foreground">No base avatar URL found.</p>
+        <p className="text-muted-foreground">Enter a prompt to generate an avatar.</p>
       </div>
     );
   }
@@ -66,7 +71,7 @@ export function TwinskieV2({ user, prompt, onFinishedLoading }: TwinskieV2Props)
       {isLoading && (
         <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center z-10 rounded-lg">
           <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-primary-foreground mt-4">Applying cosmetic effects...</p>
+          <p className="text-primary-foreground mt-4">Generating new avatar...</p>
         </div>
       )}
       <Image
