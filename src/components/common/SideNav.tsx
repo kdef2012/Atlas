@@ -76,6 +76,7 @@ const adminNavItems = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/curation", label: "Curation", icon: Palette },
     { href: "/admin/events", label: "Events", icon: Megaphone },
+    { href: "/admin/avatar-gallery", label: "Avatar Gallery", icon: Sparkles },
 ]
 
 export function SideNav() {
@@ -237,4 +238,3 @@ export function SideNav() {
     </>
   );
 }
-
