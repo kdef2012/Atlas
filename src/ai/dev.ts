@@ -1,4 +1,3 @@
-
 'use server';
 import { config } from 'dotenv';
 config();
@@ -12,3 +11,4 @@ import '@/ai/flows/assign-personality-traits.ts';
 import '@/ai/flows/generate-radio-broadcast.ts';
 import '@/ai/flows/generate-avatar-image.ts';
 import '@/ai/flows/generate-resume.ts';
+import '@/ai/flows/remove-background.ts';

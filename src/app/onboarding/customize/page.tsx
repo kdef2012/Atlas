@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2, ArrowRight, Sparkles, Link as LinkIcon } from 'lucide-react';
+import { Loader2, ArrowRight, Sparkles, Link as LinkIcon, Check } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { ReadyPlayerMeCreator } from '@/components/ready-player-me';
 import { Input } from '@/components/ui/input';
+import { removeBackground } from '@/ai/flows/remove-background';
 
 export default function CustomizeAvatarPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -23,12 +25,43 @@ export default function CustomizeAvatarPage() {
   const searchParams = useSearchParams();
   const archetype = searchParams.get('archetype') as Archetype | null;
 
-  const handleAvatarCreated = (url: string) => {
-    setAvatarUrl(url);
+  const handleAvatarCreated = async (url: string) => {
+    setIsProcessing(true);
     toast({
-      title: '✨ Twinskie Forged!',
-      description: 'Your Twinskie is ready! Click Continue to proceed.',
+      title: '✨ Avatar Forged!',
+      description: 'Now removing the background... This may take a moment.',
     });
+    
+    try {
+        // The URL from RPM might be a .png, but we need to fetch it to get a data URI for the AI
+        const response = await fetch(url);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.readAsDataURL(blob);
+        reader.onloadend = async () => {
+            const base64data = reader.result as string;
+            
+            // Call the background removal flow
+            const result = await removeBackground({ imageDataUri: base64data });
+            
+            setAvatarUrl(result.transparentImageDataUri);
+            toast({
+                title: '✅ Background Removed!',
+                description: 'Your transparent Twinskie is ready! Click Continue.',
+            });
+            setIsProcessing(false);
+        };
+    } catch (error) {
+        console.error("Failed to process avatar:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Processing Failed',
+            description: 'Could not remove the background. Using original avatar.',
+        });
+        // Fallback to the original URL
+        setAvatarUrl(url);
+        setIsProcessing(false);
+    }
   };
   
   const handleManualUrlSubmit = () => {
@@ -74,7 +107,6 @@ export default function CustomizeAvatarPage() {
 
     const userRef = doc(firestore, 'users', user.uid);
     
-    // ✅ FIXED: Simplified avatar style logic
     const updates: { avatarUrl?: string; avatarStyle: string } = {
       avatarStyle: avatarUrl ? 'readyplayerme' : 'default',
     };
@@ -155,7 +187,7 @@ export default function CustomizeAvatarPage() {
         <div className="mt-6 flex flex-col sm:flex-row justify-center items-center gap-4">
             <Button
               onClick={() => handleProceed(true)}
-              disabled={isLoading}
+              disabled={isLoading || isProcessing}
               size="lg"
               variant="outline"
             >
@@ -163,13 +195,13 @@ export default function CustomizeAvatarPage() {
             </Button>
             <Button
               onClick={() => handleProceed(false)}
-              disabled={isLoading || !avatarUrl}
+              disabled={isLoading || isProcessing || !avatarUrl}
               size="lg"
               className="font-bold group text-lg px-8"
             >
-              {isLoading && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
-              Continue to ATLAS
-              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+              {(isLoading || isProcessing) && <Loader2 className="mr-2 h-5 w-5 animate-spin" />}
+              {isProcessing ? 'Processing...' : 'Continue to ATLAS'}
+              {!isProcessing && <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />}
             </Button>
         </div>
 

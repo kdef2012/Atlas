@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
@@ -36,10 +35,9 @@ export function ReadyPlayerMeCreator({
 
         // Avatar export completed - this is what we want!
         if (data.eventName === 'v1.avatar.exported') {
-          const avatarUrl = data.data.url; // Full 3D model URL
-          // The creator returns a .glb model, but we want a .png portrait for display
-          const imageUrl = avatarUrl.replace('.glb', '.png') + '?scene=fullbody-portrait-v1';
-          onAvatarCreated(imageUrl);
+          const avatarUrl = data.data.url; // This is the .glb model URL
+          // We will pass the GLB URL directly, and the parent component will convert it to a PNG data URI for processing
+          onAvatarCreated(avatarUrl);
         }
 
         // Frame is ready to use
@@ -106,6 +104,7 @@ interface AvatarDisplayProps {
   size?: number;
   scene?: 'fullbody-portrait-v1' | 'halfbody-portrait-v1' | 'bust-portrait-v1';
   className?: string;
+  transparent?: boolean;
 }
 
 export function ReadyPlayerMeAvatar({
@@ -113,15 +112,27 @@ export function ReadyPlayerMeAvatar({
   size = 300,
   scene = 'fullbody-portrait-v1',
   className = '',
+  transparent = false,
 }: AvatarDisplayProps) {
-  // Convert GLB model URL to PNG image URL
-  const imageUrl = avatarUrl.includes('.png')
-    ? avatarUrl
-    : `${avatarUrl.replace('.glb', '.png')}?scene=${scene}`;
+
+  const getImageUrl = (url: string) => {
+    // If it's already a data URI, use it directly
+    if (url.startsWith('data:image')) {
+      return url;
+    }
+    // Otherwise, convert GLB model URL to PNG image URL
+    const imageUrl = url.includes('.png') ? url : `${url.replace('.glb', '.png')}?scene=${scene}`;
+    
+    const finalUrl = new URL(imageUrl);
+    if(transparent) {
+      finalUrl.searchParams.set('background', 'transparent');
+    }
+    return finalUrl.toString();
+  }
 
   return (
     <img
-      src={imageUrl}
+      src={getImageUrl(avatarUrl)}
       alt="Avatar"
       width={size}
       height={size}
