@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -54,7 +55,7 @@ const removeBackgroundFlow = ai.defineFlow(
     
     // 3. Call the Gemini image-to-image model
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-image-preview'),
+      model: googleAI.model('gemini-1.5-pro-latest'), // Using a more powerful model to avoid rate limits
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
