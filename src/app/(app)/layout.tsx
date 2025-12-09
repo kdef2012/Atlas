@@ -71,13 +71,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           createdAt: Date.now(),
         }, {});
       }
-      // Do not redirect to /admin automatically, let the user choose via sidebar.
     } else {
-      if (!user && !pathname.startsWith('/onboarding')) {
-        router.replace('/onboarding/archetype');
-      } else if (user && pathname.startsWith('/onboarding')) {
-        router.replace('/dashboard');
-      }
+        if (!user && !pathname.startsWith('/onboarding')) {
+            router.replace('/onboarding/archetype');
+        } else if (user && pathname.startsWith('/onboarding')) {
+            router.replace('/dashboard');
+        }
     }
   }, [
     isReadyToDecide,

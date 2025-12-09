@@ -2,9 +2,9 @@
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
-import type { Archetype } from '@/lib/types';
-import { Bot, Mountain, Zap } from 'lucide-react';
-import { useFirestore, useUser, setDocumentNonBlocking } from '@/firebase';
+import type { Archetype, User } from '@/lib/types';
+import { Bot, Mountain, Zap, Loader2 } from 'lucide-react';
+import { useFirestore, useUser, setDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -42,16 +42,21 @@ export default function ArchetypeSelectionPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
-  const { user: authUser } = useUser();
-  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
+  const { user: authUser, isUserLoading: isAuthLoading } = useUser();
+
+  // Check if a user document already exists
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: userDoc, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+
+  const isLoading = isAuthLoading || isUserDocLoading;
 
   useEffect(() => {
-      // **CRITICAL FIX**: If the admin user somehow lands here, redirect them immediately.
-      if (isAdminLogin) {
-          router.replace('/admin');
-      }
-  }, [isAdminLogin, router]);
-  
+    // If we're not loading and a user document *does* exist, they shouldn't be here.
+    if (!isLoading && userDoc) {
+      router.replace('/dashboard');
+    }
+  }, [isLoading, userDoc, router]);
+
   const handleSelectArchetype = async (archetype: Archetype) => {
     if (!authUser) {
         toast({
@@ -60,13 +65,6 @@ export default function ArchetypeSelectionPage() {
             description: 'Please log in or sign up to select an archetype.',
         });
         router.push('/login');
-        return;
-    }
-    
-    // This check is now redundant because of the useEffect, but it's good for safety.
-    if (isAdminLogin) {
-        toast({ title: 'Redirecting to Admin Dashboard...' });
-        router.replace('/admin');
         return;
     }
       
@@ -102,9 +100,13 @@ export default function ArchetypeSelectionPage() {
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
   
-  // Don't render the page content if we're about to redirect the admin.
-  if (isAdminLogin) {
-      return null;
+  // While checking, show a loading state. Or if the user doc exists and we're about to redirect.
+  if (isLoading || userDoc) {
+      return (
+        <div className="flex h-screen w-screen items-center justify-center">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      )
   }
 
   return (
