@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { Territory, Fireteam, User } from "@/lib/types";
 import { useCollection, useMemoFirebase, useDoc } from "@/firebase";
@@ -16,6 +17,13 @@ import { generateFactionChallenges } from '@/ai/flows/generate-faction-challenge
 import { useToast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { TwinskieAvatarCompact } from '@/components/TwinskiAvatarCompact';
+
+// Dynamically import the map component to prevent SSR issues with Leaflet
+const WorldMap = dynamic(() => import('@/components/map/WorldMap'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-[400px] w-full" />,
+});
+
 
 function Leaderboard({ territory }: { territory: Territory }) {
   const firestore = useFirestore();
@@ -84,7 +92,7 @@ function Leaderboard({ territory }: { territory: Territory }) {
 function TerritoryList({ territories, isLoading }: { territories: Territory[] | null, isLoading: boolean }) {
   if (isLoading) {
     return (
-      <div className="space-y-2 p-6 pt-0">
+      <div className="space-y-2">
         {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
       </div>
     );
@@ -92,7 +100,7 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
 
   if (!territories || territories.length === 0) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground p-6 text-center border-2 border-dashed rounded-lg">
+      <div className="flex items-center justify-center h-48 text-muted-foreground text-center border-2 border-dashed rounded-lg">
         <p>No active challenges at the moment. A new cycle will begin soon.</p>
       </div>
     )
@@ -103,7 +111,7 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
   const pastTerritories = territories.filter(t => t.endsAt <= now).sort((a, b) => b.endsAt - a.endsAt);
 
   return (
-    <div className="space-y-4 p-6 pt-0">
+    <div className="space-y-4">
       {activeTerritories.length > 0 ? (
         <Accordion type="single" collapsible className="w-full">
             {activeTerritories.map(t => (
@@ -118,7 +126,7 @@ function TerritoryList({ territories, isLoading }: { territories: Territory[] | 
             ))}
         </Accordion>
       ) : (
-         <div className="flex items-center justify-center h-48 text-muted-foreground p-6 text-center border-2 border-dashed rounded-lg">
+         <div className="flex items-center justify-center h-48 text-muted-foreground text-center border-2 border-dashed rounded-lg">
             <p>No active challenges at the moment.</p>
         </div>
       )}
@@ -224,23 +232,44 @@ export default function TurfWarsPage() {
   const ChallengeIcon = CATEGORY_ICONS['Challenge'];
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="font-headline text-3xl flex items-center gap-2">
-            <ChallengeIcon className="w-8 h-8 text-primary"/>
-            Faction Challenges
-          </CardTitle>
-          <CardDescription>Compete with your Fireteam in weekly challenges. The top-scoring teams in your region earn rewards and glory.</CardDescription>
-        </div>
-        <Button onClick={handleGenerateChallenges} disabled={isGenerating || !territoriesCollection}>
-            {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
-            New Cycle
-        </Button>
-      </CardHeader>
-      <CardContent className="p-0">
-          <TerritoryList territories={territories} isLoading={isLoading} />
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="font-headline text-3xl flex items-center gap-2">
+              <ChallengeIcon className="w-8 h-8 text-primary"/>
+              Faction Challenges
+            </CardTitle>
+            <CardDescription>Compete with your Fireteam in weekly challenges. The top-scoring teams in your region earn rewards and glory.</CardDescription>
+          </div>
+          <Button onClick={handleGenerateChallenges} disabled={isGenerating || !territoriesCollection}>
+              {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
+              New Cycle
+          </Button>
+        </CardHeader>
+      </Card>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle>Challenge List</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <TerritoryList territories={territories} isLoading={isLoading} />
+                </CardContent>
+            </Card>
+          </div>
+          <div className="lg:col-span-1">
+            <Card className="h-full flex flex-col">
+                <CardHeader>
+                    <CardTitle>Global Activity Map</CardTitle>
+                </CardHeader>
+                 <CardContent className="flex-1 -m-6 mt-0">
+                    <WorldMap />
+                 </CardContent>
+            </Card>
+          </div>
+      </div>
+    </div>
   );
 }
