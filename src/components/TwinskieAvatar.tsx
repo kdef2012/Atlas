@@ -81,8 +81,8 @@ export function TwinskieAvatar({
     });
     
     return {
-      boxShadow: shadows.join(', '),
-      background: backgrounds.join(', '),
+      boxShadow: shadows.join(', ') || 'none',
+      background: backgrounds.join(', ') || 'transparent',
       border,
     };
   }, [aiCosmetics]);
@@ -152,12 +152,12 @@ export function TwinskieAvatar({
 
           {/* AI-Generated SVG Overlays */}
           {aiCosmetics.map((cosmetic) => (
-            cosmetic.svgCode && cosmetic.overlayPosition && (
+            cosmetic.svgCode && cosmetic.position && (
               <div
                 key={cosmetic.id}
                 className="absolute pointer-events-none"
                 style={{
-                  ...cosmetic.overlayPosition,
+                  ...calculateOverlayPosition(cosmetic.position),
                 }}
                 dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
               />
@@ -182,3 +182,56 @@ export function TwinskieAvatar({
     </>
   );
 }
+
+function calculateOverlayPosition(position: string): React.CSSProperties {
+    switch (position) {
+      case 'head':
+        return {
+          top: '-10%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '60%',
+          height: 'auto',
+        };
+      case 'face':
+        return {
+          top: '35%',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '40%',
+          height: 'auto',
+        };
+      case 'body':
+        return {
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '50%',
+          height: 'auto',
+        };
+      case 'background':
+        return {
+          top: '0',
+          left: '0',
+          width: '100%',
+          height: '100%',
+        };
+      case 'aura':
+        return {
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '120%',
+          height: '120%',
+        };
+      default:
+        return {
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          width: '50%',
+        };
+    }
+}
+
+    

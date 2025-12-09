@@ -1,7 +1,6 @@
 
-
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
-import type { GeneratedCosmetic } from './ai/activity-analyzer-EXPANDED';
+import type { GeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 
@@ -52,7 +51,7 @@ export interface User {
   region?: string;
   aiGeneratedCosmetics?: Record<string, GeneratedCosmetic>;
   suggestedCosmetics?: GeneratedCosmetic[];
-  evolutionPath?: any;
+  evolutionPath?: EvolutionPathData;
   evolutionLevel?: number;
 }
 
@@ -211,3 +210,7 @@ export const STORE_ITEM_ICONS = {
   Glasses,
   Shield,
 };
+
+export type { GeneratedCosmetic, EvolutionPathData };
+
+    
