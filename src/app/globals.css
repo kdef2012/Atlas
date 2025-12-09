@@ -104,4 +104,7 @@ body {
     border-color: hsl(var(--accent));
     box-shadow: 0 0 5px hsl(var(--accent));
   }
+  [data-sidebar] .bg-border {
+    background-color: hsl(var(--sidebar-accent));
+  }
 }
