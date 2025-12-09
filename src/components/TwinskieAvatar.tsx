@@ -1,7 +1,8 @@
+
 'use client';
 
 import { ReadyPlayerMeAvatar } from './ready-player-me';
-import type { User } from '@/lib/types';
+import type { User, GeneratedCosmetic } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { getActiveCosmetics, combineCosmeticEffects, buildAvatarUrl } from '@/lib/avatar-cosmetics';
 import { useMemo } from 'react';
@@ -34,24 +35,71 @@ export function TwinskieAvatar({
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
 
-  // Get active cosmetics
-  const cosmetics = useMemo(() => 
+  // Get active STATIC cosmetics from the predefined list
+  const staticCosmetics = useMemo(() => 
     getActiveCosmetics(user.avatarLayers as Record<string, boolean> | undefined),
     [user.avatarLayers]
   );
   
-  // Build modified avatar URL with URL parameters
-  // ✅ buildAvatarUrl now automatically adds ?background=transparent if background cosmetics are active!
+  // Build modified avatar URL with URL parameters from STATIC cosmetics
   const modifiedAvatarUrl = useMemo(() => {
     if (!user.avatarUrl) return null;
-    return buildAvatarUrl(user.avatarUrl, cosmetics);
-  }, [user.avatarUrl, cosmetics]);
+    return buildAvatarUrl(user.avatarUrl, staticCosmetics);
+  }, [user.avatarUrl, staticCosmetics]);
   
-  // Get visual effects (glows, borders, backgrounds)
-  const effects = useMemo(() => 
-    combineCosmeticEffects(cosmetics),
-    [cosmetics]
+  // Get visual effects (glows, borders, backgrounds) from STATIC cosmetics
+  const staticEffects = useMemo(() => 
+    combineCosmeticEffects(staticCosmetics),
+    [staticCosmetics]
   );
+  
+  // Get active AI-generated cosmetics
+  const aiCosmetics = useMemo(() => {
+    if (!user.avatarLayers || !user.aiGeneratedCosmetics) return [];
+    
+    return Object.entries(user.avatarLayers)
+      .filter(([id, enabled]) => enabled && user.aiGeneratedCosmetics?.[id])
+      .map(([id]) => user.aiGeneratedCosmetics![id]);
+  }, [user.avatarLayers, user.aiGeneratedCosmetics]);
+  
+  // Combine CSS effects from AI cosmetics
+  const aiEffects = useMemo(() => {
+    const shadows: string[] = [];
+    const backgrounds: string[] = [];
+    let border = '';
+    
+    aiCosmetics.forEach(cosmetic => {
+      if (cosmetic.cssEffects?.boxShadow) {
+        shadows.push(cosmetic.cssEffects.boxShadow);
+      }
+      if (cosmetic.cssEffects?.background) {
+        backgrounds.push(cosmetic.cssEffects.background);
+      }
+      if (cosmetic.cssEffects?.border) {
+        border = cosmetic.cssEffects.border;
+      }
+    });
+    
+    return {
+      boxShadow: shadows.join(', '),
+      background: backgrounds.join(', '),
+      border,
+    };
+  }, [aiCosmetics]);
+
+  // Combine effects from both systems
+  const combinedEffects = useMemo(() => {
+    const allBoxShadows = [staticEffects.boxShadow, aiEffects.boxShadow].filter(Boolean).join(', ');
+    const allBackgrounds = [staticEffects.background, aiEffects.background].filter(Boolean).join(', ');
+    
+    return {
+      boxShadow: allBoxShadows || 'none',
+      background: allBackgrounds || 'transparent',
+      border: aiEffects.border || staticEffects.border, // Prioritize AI border
+      animationClasses: staticEffects.animationClasses,
+    }
+  }, [staticEffects, aiEffects]);
+
 
   // Check if user has an avatar URL
   if (!user.avatarUrl || !modifiedAvatarUrl) {
@@ -72,45 +120,49 @@ export function TwinskieAvatar({
 
   return (
     <>
-      {/* 
-        ✅ SOLUTION: With transparent background, this is simple!
-        - Outer div: Handles glow (box-shadow)
-        - Inner div: Handles background + border
-        - Avatar has transparent background so it doesn't cover the gradient!
-      */}
-      
       {/* Outer container - for glow effect */}
       <div 
         className={cn(
           "relative",
-          effects.animationClasses.join(' '),
+          combinedEffects.animationClasses.join(' '),
           isInactive && "opacity-50 grayscale",
           className
         )}
         style={{ 
           width: pixelSize, 
           height: pixelSize,
-          // ✅ Box-shadow (glow) on outer container
-          boxShadow: effects.boxShadow,
+          boxShadow: combinedEffects.boxShadow,
         }}
       >
         {/* Inner container - for background and border */}
         <div
           className="relative w-full h-full rounded-lg overflow-hidden"
           style={{
-            // ✅ Background on inner container - now visible through transparent avatar!
-            background: effects.background,
-            // ✅ Border on inner container
-            ...(effects.border && { border: effects.border })
+            background: combinedEffects.background,
+            ...(combinedEffects.border && { border: combinedEffects.border })
           }}
         >
-          {/* Avatar with transparent background */}
+          {/* Base Avatar */}
           <ReadyPlayerMeAvatar
-            avatarUrl={modifiedAvatarUrl} // ✅ Has ?background=transparent parameter!
+            avatarUrl={modifiedAvatarUrl}
             size={pixelSize}
             scene={scene}
             className="transition-all duration-300"
           />
+
+          {/* AI-Generated SVG Overlays */}
+          {aiCosmetics.map((cosmetic) => (
+            cosmetic.svgCode && cosmetic.overlayPosition && (
+              <div
+                key={cosmetic.id}
+                className="absolute pointer-events-none"
+                style={{
+                  ...cosmetic.overlayPosition,
+                }}
+                dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
+              />
+            )
+          ))}
           
           {/* Inactive Label */}
           {isInactive && (
