@@ -18,13 +18,14 @@ import {
   Zap,
   Loader2
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { GeneratedCosmetic, EvolutionPathData, User } from '@/lib/types';
+import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem as StaticCosmeticItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 
-const RARITY_COLORS = {
+const RARITY_COLORS: Record<string, string> = {
   common: 'text-gray-400 border-gray-400',
   uncommon: 'text-green-400 border-green-400',
   rare: 'text-blue-400 border-blue-400',
@@ -39,6 +40,9 @@ const RARITY_ICONS: Record<string, React.ElementType> = {
   epic: Zap,
   legendary: Crown,
 };
+
+// Unified type for any cosmetic item
+type AnyCosmetic = (GeneratedCosmetic & { source: 'ai' }) | (StaticCosmeticItem & { source: 'static', rarity: string, visualDescription: string });
 
 export default function WardrobePage() {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -62,6 +66,38 @@ export default function WardrobePage() {
     }
   }, [user]);
 
+  const allOwnedCosmetics = useMemo(() => {
+    const cosmetics: AnyCosmetic[] = [];
+
+    // Add AI-generated cosmetics
+    if (user?.aiGeneratedCosmetics) {
+      Object.values(user.aiGeneratedCosmetics).forEach(cosmetic => {
+        cosmetics.push({ ...cosmetic, source: 'ai' });
+      });
+    }
+
+    // Add static starter cosmetics if user has them (level >= 1)
+    if (user && user.level >= 1) {
+        const starterItems = COSMETIC_ITEMS.filter(item => item.requirement?.type === 'starter');
+        starterItems.forEach(item => {
+            // Adapt the static item to the AnyCosmetic shape
+            cosmetics.push({
+                ...item,
+                id: item.id,
+                name: item.name,
+                description: item.description,
+                rarity: 'uncommon', // Assign a default rarity for display
+                visualDescription: item.description,
+                source: 'static',
+                position: item.type, // Map type to position
+            });
+        });
+    }
+
+    return cosmetics;
+  }, [user]);
+
+
   if (isLoading || !user || !userRef) {
     return (
         <div className="space-y-6">
@@ -76,7 +112,7 @@ export default function WardrobePage() {
   const suggestedCosmetics = (user.suggestedCosmetics as GeneratedCosmetic[]) || [];
   const evolutionPath = user.evolutionPath as EvolutionPathData;
 
-  const ownedCosmetics = Object.values(aiGeneratedCosmetics);
+  const ownedCosmetics = allOwnedCosmetics;
   
   // Filter by category
   const filteredCosmetics = selectedCategory === 'all' 
@@ -189,7 +225,7 @@ export default function WardrobePage() {
                   >
                     All
                   </Button>
-                  {['head', 'face', 'body', 'background', 'aura'].map(category => (
+                  {['head', 'face', 'body', 'background', 'aura', 'border', 'glow'].map(category => (
                     <Button
                       key={category}
                       variant={selectedCategory === category ? 'default' : 'outline'}
@@ -204,7 +240,8 @@ export default function WardrobePage() {
                 {/* Cosmetics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredCosmetics.map((cosmetic) => {
-                    const RarityIcon = RARITY_ICONS[cosmetic.rarity] || Star;
+                    const rarity = cosmetic.rarity || 'common';
+                    const RarityIcon = RARITY_ICONS[rarity] || Star;
                     const isEquipped = equippedCosmetics.has(cosmetic.id);
                     
                     return (
@@ -222,12 +259,12 @@ export default function WardrobePage() {
                                 {cosmetic.name}
                                 {isEquipped && <Check className="w-4 h-4 text-green-500" />}
                               </CardTitle>
-                              <Badge variant="outline" className={`mt-2 ${RARITY_COLORS[cosmetic.rarity]}`}>
+                              <Badge variant="outline" className={`mt-2 ${RARITY_COLORS[rarity]}`}>
                                 <RarityIcon className="w-3 h-3 mr-1" />
-                                {cosmetic.rarity}
+                                {rarity}
                               </Badge>
                             </div>
-                            {cosmetic.svgCode && (
+                            {cosmetic.source === 'ai' && cosmetic.svgCode && (
                               <div 
                                 className="w-16 h-16 flex-shrink-0"
                                 dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
@@ -239,10 +276,12 @@ export default function WardrobePage() {
                           <p className="text-sm text-muted-foreground mb-2">
                             {cosmetic.description}
                           </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Activity className="w-3 h-3" />
-                            <span>Earned through {cosmetic.earnedThrough}</span>
-                          </div>
+                          {cosmetic.earnedThrough && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Activity className="w-3 h-3" />
+                                <span>Earned through {cosmetic.earnedThrough}</span>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     );
@@ -253,9 +292,9 @@ export default function WardrobePage() {
                   <Card>
                     <CardContent className="p-12 text-center">
                       <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-xl font-bold mb-2">No cosmetics yet</h3>
+                      <h3 className="text-xl font-bold mb-2">No cosmetics here</h3>
                       <p className="text-muted-foreground">
-                        Complete activities to earn cosmetics!
+                        No cosmetics in the '{selectedCategory}' category. Keep playing to earn more!
                       </p>
                     </CardContent>
                   </Card>
@@ -320,5 +359,3 @@ export default function WardrobePage() {
     </div>
   );
 }
-
-    
