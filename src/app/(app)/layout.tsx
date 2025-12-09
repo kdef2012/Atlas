@@ -72,13 +72,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         }, {});
       }
     } else {
-        // If user document doesn't exist and we're NOT in onboarding, redirect to start.
-        if (!user && !pathname.startsWith('/onboarding')) {
-            router.replace('/onboarding/archetype');
-        // If user document DOES exist and they are trying to access onboarding, redirect to dashboard.
-        } else if (user && pathname.startsWith('/onboarding')) {
-            router.replace('/dashboard');
-        }
+      // If the user document doesn't exist and they are not on an onboarding page, redirect them to the start.
+      if (!user && !pathname.startsWith('/onboarding')) {
+        router.replace('/onboarding/archetype');
+      } 
+      // If a user document *does* exist but they haven't finished onboarding (no avatarStyle set)
+      // and they navigate away from onboarding, bring them back to the customize step.
+      else if (user && !user.avatarStyle && !pathname.startsWith('/onboarding')) {
+        router.replace(`/onboarding/customize?archetype=${user.archetype}`);
+      }
+      // If the user *has* completed onboarding (has an avatarStyle) but tries to go back to an onboarding page,
+      // redirect them to the dashboard.
+      else if (user && user.avatarStyle && pathname.startsWith('/onboarding')) {
+        router.replace('/dashboard');
+      }
     }
   }, [
     isReadyToDecide,
