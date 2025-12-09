@@ -17,7 +17,7 @@ import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
 import type { Quest } from '@/lib/quest';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, FileText } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
 import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
@@ -129,6 +129,21 @@ function DashboardPageContent() {
               </CardContent>
             </Card>
         </div>
+         <Card>
+          <CardHeader>
+            <CardTitle className="font-headline">Live Resume</CardTitle>
+            <CardDescription>Translate your ATLAS journey into a professional resume.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full group">
+              <Link href="/resume">
+                <FileText className="mr-2 h-4 w-4" />
+                View Your Live Resume
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
