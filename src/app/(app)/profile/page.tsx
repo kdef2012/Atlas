@@ -33,69 +33,7 @@ export default function ProfilePage() {
     );
   }
 
-  const activeCosmetics = userData.avatarLayers || {};
   const userGems = userData.gems || 0;
-
-  const toggleCosmetic = async (itemId: string) => {
-    if (!userDocRef) return;
-
-    const isActive = activeCosmetics[itemId];
-    
-    updateDocumentNonBlocking(userDocRef, {
-      [`avatarLayers.${itemId}`]: !isActive,
-    });
-
-    toast({
-      title: isActive ? 'Item Unequipped' : 'Item Equipped',
-      description: isActive 
-        ? 'The item has been removed from your Twinskie' 
-        : 'The item is now visible on your Twinskie',
-    });
-  };
-
-  const purchaseCosmetic = async (item: typeof COSMETIC_ITEMS[0]) => {
-    if (!userDocRef || !item.costGems) return;
-    
-    if (userGems < item.costGems) {
-      toast({
-        variant: 'destructive',
-        title: 'Insufficient Gems',
-        description: `You need ${item.costGems} gems but only have ${userGems}.`,
-      });
-      return;
-    }
-
-    setPurchasingItem(item.id);
-
-    // Deduct gems and unlock item
-    updateDocumentNonBlocking(userDocRef, {
-      gems: userGems - item.costGems,
-      [`avatarLayers.${item.id}`]: true,
-    });
-
-    setTimeout(() => {
-      toast({
-        title: 'Item Purchased!',
-        description: `${item.name} has been added to your Twinskie.`,
-      });
-      setPurchasingItem(null);
-    }, 500);
-  };
-
-  const isItemUnlocked = (item: typeof COSMETIC_ITEMS[0]): boolean => {
-    if (activeCosmetics[item.id] !== undefined) return true;
-    if (!item.requirement) return false;
-
-    // Check requirements
-    if (item.requirement.type === 'level') {
-      return userData.level >= (item.requirement.value as number);
-    }
-    if (item.requirement.type === 'trait') {
-      return userData.traits?.[item.requirement.value as string] || false;
-    }
-    
-    return false;
-  };
 
   return (
     <main className="container mx-auto p-4 md:p-8 max-w-7xl">
@@ -134,7 +72,7 @@ export default function ProfilePage() {
           </Card>
         </div>
 
-        {/* Right Column - Stats & Cosmetics */}
+        {/* Right Column - Stats */}
         <div className="lg:col-span-2 space-y-6">
           {/* Stats Card */}
           <Card>
@@ -164,84 +102,6 @@ export default function ProfilePage() {
                     </div>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Cosmetics Wardrobe */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Wardrobe</CardTitle>
-              <CardDescription>Customize your Twinskie with cosmetic items</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {COSMETIC_ITEMS.map((item) => {
-                  const isUnlocked = isItemUnlocked(item);
-                  const isActive = activeCosmetics[item.id] || false;
-                  const isOwned = activeCosmetics[item.id] !== undefined;
-                  const canPurchase = item.costGems && userGems >= item.costGems;
-
-                  return (
-                    <div
-                      key={item.id}
-                      className="border rounded-lg p-4 space-y-3 hover:border-primary transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="space-y-1">
-                          <h3 className="font-semibold">{item.name}</h3>
-                          <p className="text-sm text-muted-foreground">{item.description}</p>
-                          <Badge variant="outline" className="capitalize">
-                            {item.type}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {isOwned ? (
-                        <Button
-                          onClick={() => toggleCosmetic(item.id)}
-                          variant={isActive ? 'default' : 'outline'}
-                          className="w-full"
-                        >
-                          {isActive ? (
-                            <>
-                              <Check className="w-4 h-4 mr-2" />
-                              Equipped
-                            </>
-                          ) : (
-                            'Equip'
-                          )}
-                        </Button>
-                      ) : isUnlocked && item.requirement ? (
-                        <Button
-                          onClick={() => toggleCosmetic(item.id)}
-                          variant="secondary"
-                          className="w-full"
-                        >
-                          Unlock & Equip
-                        </Button>
-                      ) : item.costGems ? (
-                        <Button
-                          onClick={() => purchaseCosmetic(item)}
-                          disabled={!canPurchase || purchasingItem === item.id}
-                          className="w-full"
-                        >
-                          {purchasingItem === item.id ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <ShoppingBag className="w-4 h-4 mr-2" />
-                          )}
-                          {canPurchase ? `Buy ${item.costGems} gems` : `Need ${item.costGems} gems`}
-                        </Button>
-                      ) : (
-                        <Button disabled className="w-full">
-                          <Lock className="w-4 h-4 mr-2" />
-                          Locked
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })}
               </div>
             </CardContent>
           </Card>
