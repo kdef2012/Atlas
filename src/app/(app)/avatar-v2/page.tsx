@@ -55,7 +55,7 @@ export default function AvatarV2ShowcasePage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            <p className="text-sm font-medium">Your Archetype: <Badge variant="outline">{userData.archetype}</Badge></p>
+            <div className="text-sm font-medium">Your Archetype: <Badge variant="outline">{userData.archetype}</Badge></div>
             <div className="flex gap-2">
                  <Input 
                     value={prompt}
