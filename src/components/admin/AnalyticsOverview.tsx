@@ -37,24 +37,13 @@ export function AnalyticsOverview() {
     const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
     const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-    // This useMemo is the key fix. It ensures that the queries are only created
-    // when we know the user is an admin, but the hooks themselves are still called
-    // on every render. The hooks will simply receive 'null' if the user isn't an admin,
-    // which they are designed to handle gracefully.
-    const queries = useMemoFirebase(() => {
-        if (adminData) {
-            return {
-                skills: collection(firestore, 'skills'),
-                fireteams: collection(firestore, 'fireteams'),
-                guilds: collection(firestore, 'guilds')
-            }
-        }
-        return { skills: null, fireteams: null, guilds: null };
-    }, [adminData, firestore]);
+    const skillsQuery = useMemoFirebase(() => adminData ? collection(firestore, 'skills') : null, [adminData, firestore]);
+    const fireteamsQuery = useMemoFirebase(() => adminData ? collection(firestore, 'fireteams') : null, [adminData, firestore]);
+    const guildsQuery = useMemoFirebase(() => adminData ? collection(firestore, 'guilds') : null, [adminData, firestore]);
 
-    const { data: skills, isLoading: skillsLoading } = useCollection<Skill>(queries.skills);
-    const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(queries.fireteams);
-    const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(queries.guilds);
+    const { data: skills, isLoading: skillsLoading } = useCollection<Skill>(skillsQuery);
+    const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(fireteamsQuery);
+    const { data: guilds, isLoading: guildsLoading } = useCollection<Guild>(guildsQuery);
     
     const isLoading = isAuthLoading || isAdminDocLoading || skillsLoading || fireteamsLoading || guildsLoading;
 
