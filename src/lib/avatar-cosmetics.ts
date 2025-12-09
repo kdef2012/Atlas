@@ -277,9 +277,6 @@ export function buildAvatarUrl(
   if (pose) {
     params.set('pose', pose);
   }
-
-  // Always make the background transparent so CSS effects can be layered behind it.
-  params.set('background', 'transparent');
   
   return url.toString();
 }
