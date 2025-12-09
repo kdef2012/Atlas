@@ -1,3 +1,4 @@
+
 import type { SkillCategory } from './types';
 
 export interface CosmeticItem {
@@ -240,7 +241,10 @@ export function buildAvatarUrl(
 ): string {
   const urlMods = cosmetics.filter(c => c.type === 'url-mod' && c.urlModifications);
   
-  const params = new URLSearchParams();
+  // Use URLSearchParams to handle URL construction safely
+  const url = new URL(baseUrl);
+  const params = url.searchParams;
+  
   const morphTargets: string[] = [];
   let textureAtlas: number | undefined;
   let lod: number | undefined;
@@ -273,12 +277,11 @@ export function buildAvatarUrl(
   if (pose) {
     params.set('pose', pose);
   }
-  
-  // Always make the background transparent
+
+  // Always make the background transparent so CSS effects can be layered behind it.
   params.set('background', 'transparent');
   
-  const queryString = params.toString();
-  return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+  return url.toString();
 }
 
 export function combineCosmeticEffects(cosmetics: CosmeticItem[]): {
