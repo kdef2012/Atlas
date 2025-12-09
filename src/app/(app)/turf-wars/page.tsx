@@ -1,10 +1,10 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import type { Territory, Fireteam, User } from "@/lib/types";
+import type { Territory, Fireteam, User, SkillCategory } from "@/lib/types";
 import { useCollection, useMemoFirebase, useDoc } from "@/firebase";
 import { useFirestore, useUser } from "@/firebase/provider";
 import { collection, doc, query, where, getDocs, writeBatch } from "firebase/firestore";
@@ -152,14 +152,69 @@ export default function TurfWarsPage() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const territoriesCollection = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
-  const { data: territories, isLoading } = useCollection<Territory>(territoriesCollection);
+  const { data: territories, isLoading: territoriesLoading } = useCollection<Territory>(territoriesCollection);
+
+  const fireteamsCollection = useMemoFirebase(() => collection(firestore, 'fireteams'), [firestore]);
+  const { data: fireteams, isLoading: fireteamsLoading } = useCollection<Fireteam>(fireteamsCollection);
+  
+  const isLoading = territoriesLoading || fireteamsLoading;
+
+  const mapData = useMemo(() => {
+    if (!territories || !fireteams) return [];
+
+    const regionScores: Record<string, Record<SkillCategory, number>> = {};
+    const now = Date.now();
+    const activeChallenges = territories.filter(t => t.endsAt > now);
+
+    // 1. Find all unique regions from fireteams
+    const allRegions = [...new Set(fireteams.map(ft => ft.region))];
+
+    // 2. Initialize scores for each region
+    allRegions.forEach(region => {
+      regionScores[region] = {
+        Physical: 0,
+        Mental: 0,
+        Social: 0,
+        Practical: 0,
+        Creative: 0,
+      };
+    });
+
+    // 3. Aggregate scores from challenges
+    for (const challenge of activeChallenges) {
+      if (challenge.scores) {
+        for (const fireteamId in challenge.scores) {
+          const fireteam = fireteams.find(ft => ft.id === fireteamId);
+          if (fireteam && fireteam.region && regionScores[fireteam.region]) {
+            regionScores[fireteam.region][challenge.faction] += challenge.scores[fireteamId];
+          }
+        }
+      }
+    }
+    
+    // 4. Format data for the map
+    return Object.entries(regionScores).map(([region, scores]) => {
+      const sortedScores = (Object.entries(scores) as [SkillCategory, number][])
+        .sort((a, b) => b[1] - a[1]);
+      
+      const dominantFaction = sortedScores[0][1] > 0 ? sortedScores[0][0] : null;
+
+      return {
+        id: region,
+        name: region,
+        dominantFaction,
+        scores: sortedScores,
+      };
+    });
+  }, [territories, fireteams]);
+
 
   const handleGenerateChallenges = async () => {
     setIsGenerating(true);
     try {
       // Step 1: Award "State Best" Trait for previous cycle before generating new one
       const now = Date.now();
-      const recentlyEndedQuery = query(territoriesCollection, where('endsAt', '<', now), where('awarded', '==', false));
+      const recentlyEndedQuery = query(territoriesCollection, where('awarded', '==', false), where('endsAt', '<', now));
       const recentlyEndedSnap = await getDocs(recentlyEndedQuery);
       
       const batch = writeBatch(firestore);
@@ -255,17 +310,18 @@ export default function TurfWarsPage() {
                     <CardTitle>Challenge List</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <TerritoryList territories={territories} isLoading={isLoading} />
+                    <TerritoryList territories={territories} isLoading={territoriesLoading} />
                 </CardContent>
             </Card>
           </div>
           <div className="lg:col-span-1">
             <Card className="h-full flex flex-col">
                 <CardHeader>
-                    <CardTitle>Global Activity Map</CardTitle>
+                    <CardTitle>Global Influence Map</CardTitle>
+                    <CardDescription>Regions are colored by their dominant faction.</CardDescription>
                 </CardHeader>
                  <CardContent className="flex-1 -m-6 mt-0">
-                    <WorldMap />
+                    <WorldMap regions={mapData} isLoading={isLoading} />
                  </CardContent>
             </Card>
           </div>
