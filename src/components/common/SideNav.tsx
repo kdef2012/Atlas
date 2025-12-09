@@ -32,6 +32,7 @@ import {
   Radio,
   BookUser,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -55,6 +56,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/profile", label: "Profile", icon: UserIcon },
+  { href: "/wardrobe", label: "Wardrobe", icon: Sparkles },
   { href: "/nebula", label: "Nebula", icon: Atom },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/resume", label: "Resume", icon: FileText },
