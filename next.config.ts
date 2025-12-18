@@ -44,6 +44,15 @@ const nextConfig: NextConfig = {
       }
     ],
   },
+  experimental: {
+    // This is the key change to prevent recompilation loops
+    serverComponentsExternalPackages: ['firebase-admin'],
+    outputFileTracingExcludes: {
+      '*': [
+        './src/firebase/functions/**'
+      ],
+    },
+  },
 };
 
 export default nextConfig;
