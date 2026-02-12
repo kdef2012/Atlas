@@ -50,17 +50,24 @@ export function useDoc<T = any>(
   const [error, setError] = useState<FirestoreError | Error | null>(null);
 
   useEffect(() => {
-    // If the doc ref is not ready OR if user auth is still loading, wait.
-    if (!memoizedDocRef || isAuthLoading) {
+    // If no document reference is provided, we are not loading a document.
+    // The loading state should only reflect the authentication status.
+    if (!memoizedDocRef) {
       setData(null);
-      setIsLoading(true); // We are "loading" either the ref or auth state
+      setIsLoading(isAuthLoading);
       setError(null);
       return;
     }
 
+    // If we have a reference but auth is still loading, we should wait.
+    if (isAuthLoading) {
+      setIsLoading(true);
+      return;
+    }
+
+    // At this point, we have a docRef and auth is resolved. Start the fetch.
     setIsLoading(true);
     setError(null);
-    // Optional: setData(null); // Clear previous data instantly
 
     const unsubscribe = onSnapshot(
       memoizedDocRef,

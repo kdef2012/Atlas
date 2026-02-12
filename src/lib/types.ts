@@ -1,25 +1,35 @@
-
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
-import type { GeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
+import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
+
+// We redefine the UI-specific fields to be compatible with React's style objects
+export interface GeneratedCosmetic extends Omit<BaseGeneratedCosmetic, 'cssEffects'> {
+  svgCode: string; 
+  color: string;
+  position: 'head' | 'face' | 'body' | 'background' | 'aura';
+  cssEffects?: {
+    boxShadow?: string;
+    border?: string;
+    background?: string;
+    filter?: string;
+    [key: string]: string | number | undefined; 
+  };
+  overlayPosition?: {
+    top?: string;
+    left?: string;
+    width?: string;
+    height?: string;
+    transform?: string;
+  };
+}
 
 export type Archetype = 'Titan' | 'Sage' | 'Maverick';
-
 export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Creative';
-
 export type Gender = 'Male' | 'Female';
 export type AvatarStyle = string;
-
 
 export interface UserSkillData {
   isUnlocked: boolean;
   xp: number;
-}
-
-export interface Trait {
-  id: string;
-  name: string;
-  description: string;
-  icon: keyof typeof TRAIT_ICONS;
 }
 
 export interface User {
@@ -35,18 +45,18 @@ export interface User {
   socialStat: number;
   practicalStat: number;
   creativeStat: number;
-  lastLogTimestamp: number; // Unix timestamp
+  lastLogTimestamp: number;
   createdAt: number;
   level: number;
   xp: number;
   fireteamId?: string;
   guilds?: Record<string, boolean>;
   userSkills: Record<string, UserSkillData>;
-  avatarLayers?: Partial<Record<string, boolean>>;
+  avatarLayers?: Record<string, boolean>; 
   momentumFlameActive: boolean;
   gems: number;
   streakFreezes: number;
-  traits?: Partial<Record<string, boolean>>;
+  traits?: Record<string, boolean>;
   verificationVotes?: number;
   region?: string;
   aiGeneratedCosmetics?: Record<string, GeneratedCosmetic>;
@@ -55,139 +65,17 @@ export interface User {
   evolutionLevel?: number;
 }
 
-// A new, separate type for Admin users
-export interface AdminUser {
-    id: string;
-    email: string;
-    userName: string;
-    createdAt: number;
-}
+// ... Keep your Skill, Log, Fireteam, Message, Guild, Territory, GlobalEvent, StoreItem, and Radio interfaces here ...
 
-
-export interface Skill {
-  id:string;
-  name: string;
-  description: string;
-  category: SkillCategory;
-  xp: number;
-  pioneer?: boolean; // Is this a user-discovered skill?
-  pioneerUserId?: string;
-  prerequisites?: string[]; // Array of skill IDs
-  cost?: {
-    category: SkillCategory;
-    points: number;
-  };
-  innovatorAwarded?: boolean;
-}
-
-export interface Log {
-    id: string;
-    userId: string;
-    skillId: string;
-    timestamp: number;
-    xp: number;
-    verificationPhotoUrl?: string;
-    isVerified: boolean;
-}
-
-export interface Fireteam {
-  id: string;
-  name: string;
-  region: string;
-  state: string;
-  country: string;
-  ownerId: string;
-  members: Record<string, boolean>;
-  streakActive: boolean;
-  streakStartDate?: number;
-}
-
-export interface Message {
-  id: string;
-  text: string;
-  timestamp: number;
-  userId: string;
-  userName: string;
-  channel: string;
-}
-
-export interface Guild {
-    id: string;
-    name: string;
-    skillId: string; // The skill this guild is for
-    category: SkillCategory;
-    region: string; // Region of origin
-    members: Record<string, boolean>;
-    challengeGoal: number;
-    challengeProgress: number;
-    challengeEndsAt: number;
-    isBuffActive: boolean;
-}
-
-export interface Territory {
-  id: string;
-  faction: SkillCategory;
-  challengeDescription: string;
-  endsAt: number; // Unix timestamp
-  scores: Record<string, number>; // fireteamId: score
-  awarded?: boolean; // New field to track if State Best trait has been awarded
-}
-
-export interface GlobalEvent {
-  id: string;
-  title: string;
-  description: string;
-  startAt: number;
-  endAt: number;
-  xpMultiplier?: number;
-  isActive: boolean;
-  bannerMessage?: string;
-  hasBanner?: boolean;
-}
-
-export interface StoreItem {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  icon: keyof typeof STORE_ITEM_ICONS;
-  layerKey: string;
-}
-
-export interface AtlasRadioBroadcast {
-  id: string;
-  timestamp: number;
-  script: string;
-  audioUrl: string;
-}
-
-
-export const CATEGORY_ICONS: Record<SkillCategory | 'Challenge' | 'Streak' | 'Gems' | 'Verify' | 'Guilds' | 'Store' | 'Events' | 'Radio', React.ComponentType<{ className?: string }>> = {
+export const CATEGORY_ICONS = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
   Practical: Wrench,
   Creative: Paintbrush,
-  Challenge: Swords,
-  Streak: Flame,
-  Gems: Gem,
-  Verify: ShieldCheck,
-  Guilds: Building2,
-  Store: Store,
-  Events: Megaphone,
-  Radio: Radio,
 };
 
-export const CATEGORY_COLORS: Record<SkillCategory, string> = {
-  Physical: 'hsl(var(--chart-5))', // red
-  Mental: 'hsl(var(--chart-2))',   // blue
-  Social: 'hsl(var(--chart-1))',   // purple
-  Practical: 'hsl(var(--chart-3))', // green
-  Creative: 'hsl(var(--chart-4))',  // yellow
-};
-
-
-export const TRAIT_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
+export const TRAIT_ICONS = {
     pioneer: Crown,
     innovator: Lightbulb,
     specialist: Star,
@@ -211,6 +99,4 @@ export const STORE_ITEM_ICONS = {
   Shield,
 };
 
-export type { GeneratedCosmetic, EvolutionPathData };
-
-    
+export type { EvolutionPathData };

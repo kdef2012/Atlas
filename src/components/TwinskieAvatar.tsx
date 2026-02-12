@@ -1,237 +1,92 @@
-
 'use client';
 
-import { ReadyPlayerMeAvatar } from './ready-player-me';
-import type { User, GeneratedCosmetic } from '@/lib/types';
-import { cn } from '@/lib/utils';
-import { getActiveCosmetics, combineCosmeticEffects, buildAvatarUrl } from '@/lib/avatar-cosmetics';
 import { useMemo } from 'react';
+import { buildRpmUrl, getLayerStyles } from '@/lib/avatar-engine';
+import { cn } from '@/lib/utils';
+import type { User, GeneratedCosmetic } from '@/lib/types';
 
 interface TwinskieAvatarProps {
   user: User;
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  scene?: 'fullbody-portrait-v1' | 'halfbody-portrait-v1' | 'bust-portrait-v1';
-  showInactiveLabel?: boolean;
 }
 
 const SIZE_MAP = {
-  sm: 150,
-  md: 250,
-  lg: 350,
-  xl: 450,
+  sm: 'w-24 h-24',
+  md: 'w-48 h-48',
+  lg: 'w-64 h-64',
+  xl: 'w-80 h-80',
 };
 
-export function TwinskieAvatar({ 
-  user, 
-  size = 'md',
-  className,
-  scene = 'fullbody-portrait-v1',
-  showInactiveLabel = false
-}: TwinskieAvatarProps) {
-  const pixelSize = SIZE_MAP[size];
+export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarProps) {
+  const dimensions = SIZE_MAP[size];
 
-  // Check if user is inactive
-  const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
-  const isInactive = showInactiveLabel && user.lastLogTimestamp < twentyFourHoursAgo;
-
-  // Get active STATIC cosmetics from the predefined list
-  const staticCosmetics = useMemo(() => 
-    getActiveCosmetics(user.avatarLayers as Record<string, boolean> | undefined),
-    [user.avatarLayers]
-  );
-  
-  // Build modified avatar URL with URL parameters from STATIC cosmetics
-  const modifiedAvatarUrl = useMemo(() => {
-    if (!user.avatarUrl) return null;
-    return buildAvatarUrl(user.avatarUrl, staticCosmetics);
-  }, [user.avatarUrl, staticCosmetics]);
-  
-  // Get visual effects (glows, borders, backgrounds) from STATIC cosmetics
-  const staticEffects = useMemo(() => 
-    combineCosmeticEffects(staticCosmetics),
-    [staticCosmetics]
-  );
-  
-  // Get active AI-generated cosmetics
-  const aiCosmetics = useMemo(() => {
-    if (!user.avatarLayers || !user.aiGeneratedCosmetics) return [];
-    
-    return Object.entries(user.avatarLayers)
-      .filter(([id, enabled]) => enabled && user.aiGeneratedCosmetics?.[id])
-      .map(([id]) => user.aiGeneratedCosmetics![id]);
+  // 1. Memoize AI Cosmetics with null-safety
+  const activeAiCosmetics = useMemo(() => {
+    const layers = user.avatarLayers ?? {};
+    const aiData = user.aiGeneratedCosmetics ?? {};
+    return Object.keys(layers)
+      .filter((id) => layers[id] === true && aiData[id])
+      .map((id) => aiData[id] as GeneratedCosmetic);
   }, [user.avatarLayers, user.aiGeneratedCosmetics]);
-  
-  // Combine CSS effects from AI cosmetics
-  const aiEffects = useMemo(() => {
-    const shadows: string[] = [];
-    const backgrounds: string[] = [];
-    let border = '';
-    
-    aiCosmetics.forEach(cosmetic => {
-      if (cosmetic.cssEffects?.boxShadow) {
-        shadows.push(cosmetic.cssEffects.boxShadow);
-      }
-      if (cosmetic.cssEffects?.background) {
-        backgrounds.push(cosmetic.cssEffects.background);
-      }
-      if (cosmetic.cssEffects?.border) {
-        border = cosmetic.cssEffects.border;
-      }
-    });
-    
-    return {
-      boxShadow: shadows.join(', ') || 'none',
-      background: backgrounds.join(', ') || 'transparent',
-      border,
-    };
-  }, [aiCosmetics]);
 
-  // Combine effects from both systems
-  const combinedEffects = useMemo(() => {
-    const allBoxShadows = [staticEffects.boxShadow, aiEffects.boxShadow].filter(Boolean).join(', ');
-    const allBackgrounds = [staticEffects.background, aiEffects.background].filter(Boolean).join(', ');
+  // 2. Memoize RPM URL with null-safety
+  const rpmUrl = useMemo(() => {
+    const baseUrl = user.avatarUrl ?? '';
+    const layers = user.avatarLayers ?? {};
+    const aiData = user.aiGeneratedCosmetics ?? {};
     
-    return {
-      boxShadow: allBoxShadows || 'none',
-      background: allBackgrounds || 'transparent',
-      border: aiEffects.border || staticEffects.border, // Prioritize AI border
-      animationClasses: staticEffects.animationClasses,
-    }
-  }, [staticEffects, aiEffects]);
+    // Static assets are IDs in avatarLayers that ARE NOT in aiGeneratedCosmetics
+    const staticAssetIds = Object.keys(layers).filter((id) => !aiData[id] && layers[id]);
+    
+    return buildRpmUrl(baseUrl, staticAssetIds);
+  }, [user.avatarUrl, user.avatarLayers, user.aiGeneratedCosmetics]);
 
-
-  // Check if user has an avatar URL
-  if (!user.avatarUrl || !modifiedAvatarUrl) {
+  if (!user.avatarUrl) {
     return (
-      <div 
-        className={cn(
-          "flex items-center justify-center bg-muted rounded-lg border-2 border-dashed",
-          className
-        )}
-        style={{ width: pixelSize, height: pixelSize }}
-      >
-        <div className="text-center p-4">
-          <p className="text-muted-foreground text-sm">No Avatar</p>
-        </div>
-      </div>
+      <div className={cn("bg-secondary animate-pulse rounded-xl", dimensions, className)} />
     );
   }
 
   return (
-    <>
-      {/* Outer container - for glow effect */}
-      <div 
-        className={cn(
-          "relative",
-          combinedEffects.animationClasses.join(' '),
-          isInactive && "opacity-50 grayscale",
-          className
-        )}
-        style={{ 
-          width: pixelSize, 
-          height: pixelSize,
-          boxShadow: combinedEffects.boxShadow,
-        }}
-      >
-        {/* Inner container - for background and border */}
-        <div
-          className="relative w-full h-full rounded-lg overflow-hidden"
-          style={{
-            background: combinedEffects.background,
-            ...(combinedEffects.border && { border: combinedEffects.border })
-          }}
-        >
-          {/* Base Avatar */}
-          <ReadyPlayerMeAvatar
-            avatarUrl={modifiedAvatarUrl}
-            size={pixelSize}
-            scene={scene}
-            className="transition-all duration-300"
+    <div className={cn("relative flex items-center justify-center", dimensions, className)}>
+      
+      {/* 1. Background Layers (Aura/Background) */}
+      {activeAiCosmetics
+        .filter((c) => c.position === 'aura' || c.position === 'background')
+        .map((cosmetic) => (
+          <div
+            key={cosmetic.id}
+            style={{ 
+              ...getLayerStyles(cosmetic.position), 
+              ...(cosmetic.cssEffects as React.CSSProperties) 
+            }}
+            className="animate-in fade-in zoom-in duration-1000"
+            dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
           />
+        ))}
 
-          {/* AI-Generated SVG Overlays */}
-          {aiCosmetics.map((cosmetic) => (
-            cosmetic.svgCode && cosmetic.position && (
-              <div
-                key={cosmetic.id}
-                className="absolute pointer-events-none"
-                style={{
-                  ...calculateOverlayPosition(cosmetic.position),
-                }}
-                dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
-              />
-            )
-          ))}
-          
-          {/* Inactive Label */}
-          {isInactive && (
-            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-destructive text-destructive-foreground px-3 py-1 rounded-full text-xs font-bold z-20">
-              INACTIVE
-            </div>
-          )}
-          
-          {/* Level Badge */}
-          {user.level != null && (
-            <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg z-20">
-              {user.level}
-            </div>
-          )}
-        </div>
-      </div>
-    </>
+      {/* 2. Ready Player Me Base Render */}
+      <img
+        src={rpmUrl}
+        alt={`${user.userName}'s Avatar`}
+        className="relative z-10 w-full h-full object-contain"
+      />
+
+      {/* 3. Foreground Layers (Head/Face/Body) */}
+      {activeAiCosmetics
+        .filter((c) => c.position !== 'aura' && c.position !== 'background')
+        .map((cosmetic) => (
+          <div
+            key={cosmetic.id}
+            style={{ 
+              ...getLayerStyles(cosmetic.position), 
+              ...(cosmetic.cssEffects as React.CSSProperties) 
+            }}
+            className="z-20 animate-in slide-in-from-top-2 duration-500"
+            dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
+          />
+        ))}
+    </div>
   );
 }
-
-function calculateOverlayPosition(position: string): React.CSSProperties {
-    switch (position) {
-      case 'head':
-        return {
-          top: '-10%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '60%',
-          height: 'auto',
-        };
-      case 'face':
-        return {
-          top: '35%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '40%',
-          height: 'auto',
-        };
-      case 'body':
-        return {
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '50%',
-          height: 'auto',
-        };
-      case 'background':
-        return {
-          top: '0',
-          left: '0',
-          width: '100%',
-          height: '100%',
-        };
-      case 'aura':
-        return {
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '120%',
-          height: '120%',
-        };
-      default:
-        return {
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '50%',
-        };
-    }
-}
-
-    

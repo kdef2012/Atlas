@@ -68,14 +68,22 @@ export function useCollection<T = any>(
 
   useEffect(() => {
     isMountedRef.current = true;
-    // If the query is not ready OR if user auth is still loading, wait.
-    if (!memoizedTargetRefOrQuery || isUserLoading) {
+    
+    // If no query is provided, we are not loading. The state should reflect auth loading status.
+    if (!memoizedTargetRefOrQuery) {
       setData(null);
-      setIsLoading(true); // Set to true because we are "loading" the query or auth.
+      setIsLoading(isUserLoading);
       setError(null);
       return;
     }
+    
+    // If auth is loading, we wait.
+    if (isUserLoading) {
+        setIsLoading(true);
+        return;
+    }
 
+    // We have a query and auth is ready. Start loading.
     setIsLoading(true);
     setError(null);
 
