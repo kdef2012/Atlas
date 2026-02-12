@@ -1,13 +1,21 @@
+
 import React from 'react';
 
 // Builds the RPM URL with active static assets appended
 export function buildRpmUrl(baseUrl: string, activeAssetIds: string[]): string {
+  // The 'activeAssetIds' parameter is no longer used for rendering, as we're using overlays.
+  // This function now primarily ensures a transparent PNG is requested.
   if (!baseUrl) return '';
-  const url = new URL(baseUrl.replace('.glb', '.png')); // Force PNG for 2D UI
-  url.searchParams.set('scene', 'fullbody-portrait-v1-transparent');
-  if (activeAssetIds.length > 0) {
-    url.searchParams.set('assets', activeAssetIds.join(','));
+  
+  // If it's already a data URI (from our AI flows), return it as is.
+  if (baseUrl.startsWith('data:image')) {
+    return baseUrl;
   }
+
+  const url = new URL(baseUrl.replace('.glb', '.png')); // Force PNG for 2D UI
+  url.searchParams.set('scene', 'fullbody-portrait-v1');
+  url.searchParams.set('transparent', 'true'); // Correct parameter for transparency
+  
   return url.toString();
 }
 

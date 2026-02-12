@@ -5,7 +5,8 @@ export interface CosmeticItem {
   id: string;
   name: string;
   description: string;
-  type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod';
+  type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod' | 'overlay';
+  imageUrl?: string;
   
   boxShadow?: string;
   border?: string;
@@ -45,6 +46,32 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     requirement: { type: 'starter', value: 1 },
   },
   
+  // ===== STORE ITEMS (NOW DEFINED HERE) =====
+  {
+      "id": "cosmetic_shadow_cloak",
+      "name": "Shadow Cloak",
+      "description": "A mysterious cloak that billows with ethereal energy.",
+      "type": "overlay",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fshadow_cloak.png?alt=media&token=7e750e3a-0e9e-4e42-921c-529a73841a0b",
+      "costGems": 10
+  },
+  {
+      "id": "cosmetic_arcane_goggles",
+      "name": "Arcane Goggles",
+      "description": "Lenses crafted to see the flow of raw data in the world.",
+      "type": "overlay",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Farcane_goggles.png?alt=media&token=e1c6999a-3f9c-48b4-8250-93217b189736",
+      "costGems": 8
+  },
+  {
+      "id": "cosmetic_titans_pauldrons",
+      "name": "Titan's Pauldrons",
+      "description": "Heavy shoulder plates, signifying immense physical power.",
+      "type": "overlay",
+      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ftitans_pauldrons.png?alt=media&token=f6c4c5b3-3a8a-48a5-9a84-0a4a9c3d4a6e",
+      "costGems": 12
+  },
+
   // ===== URL MODIFICATIONS =====
   {
     id: 'performance_mode',

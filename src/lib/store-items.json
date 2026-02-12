@@ -1,29 +1,4 @@
 
 {
-    "items": [
-        {
-            "id": "cosmetic_shadow_cloak",
-            "name": "Shadow Cloak",
-            "description": "A mysterious cloak that billows with ethereal energy.",
-            "price": 10,
-            "icon": "RectangleHorizontal",
-            "layerKey": "cosmetic_shadow_cloak"
-        },
-        {
-            "id": "cosmetic_arcane_goggles",
-            "name": "Arcane Goggles",
-            "description": "Lenses crafted to see the flow of raw data in the world.",
-            "price": 8,
-            "icon": "Glasses",
-            "layerKey": "cosmetic_arcane_goggles"
-        },
-        {
-            "id": "cosmetic_titans_pauldrons",
-            "name": "Titan's Pauldrons",
-            "description": "Heavy shoulder plates, signifying immense physical power.",
-            "price": 12,
-            "icon": "Shield",
-            "layerKey": "cosmetic_titans_pauldrons"
-        }
-    ]
+    "items": []
 }
