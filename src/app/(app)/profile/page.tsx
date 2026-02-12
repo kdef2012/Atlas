@@ -7,7 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useUser, useDoc, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import type { User } from '@/lib/types';
+import type { User, SkillCategory } from '@/lib/types';
+import { CATEGORY_COLORS } from '@/lib/types';
 import { COSMETIC_ITEMS, getActiveCosmetics, combineCosmeticEffects } from '@/lib/avatar-cosmetics';
 import { Loader2, ShoppingBag, Check, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -82,13 +83,13 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {[
-                  { name: 'Physical', value: userData.physicalStat, color: 'bg-red-500' },
-                  { name: 'Mental', value: userData.mentalStat, color: 'bg-blue-500' },
-                  { name: 'Social', value: userData.socialStat, color: 'bg-purple-500' },
-                  { name: 'Practical', value: userData.practicalStat, color: 'bg-green-500' },
-                  { name: 'Creative', value: userData.creativeStat, color: 'bg-yellow-500' },
-                ].map((stat) => (
+                {([
+                  { name: 'Physical', value: userData.physicalStat },
+                  { name: 'Mental', value: userData.mentalStat },
+                  { name: 'Social', value: userData.socialStat },
+                  { name: 'Practical', value: userData.practicalStat },
+                  { name: 'Creative', value: userData.creativeStat },
+                ] as {name: SkillCategory, value: number}[]).map((stat) => (
                   <div key={stat.name} className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-sm font-medium">{stat.name}</span>
@@ -96,8 +97,11 @@ export default function ProfilePage() {
                     </div>
                     <div className="w-full bg-secondary rounded-full h-2">
                       <div
-                        className={`${stat.color} h-2 rounded-full transition-all`}
-                        style={{ width: `${Math.min((stat.value / 100) * 100, 100)}%` }}
+                        className={`h-2 rounded-full transition-all`}
+                        style={{ 
+                            width: `${Math.min((stat.value / 100) * 100, 100)}%`,
+                            backgroundColor: CATEGORY_COLORS[stat.name] 
+                        }}
                       />
                     </div>
                   </div>

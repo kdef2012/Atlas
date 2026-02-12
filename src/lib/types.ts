@@ -1,3 +1,4 @@
+
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
@@ -65,14 +66,173 @@ export interface User {
   evolutionLevel?: number;
 }
 
-// ... Keep your Skill, Log, Fireteam, Message, Guild, Territory, GlobalEvent, StoreItem, and Radio interfaces here ...
+export interface Skill {
+  id: string;
+  name: string;
+  description: string;
+  category: SkillCategory;
+  xp: number;
+  pioneerUserId: string;
+  prerequisites: string[];
+  cost: {
+    category: SkillCategory;
+    points: number;
+  };
+  innovatorAwarded: boolean;
+}
 
-export const CATEGORY_ICONS = {
+export interface Log {
+  id: string;
+  userId: string;
+  skillId: string;
+  timestamp: number;
+  xp: number;
+  verificationPhotoUrl?: string;
+  isVerified: boolean;
+}
+
+export interface Fireteam {
+  id: string;
+  name: string;
+  region: string;
+  state: string;
+  country: string;
+  ownerId: string;
+  members: Record<string, boolean>;
+  streakActive: boolean;
+  streakStartDate: number;
+}
+
+export interface Message {
+  id: string;
+  text: string;
+  timestamp: number;
+  userId: string;
+  userName: string;
+  channel: string;
+}
+
+export interface Guild {
+  id: string;
+  name: string;
+  skillId: string;
+  category: SkillCategory;
+  region: string;
+  members: Record<string, boolean>;
+  challengeGoal: number;
+  challengeProgress: number;
+  challengeEndsAt: number;
+  isBuffActive: boolean;
+}
+
+export interface Territory {
+  id: string;
+  faction: SkillCategory;
+  challengeDescription: string;
+  endsAt: number;
+  scores: Record<string, number>;
+  awarded: boolean;
+}
+
+export interface Trait {
+  id: string;
+  name: string;
+  description: string;
+  icon: keyof typeof TRAIT_ICONS;
+}
+
+export interface GlobalEvent {
+  id: string;
+  title: string;
+  description: string;
+  startAt: number;
+  endAt: number;
+  xpMultiplier?: number;
+  isActive: boolean;
+  bannerMessage?: string;
+  hasBanner: boolean;
+}
+
+export interface CosmeticItem {
+    id: string;
+    name: string;
+    description: string;
+    type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod';
+    boxShadow?: string;
+    border?: string;
+    backgroundGradient?: string;
+    animationClass?: string;
+    urlModifications?: {
+        textureAtlas?: number;
+        morphTargets?: string[];
+        lod?: number;
+        pose?: 'A' | 'T';
+    };
+    costGems?: number;
+    requirement?: {
+        type: 'quest' | 'level' | 'skill' | 'trait' | 'starter';
+        value: string | number;
+    };
+}
+
+
+export interface StoreItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  icon: keyof typeof STORE_ITEM_ICONS;
+  layerKey: string;
+}
+
+export interface PublicLog {
+  skillName: string;
+  category: SkillCategory;
+  userRegion: string;
+  timestamp: number;
+  id?: string; // from useCollection
+}
+
+export interface AtlasRadioBroadcast {
+  id: string;
+  timestamp: number;
+  script: string;
+  audioUrl: string;
+}
+
+export interface Mentorship {
+  id: string;
+  mentorId: string;
+  menteeId: string;
+  skillId: string;
+  status: 'pending' | 'active' | 'completed' | 'denied';
+  createdAt: number;
+  startedAt?: number;
+}
+
+
+export const CATEGORY_COLORS: Record<SkillCategory, string> = {
+  Physical: 'hsl(var(--chart-1))',
+  Mental: 'hsl(var(--chart-2))',
+  Social: 'hsl(var(--chart-3))',
+  Practical: 'hsl(var(--chart-4))',
+  Creative: 'hsl(var(--chart-5))',
+};
+
+export const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Physical: Dumbbell,
   Mental: BrainCircuit,
   Social: Users,
   Practical: Wrench,
   Creative: Paintbrush,
+  Challenge: Trophy,
+  Verify: ShieldCheck,
+  Store: Store,
+  Guilds: Building2,
+  Streak: Flame,
+  Gems: Gem,
+  Events: Megaphone,
+  Radio: Radio
 };
 
 export const TRAIT_ICONS = {
@@ -93,7 +253,7 @@ export const TRAIT_ICONS = {
     mentor: BookOpen,
 };
 
-export const STORE_ITEM_ICONS = {
+export const STORE_ITEM_ICONS: Record<string, React.ElementType> = {
   RectangleHorizontal,
   Glasses,
   Shield,
