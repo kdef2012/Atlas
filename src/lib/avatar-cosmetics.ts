@@ -1,31 +1,5 @@
 
-import type { SkillCategory } from './types';
-
-export interface CosmeticItem {
-  id: string;
-  name: string;
-  description: string;
-  type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod' | 'overlay';
-  imageUrl?: string;
-  
-  boxShadow?: string;
-  border?: string;
-  backgroundGradient?: string;
-  animationClass?: string;
-  
-  urlModifications?: {
-    textureAtlas?: number;
-    morphTargets?: string[];
-    lod?: number;
-    pose?: 'A' | 'T';
-  };
-  
-  costGems?: number;
-  requirement?: {
-    type: 'quest' | 'level' | 'skill' | 'trait' | 'starter';
-    value: string | number;
-  };
-}
+import type { SkillCategory, CosmeticItem } from './types';
 
 export const COSMETIC_ITEMS: CosmeticItem[] = [
   // ===== STARTER ITEMS =====
