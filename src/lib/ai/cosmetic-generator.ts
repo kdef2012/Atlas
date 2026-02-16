@@ -1,5 +1,6 @@
 
-import { generateJSON, generateWithGemini } from './gemini-client';
+
+import { generateWithOpenAI } from './openai-client';
 import type { GeneratedCosmetic } from './activity-analyzer';
 
 export interface CosmeticGenerationRequest {
@@ -54,7 +55,7 @@ export async function generateCompleteCosmetic(
 }
 
 /**
- * Generate SVG code from visual description using Gemini
+ * Generate SVG code from visual description using OpenAI
  */
 export async function generateSVG(
   visualDescription: string,
@@ -89,7 +90,7 @@ Example format:
 </svg>`;
 
   try {
-    const response = await generateWithGemini(prompt, systemInstruction);
+    const response = await generateWithOpenAI(prompt, systemInstruction);
     let svgCode = response.text.trim();
     
     // Extract SVG if wrapped in markdown

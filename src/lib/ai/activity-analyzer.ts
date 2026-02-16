@@ -1,5 +1,6 @@
 
-import { generateJSON } from './gemini-client';
+
+import { generateJSON } from './openai-client';
 import { determineEvolutionPath, PATH_THEMES, type EvolutionPath } from './evolution-paths';
 import type { UserActivity } from './evolution-paths';
 
