@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -135,7 +134,12 @@ export default function AdminAvatarGalleryPage() {
     toast({ title: 'Processing Image...', description: 'Preparing avatar for the AI.' });
 
     try {
-      const response = await fetch(originalAvatarUrl);
+      // The originalAvatarUrl is a .glb file. We need to fetch the .png render.
+      const imageUrl = new URL(originalAvatarUrl.replace('.glb', '.png'));
+      imageUrl.searchParams.set('scene', 'fullbody-portrait-v1');
+      const pngUrl = imageUrl.toString();
+
+      const response = await fetch(pngUrl);
       const blob = await response.blob();
       const reader = new FileReader();
       reader.readAsDataURL(blob);
