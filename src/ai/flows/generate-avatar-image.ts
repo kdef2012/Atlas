@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -58,7 +57,7 @@ const generateAvatarImageFlow = ai.defineFlow(
     
     // 3. Call the Gemini image-to-image model
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash'),
+      model: googleAI.model('gemini-2.5-flash'),
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
@@ -66,7 +65,7 @@ const generateAvatarImageFlow = ai.defineFlow(
     });
     
     if (!media?.url) {
-      throw new Error('Image generation failed to return a valid image using gemini-1.5-pro-latest.');
+      throw new Error('Image generation failed to return a valid image.');
     }
 
     return { generatedAvatarDataUri: media.url };
