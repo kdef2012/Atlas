@@ -5,7 +5,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const model = 'gpt-4o'; // Use GPT-4o as requested
+const model = 'gpt-4o-mini'; // Use GPT-4o mini as requested
 
 export interface OpenAIResponse {
   text: string;

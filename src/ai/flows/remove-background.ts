@@ -25,7 +25,7 @@ export async function removeBackground(
 ): Promise<RemoveBackgroundOutput> {
     
     const prompt = `
-      Perfectly remove the background from the provided image, making it transparent.
+      Perfectly remove the background from the provided avatar, making it transparent.
       The subject of the image should be preserved in full detail with clean edges.
     `;
     
