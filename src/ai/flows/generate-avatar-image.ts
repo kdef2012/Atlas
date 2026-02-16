@@ -9,7 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
-import type { MediaPart } from '@genkit-ai/core';
+import type { MediaPart } from 'genkit';
 
 // Define the input schema for the flow
 const GenerateAvatarImageInputSchema = z.object({
