@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -12,7 +11,7 @@ import { Loader2, ArrowRight, Sparkles, Link as LinkIcon, Check } from 'lucide-r
 import type { Archetype } from '@/lib/types';
 import { ReadyPlayerMeCreator } from '@/components/ready-player-me';
 import { Input } from '@/components/ui/input';
-import { removeBackground } from '@/ai/flows/remove-background';
+import { removeBackground } from '@/actions/removeBackground';
 
 export default function CustomizeAvatarPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);

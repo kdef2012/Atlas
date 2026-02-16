@@ -1,9 +1,8 @@
-
 'use server';
 
 /**
- * @fileOverview Defines a flow to remove the background from an image, making it transparent.
- * This now uses OpenAI's DALL-E 2 for image editing.
+ * @fileOverview Defines a server action to remove the background from an image.
+ * This uses OpenAI's DALL-E 2 for image editing.
  */
 
 import { editImageWithDALLE } from '@/ai/openai';
@@ -17,7 +16,6 @@ export interface RemoveBackgroundInput {
 export interface RemoveBackgroundOutput {
   transparentImageDataUri: string;
 }
-
 
 // Exported function that other parts of the application can call
 export async function removeBackground(

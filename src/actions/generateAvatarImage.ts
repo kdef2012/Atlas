@@ -2,7 +2,7 @@
 'use server';
 
 /**
- * @fileOverview Defines a flow to generate a new 3D avatar image by applying cosmetics.
+ * @fileOverview Defines a server action to generate a new 3D avatar image by applying cosmetics.
  * This now uses OpenAI's DALL-E 2 for image editing.
  */
 import { editImageWithDALLE } from '@/ai/openai';
