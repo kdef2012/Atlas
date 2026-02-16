@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -33,8 +34,12 @@ export default function CustomizeAvatarPage() {
     });
     
     try {
-        // The URL from RPM might be a .png, but we need to fetch it to get a data URI for the AI
-        const response = await fetch(url);
+        // Construct the PNG URL from the GLB URL
+        const imageUrl = new URL(url.replace('.glb', '.png'));
+        imageUrl.searchParams.set('scene', 'fullbody-portrait-v1');
+        
+        // Fetch the image to get a data URI for the AI
+        const response = await fetch(imageUrl.toString());
         const blob = await response.blob();
         const reader = new FileReader();
         reader.readAsDataURL(blob);
@@ -58,8 +63,10 @@ export default function CustomizeAvatarPage() {
             title: 'Processing Failed',
             description: 'Could not remove the background. Using original avatar.',
         });
-        // Fallback to the original URL
-        setAvatarUrl(url);
+        // Fallback to the original URL, but as a renderable PNG
+        const fallbackUrl = new URL(url.replace('.glb', '.png'));
+        fallbackUrl.searchParams.set('scene', 'fullbody-portrait-v1');
+        setAvatarUrl(fallbackUrl.toString());
         setIsProcessing(false);
     }
   };
