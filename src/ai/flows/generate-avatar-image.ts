@@ -9,6 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import type { MediaPart } from 'genkit';
+import { googleAI } from '@genkit-ai/google-genai';
 
 // Define the input schema for the flow
 const GenerateAvatarImageInputSchema = z.object({
@@ -57,7 +58,7 @@ const generateAvatarImageFlow = ai.defineFlow(
     
     // 3. Call the image-to-image model
     const { media } = await ai.generate({
-      model: 'openai/gpt-4o',
+      model: googleAI.model('gemini-pro-vision'),
       prompt: promptParts,
     });
     
