@@ -4,8 +4,8 @@
 import { useMemo } from 'react';
 import { buildRpmUrl, getLayerStyles } from '@/lib/avatar-engine';
 import { cn } from '@/lib/utils';
-import type { User, GeneratedCosmetic } from '@/lib/types';
-import { COSMETIC_ITEMS, type CosmeticItem } from '@/lib/avatar-cosmetics';
+import type { User, GeneratedCosmetic, CosmeticItem } from '@/lib/types';
+import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 import Image from 'next/image';
 
 interface TwinskieAvatarProps {
@@ -55,20 +55,34 @@ export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarP
     const backgrounds: string[] = [];
 
     allActiveCosmetics.forEach(cosmetic => {
-        // AI cosmetics have cssEffects object, static have individual props
-        const css = cosmetic.cssEffects ?? {};
-        
-        if (css.background || (cosmetic as CosmeticItem).backgroundGradient) {
-            backgrounds.push(css.background || (cosmetic as CosmeticItem).backgroundGradient!);
-        }
-        if (css.boxShadow || (cosmetic as CosmeticItem).boxShadow) {
-            effects.boxShadow = `${effects.boxShadow || ''}, ${css.boxShadow || (cosmetic as CosmeticItem).boxShadow}`.trim().replace(/^,/, '');
-        }
-        if (css.border || (cosmetic as CosmeticItem).border) {
-            effects.border = css.border || (cosmetic as CosmeticItem).border;
-        }
-        if (css.filter) {
-            effects.filter = `${effects.filter || ''} ${css.filter}`.trim();
+        // AI cosmetics have cssEffects object
+        if ('cssEffects' in cosmetic && cosmetic.cssEffects) {
+          const css = cosmetic.cssEffects;
+          if (css.background) {
+              backgrounds.push(css.background);
+          }
+          if (css.boxShadow) {
+              effects.boxShadow = `${effects.boxShadow || ''}, ${css.boxShadow}`.trim().replace(/^,/, '');
+          }
+          if (css.border) {
+              effects.border = css.border;
+          }
+          if (css.filter) {
+              effects.filter = `${effects.filter || ''} ${css.filter}`.trim();
+          }
+        } 
+        // Static cosmetics have individual props
+        else {
+          const staticCosmetic = cosmetic as CosmeticItem;
+          if (staticCosmetic.backgroundGradient) {
+              backgrounds.push(staticCosmetic.backgroundGradient);
+          }
+          if (staticCosmetic.boxShadow) {
+              effects.boxShadow = `${effects.boxShadow || ''}, ${staticCosmetic.boxShadow}`.trim().replace(/^,/, '');
+          }
+          if (staticCosmetic.border) {
+              effects.border = staticCosmetic.border;
+          }
         }
     });
 
