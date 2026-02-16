@@ -17,6 +17,49 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
+/**
+ * Converts an image data URI to a square, RGBA PNG format required by DALL-E.
+ * This runs on the client-side.
+ */
+const convertToSquareRgbaPng = (dataUri: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // DALL-E requires square images (256, 512, or 1024). We'll use 1024.
+      const size = 1024;
+      canvas.width = size;
+      canvas.height = size;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Could not get canvas context'));
+      }
+      
+      // Make background transparent to ensure RGBA format.
+      ctx.clearRect(0, 0, size, size);
+
+      // Calculate aspect ratio to draw the image centered without stretching.
+      const hRatio = size / img.width;
+      const vRatio = size / img.height;
+      const ratio = Math.min(hRatio, vRatio);
+      const centerShiftX = (size - img.width * ratio) / 2;
+      const centerShiftY = (size - img.height * ratio) / 2;
+      
+      ctx.drawImage(
+          img, 0, 0, img.width, img.height,
+          centerShiftX, centerShiftY, img.width * ratio, img.height * ratio
+      );
+
+      // This will now be a square RGBA data URL.
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = (e) => reject(new Error(`Image could not be loaded: ${e.toString()}`));
+    img.src = dataUri;
+  });
+};
+
+
 function UserSelector({ users, onSelectUser, selectedUser }: { users: UserType[], onSelectUser: (user: UserType) => void, selectedUser: UserType | null }) {
   const [open, setOpen] = useState(false);
 
@@ -89,22 +132,38 @@ export default function AdminAvatarGalleryPage() {
   const handleRemoveBackground = async () => {
     if (!originalAvatarUrl) return;
     setIsProcessing(true);
-    toast({ title: 'Removing Background...', description: 'The AI is working its magic.' });
+    toast({ title: 'Processing Image...', description: 'Preparing avatar for the AI.' });
+
     try {
       const response = await fetch(originalAvatarUrl);
       const blob = await response.blob();
       const reader = new FileReader();
       reader.readAsDataURL(blob);
       reader.onloadend = async () => {
-        const base64data = reader.result as string;
-        const result = await removeBackground({ imageDataUri: base64data });
-        setTransparentAvatarUrl(result.transparentImageDataUri);
-        toast({ title: 'Background Removed!', variant: 'default' });
-        setIsProcessing(false);
+        try {
+          const base64data = reader.result as string;
+          // Convert on the client before calling the server action
+          const squareRgbaPng = await convertToSquareRgbaPng(base64data);
+          
+          toast({ title: 'Removing Background...', description: 'The AI is now working its magic.' });
+          
+          const result = await removeBackground({ imageDataUri: squareRgbaPng });
+          setTransparentAvatarUrl(result.transparentImageDataUri);
+          toast({ title: 'Background Removed!', variant: 'default' });
+        } catch (procError) {
+          console.error(procError);
+          toast({ variant: 'destructive', title: 'Error', description: 'Could not process the avatar image.' });
+        } finally {
+          setIsProcessing(false);
+        }
       };
-    } catch (error) {
-      console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Could not remove background.' });
+      reader.onerror = () => {
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not read image file.' });
+        setIsProcessing(false);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      toast({ variant: 'destructive', title: 'Error', description: 'Could not fetch the avatar image.' });
       setIsProcessing(false);
     }
   };
@@ -114,6 +173,7 @@ export default function AdminAvatarGalleryPage() {
     setIsProcessing(true);
     toast({ title: 'Applying Cosmetics...', description: 'The AI is adding some flair.' });
     try {
+      // The transparentAvatarUrl is already a square RGBA PNG from the previous step.
       const result = await generateAvatarImage({
         baseAvatarDataUri: transparentAvatarUrl,
         cosmeticVisualDescriptions: ['a glowing blue aura', 'a golden crown on the head'],

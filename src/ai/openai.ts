@@ -58,52 +58,8 @@ export async function editImageWithDALLE({
   prompt: string;
 }): Promise<string> {
 
-  /**
-   * Converts an image data URI to a square, RGBA PNG format required by DALL-E.
-   */
-  const convertToSquareRgbaPng = (dataUri: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const img = new window.Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        // DALL-E requires square images (256, 512, or 1024). We'll use 1024.
-        const size = 1024;
-        canvas.width = size;
-        canvas.height = size;
-        
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          return reject(new Error('Could not get canvas context'));
-        }
-        
-        // Make background transparent to ensure RGBA format.
-        ctx.clearRect(0, 0, size, size);
-
-        // Calculate aspect ratio to draw the image centered without stretching.
-        const hRatio = size / img.width;
-        const vRatio = size / img.height;
-        const ratio = Math.min(hRatio, vRatio);
-        const centerShiftX = (size - img.width * ratio) / 2;
-        const centerShiftY = (size - img.height * ratio) / 2;
-        
-        ctx.drawImage(
-            img, 0, 0, img.width, img.height,
-            centerShiftX, centerShiftY, img.width * ratio, img.height * ratio
-        );
-
-        // This will now be a square RGBA data URL.
-        resolve(canvas.toDataURL('image/png'));
-      };
-      img.onerror = (e) => reject(new Error(`Image could not be loaded: ${e.toString()}`));
-      img.src = dataUri;
-    });
-  };
-
-  // Convert input image to a square RGBA PNG to meet DALL-E requirements.
-  const squareRgbaImageDataUri = await convertToSquareRgbaPng(imageDataUri);
-
-  // Convert data URI to buffer
-  const base64Data = squareRgbaImageDataUri.split(',')[1];
+  // Convert data URI to buffer. The imageDataUri is now expected to be a pre-converted square RGBA PNG.
+  const base64Data = imageDataUri.split(',')[1];
   const imageBuffer = Buffer.from(base64Data, 'base64');
 
   // Create a File object from buffer
