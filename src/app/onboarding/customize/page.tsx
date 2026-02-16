@@ -13,6 +13,49 @@ import { ReadyPlayerMeCreator } from '@/components/ready-player-me';
 import { Input } from '@/components/ui/input';
 import { removeBackground } from '@/actions/removeBackground';
 
+/**
+ * Converts an image data URI to a square, RGBA PNG format required by DALL-E.
+ * This runs on the client-side.
+ */
+const convertToSquareRgbaPng = (dataUri: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      // DALL-E requires square images (256, 512, or 1024). We'll use 1024.
+      const size = 1024;
+      canvas.width = size;
+      canvas.height = size;
+      
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Could not get canvas context'));
+      }
+      
+      // Make background transparent to ensure RGBA format.
+      ctx.clearRect(0, 0, size, size);
+
+      // Calculate aspect ratio to draw the image centered without stretching.
+      const hRatio = size / img.width;
+      const vRatio = size / img.height;
+      const ratio = Math.min(hRatio, vRatio);
+      const centerShiftX = (size - img.width * ratio) / 2;
+      const centerShiftY = (size - img.height * ratio) / 2;
+      
+      ctx.drawImage(
+          img, 0, 0, img.width, img.height,
+          centerShiftX, centerShiftY, img.width * ratio, img.height * ratio
+      );
+
+      // This will now be a square RGBA data URL.
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.onerror = (e) => reject(new Error(`Image could not be loaded: ${e.toString()}`));
+    img.src = dataUri;
+  });
+};
+
+
 export default function CustomizeAvatarPage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,8 +88,11 @@ export default function CustomizeAvatarPage() {
         reader.onloadend = async () => {
             const base64data = reader.result as string;
             
+            // Client-side conversion to the correct format BEFORE calling the server action
+            const squareRgbaPng = await convertToSquareRgbaPng(base64data);
+
             // Call the background removal flow
-            const result = await removeBackground({ imageDataUri: base64data });
+            const result = await removeBackground({ imageDataUri: squareRgbaPng });
             
             setAvatarUrl(result.transparentImageDataUri);
             toast({
