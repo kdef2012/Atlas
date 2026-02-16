@@ -20,7 +20,7 @@ export interface RemoveBackgroundOutput {
 export async function removeBackground(
   input: RemoveBackgroundInput
 ): Promise<RemoveBackgroundOutput> {
-    const prompt = "Remove the background from this image, leaving only the main subject on a transparent background.";
+    const prompt = "Remove the background from this image, making it transparent.";
     
     const generatedImageUrl = await editImageWithDALLE({
       imageDataUri: input.imageDataUri,
