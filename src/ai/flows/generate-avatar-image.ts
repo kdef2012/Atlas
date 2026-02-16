@@ -58,7 +58,7 @@ const generateAvatarImageFlow = ai.defineFlow(
     
     // 3. Call the Gemini image-to-image model
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-1.5-pro-latest'), // Using a more powerful model to avoid rate limits
+      model: googleAI.model('gemini-pro'), // Using a more powerful model to avoid rate limits
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
