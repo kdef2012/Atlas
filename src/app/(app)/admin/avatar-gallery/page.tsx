@@ -171,15 +171,15 @@ export default function AdminAvatarGalleryPage() {
   const handleApplyCosmetics = async () => {
     if (!transparentAvatarUrl) return;
     setIsProcessing(true);
-    toast({ title: 'Applying Cosmetics...', description: 'The AI is adding some flair.' });
+    toast({ title: 'Applying Hat...', description: 'The AI is adding a stylish hat.' });
     try {
       // The transparentAvatarUrl is already a square RGBA PNG from the previous step.
       const result = await generateAvatarImage({
         baseAvatarDataUri: transparentAvatarUrl,
-        cosmeticVisualDescriptions: ['a glowing blue aura', 'a golden crown on the head'],
+        cosmeticVisualDescriptions: ['a stylish top hat'],
       });
       setFinalAvatarUrl(result.generatedAvatarDataUri);
-      toast({ title: 'Cosmetics Applied!', variant: 'default' });
+      toast({ title: 'Hat Applied!', variant: 'default' });
     } catch (error) {
       console.error(error);
       toast({ variant: 'destructive', title: 'Error', description: 'Could not apply cosmetics.' });
@@ -246,7 +246,7 @@ export default function AdminAvatarGalleryPage() {
                 )}
                 <Button onClick={handleApplyCosmetics} disabled={!transparentAvatarUrl || isProcessing} className="w-full mt-2">
                     {isProcessing ? <Loader2 className="animate-spin" /> : <Sparkles />}
-                    Apply Sample Cosmetics
+                    Apply Hat
                 </Button>
             </CardContent>
           </Card>
@@ -255,7 +255,7 @@ export default function AdminAvatarGalleryPage() {
           <Card>
              <CardHeader>
                 <CardTitle>3. Final Result</CardTitle>
-                <CardDescription>The final avatar with AI-generated cosmetics.</CardDescription>
+                <CardDescription>The final avatar with an AI-generated hat.</CardDescription>
             </CardHeader>
             <CardContent>
                 {finalAvatarUrl ? (
