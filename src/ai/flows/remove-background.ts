@@ -55,7 +55,7 @@ const removeBackgroundFlow = ai.defineFlow(
     
     // 3. Call the Gemini image-to-image model
     const { media } = await ai.generate({
-      model: googleAI.model('gemini-1.5-flash-latest'),
+      model: googleAI.model('gemini-1.5-flash'),
       prompt: promptParts,
       config: {
         responseModalities: ['TEXT', 'IMAGE'], // MUST provide both TEXT and IMAGE
