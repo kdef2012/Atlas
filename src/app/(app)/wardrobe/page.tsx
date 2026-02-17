@@ -149,7 +149,7 @@ export default function WardrobePage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 font-headline">Your Wardrobe</h1>
           <p className="text-muted-foreground">
-            Cosmetics earned through your journey in ATLAS
+            Customize your Twinskie by equipping cosmetics earned on your journey. New AI-generated cosmetics are unlocked by hitting activity milestones, not by leveling up. Your Evolution Level tracks your overall progress.
           </p>
         </div>
 
