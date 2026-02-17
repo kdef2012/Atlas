@@ -165,7 +165,9 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
                 <FormItem>
                   <FormLabel>Image URL</FormLabel>
                   <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                   <FormDescription>For visual items, provide a URL to a transparent PNG. Required for items to be visible.</FormDescription>
+                   <FormDescription>
+                    Required for visual items. This must be a direct link to an image file (e.g., ending in .png, .jpg), not a webpage.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
