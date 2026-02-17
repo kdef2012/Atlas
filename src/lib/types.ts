@@ -1,4 +1,4 @@
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 // We redefine the UI-specific fields to be compatible with React's style objects
@@ -26,6 +26,7 @@ export type Archetype = 'Titan' | 'Sage' | 'Maverick';
 export type SkillCategory = 'Physical' | 'Mental' | 'Social' | 'Practical' | 'Creative';
 export type Gender = 'Male' | 'Female';
 export type AvatarStyle = string;
+export type CosmeticPosition = 'head' | 'face' | 'body' | 'background' | 'aura';
 
 export interface UserSkillData {
   isUnlocked: boolean;
@@ -53,6 +54,7 @@ export interface User {
   guilds?: Record<string, boolean>;
   userSkills: Record<string, UserSkillData>;
   avatarLayers?: Record<string, boolean>; 
+  ownedCosmetics?: Record<string, boolean>;
   momentumFlameActive: boolean;
   gems: number;
   streakFreezes: number;
@@ -157,6 +159,7 @@ export interface CosmeticItem {
   name: string;
   description: string;
   type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod' | 'overlay';
+  position?: CosmeticPosition;
   imageUrl?: string;
   
   boxShadow?: string;
@@ -187,6 +190,7 @@ export interface StoreItem {
   icon: keyof typeof STORE_ITEM_ICONS;
   layerKey: string;
   imageUrl?: string | '';
+  position: CosmeticPosition;
 }
 
 export interface PublicLog {
@@ -261,6 +265,7 @@ export const STORE_ITEM_ICONS: Record<string, React.ElementType> = {
   RectangleHorizontal,
   Glasses,
   Shield,
+  Shirt,
 };
 
 export type { EvolutionPathData };

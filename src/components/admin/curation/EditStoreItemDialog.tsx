@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, type ReactNode } from 'react';
@@ -14,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { Loader2, Pencil } from 'lucide-react';
-import { StoreItem, STORE_ITEM_ICONS } from '@/lib/types';
+import { StoreItem, STORE_ITEM_ICONS, CosmeticPosition } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Item name must be at least 3 characters.').max(50, 'Item name is too long.'),
@@ -23,6 +24,7 @@ const formSchema = z.object({
   icon: z.enum(Object.keys(STORE_ITEM_ICONS) as [keyof typeof STORE_ITEM_ICONS]),
   layerKey: z.string().min(3, 'Layer key is required.').regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores are allowed.'),
   imageUrl: z.string().url('Must be a valid image URL.').optional().or(z.literal('')),
+  position: z.enum(['head', 'face', 'body', 'background', 'aura']),
 });
 
 interface EditStoreItemDialogProps {
@@ -45,6 +47,7 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
       icon: item?.icon || 'RectangleHorizontal',
       layerKey: item?.layerKey || '',
       imageUrl: item?.imageUrl || '',
+      position: item?.position || 'body',
     },
   });
 
@@ -77,7 +80,7 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Store Item' : 'Add New Store Item'}</DialogTitle>
           <DialogDescription>
@@ -162,8 +165,31 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
                 <FormItem>
                   <FormLabel>Image URL</FormLabel>
                   <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                   <FormDescription>For visual items like hats or shirts, provide a URL to a transparent PNG. Leave blank for non-visual items (e.g., a streak freeze).</FormDescription>
+                   <FormDescription>For visual items, provide a URL to a transparent PNG. Required for items to be visible.</FormDescription>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="position"
+              render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Render Position</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a position" />
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                           {(['head', 'face', 'body', 'background', 'aura'] as CosmeticPosition[]).map(pos => (
+                                <SelectItem key={pos} value={pos}>{pos.charAt(0).toUpperCase() + pos.slice(1)}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormDescription>Where the cosmetic image should be layered on the avatar.</FormDescription>
+                    <FormMessage />
                 </FormItem>
               )}
             />

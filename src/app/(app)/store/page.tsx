@@ -25,11 +25,11 @@ import {
 } from "@/components/ui/alert-dialog"
 import { CATEGORY_ICONS, STORE_ITEM_ICONS } from '@/lib/types';
 
-function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: StoreItem, userGems: number, userLayers: Record<string, boolean>, onPurchase: (item: any) => void }) {
+function StoreItemCard({ item, userGems, userOwnedCosmetics, onPurchase }: { item: StoreItem, userGems: number, userOwnedCosmetics: Record<string, boolean>, onPurchase: (item: any) => void }) {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const { toast } = useToast();
 
-    const hasItem = userLayers[item.layerKey];
+    const hasItem = userOwnedCosmetics[item.layerKey];
     const canAfford = userGems >= item.price;
     
     const ItemIcon = STORE_ITEM_ICONS[item.icon] || Store;
@@ -42,7 +42,7 @@ function StoreItemCard({ item, userGems, userLayers, onPurchase }: { item: Store
         setTimeout(() => {
              toast({
                 title: 'Purchase Successful!',
-                description: `You have acquired the ${item.name}.`,
+                description: `You have acquired the ${item.name}. It has been auto-equipped!`,
             });
             setIsPurchasing(false);
         }, 1500);
@@ -112,7 +112,8 @@ export default function StorePage() {
 
         const updates = {
             gems: increment(-item.price),
-            [`avatarLayers.${item.layerKey}`]: true,
+            [`ownedCosmetics.${item.layerKey}`]: true,
+            [`avatarLayers.${item.layerKey}`]: true, // Auto-equip on purchase
         };
 
         updateDocumentNonBlocking(userRef, updates);
@@ -152,7 +153,7 @@ export default function StorePage() {
                         key={item.id} 
                         item={item} 
                         userGems={user.gems} 
-                        userLayers={user.avatarLayers as Record<string, boolean> || {}}
+                        userOwnedCosmetics={user.ownedCosmetics || {}}
                         onPurchase={handlePurchase}
                     />
                 ))}

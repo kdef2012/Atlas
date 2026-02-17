@@ -1,10 +1,10 @@
+
 'use client';
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
 import { TwinskieAvatar } from '@/components/TwinskieAvatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Sparkles, 
@@ -15,7 +15,6 @@ import {
   TrendingUp,
   Activity,
   Zap,
-  Loader2
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { doc } from 'firebase/firestore';
@@ -41,7 +40,7 @@ const RARITY_ICONS: Record<string, React.ElementType> = {
   legendary: Crown,
 };
 
-type AnyCosmetic = (GeneratedCosmetic & { source: 'ai', id: string, name: string, description: string, rarity: string }) | (CosmeticItem & { source: 'static', id: string, name: string, description: string, rarity: string, visualDescription?: string, position?: string, color?: string });
+type AnyCosmetic = (GeneratedCosmetic & { source: 'ai', id: string, name: string, description: string, rarity: string }) | (CosmeticItem & { source: 'static', id: string, name: string, description: string, rarity: string, visualDescription?: string, position?: 'head' | 'face' | 'body' | 'background' | 'aura', color?: string });
 
 export default function WardrobePage() {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -74,22 +73,23 @@ export default function WardrobePage() {
       });
     }
 
-    // Combine static starter items and dynamic store items
-    const dynamicCosmetics: CosmeticItem[] = (storeItems || []).map(item => ({
+    // Combine starter items with dynamic store items that are owned
+    const ownedStoreItems = (storeItems || []).filter(item => user.ownedCosmetics?.[item.layerKey]);
+    const dynamicCosmetics: CosmeticItem[] = ownedStoreItems.map(item => ({
       id: item.layerKey,
       name: item.name,
       description: item.description,
       type: 'overlay',
       imageUrl: item.imageUrl,
+      position: item.position,
     }));
+    
     const allPurchasableCosmetics = [...COSMETIC_ITEMS, ...dynamicCosmetics];
 
-    // Add owned static/store cosmetics
     allPurchasableCosmetics.forEach(item => {
         const isOwnedStarter = item.requirement?.type === 'starter' && user.level >= 1;
-        const isPurchased = user.avatarLayers && item.id in user.avatarLayers;
-
-        if (isOwnedStarter || isPurchased) {
+        // The check for dynamicCosmetics is already handled by filtering storeItems
+        if (isOwnedStarter || dynamicCosmetics.some(dc => dc.id === item.id)) {
              cosmetics.push({
                 ...item,
                 source: 'static',

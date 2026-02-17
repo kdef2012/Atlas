@@ -4,7 +4,7 @@
 import { useMemo } from 'react';
 import { buildRpmUrl, getLayerStyles } from '@/lib/avatar-engine';
 import { cn } from '@/lib/utils';
-import type { User, GeneratedCosmetic, CosmeticItem, StoreItem } from '@/lib/types';
+import type { User, GeneratedCosmetic, CosmeticItem, StoreItem, CosmeticPosition } from '@/lib/types';
 import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 import Image from 'next/image';
 import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
@@ -60,6 +60,7 @@ export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarP
       description: item.description,
       type: 'overlay', // Assume all dynamic store items are image overlays for now
       imageUrl: item.imageUrl,
+      position: item.position,
     }));
 
     // Combine hardcoded cosmetics with dynamic ones from the store
@@ -168,7 +169,7 @@ export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarP
                 src={item.imageUrl}
                 alt={item.name}
                 className="absolute z-20"
-                style={{ ...getLayerStyles('body') }} // Assuming most overlays are 'body' type
+                style={{ ...getLayerStyles(item.position || 'body') }}
             />
         ))}
     </div>
