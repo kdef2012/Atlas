@@ -1,4 +1,3 @@
-'use server';
 
 import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
