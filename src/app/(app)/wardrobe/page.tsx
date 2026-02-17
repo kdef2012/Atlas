@@ -178,7 +178,7 @@ export default function WardrobePage() {
     setIsGenerating(true);
 
     updateDocumentNonBlocking(userRef, {
-      avatarUrl: user.baseAvatarUrl,
+      avatarUrl: user.baseAvatarUrl || '',
       avatarLayers: {},
     });
 
@@ -404,3 +404,4 @@ export default function WardrobePage() {
   );
 
     
+
