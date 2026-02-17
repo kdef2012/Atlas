@@ -22,7 +22,7 @@ const formSchema = z.object({
   price: z.coerce.number().int().min(0, 'Price cannot be negative.'),
   icon: z.enum(Object.keys(STORE_ITEM_ICONS) as [keyof typeof STORE_ITEM_ICONS]),
   layerKey: z.string().min(3, 'Layer key is required.').regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores are allowed.'),
-  imageUrl: z.string().url('Must be a valid image URL.').optional(),
+  imageUrl: z.string().url('Must be a valid image URL.').optional().or(z.literal('')),
 });
 
 interface EditStoreItemDialogProps {
@@ -160,9 +160,9 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL</FormLabel>
+                  <FormLabel>Image URL (Optional)</FormLabel>
                   <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                   <FormDescription>The URL for the transparent PNG overlay for this cosmetic.</FormDescription>
+                   <FormDescription>For visual cosmetics, provide a URL to a transparent PNG to be overlaid on the avatar.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
