@@ -4,9 +4,12 @@
 import { useMemo } from 'react';
 import { buildRpmUrl, getLayerStyles } from '@/lib/avatar-engine';
 import { cn } from '@/lib/utils';
-import type { User, GeneratedCosmetic, CosmeticItem } from '@/lib/types';
+import type { User, GeneratedCosmetic, CosmeticItem, StoreItem } from '@/lib/types';
 import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 import Image from 'next/image';
+import { useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { collection } from 'firebase/firestore';
+
 
 interface TwinskieAvatarProps {
   user: User;
@@ -25,11 +28,16 @@ const SIZE_MAP = {
  * The TwinskieAvatar component is a client-side renderer. It does not call OpenAI directly.
  * Its role is to display the final avatar by layering multiple cosmetic assets on top of a base image.
  * The generation of these assets (e.g., SVG code for AI cosmetics) and editing of the base image
- * (e.g., background removal) happens in upstream AI flows that use OpenAI (GPT-4o-mini and DALL-E 2).
+ * (e.g., background removal) happens in upstream AI flows that use OpenAI (GPT-4o and DALL-E 2).
  * This component simply assembles the results of OpenAI's work.
  */
 export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarProps) {
   const dimensions = SIZE_MAP[size];
+
+  // Fetch dynamic store items from Firestore
+  const firestore = useFirestore();
+  const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
+  const { data: storeItems, isLoading: areStoreItemsLoading } = useCollection<StoreItem>(storeItemsCollection);
 
   const activeLayers = useMemo(() => user.avatarLayers ?? {}, [user.avatarLayers]);
 
@@ -40,22 +48,40 @@ export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarP
       .filter((id) => activeLayers[id] === true && aiData[id])
       .map((id) => aiData[id] as GeneratedCosmetic);
   }, [activeLayers, user.aiGeneratedCosmetics]);
+  
+  // 2. Combine static and dynamic (store) cosmetics
+  const allStaticCosmetics = useMemo(() => {
+    if (!storeItems) return COSMETIC_ITEMS;
+    
+    // Map store items to the CosmeticItem shape so they can be rendered
+    const dynamicCosmetics: CosmeticItem[] = storeItems.map(item => ({
+      id: item.layerKey, // Use layerKey from the store item as the unique ID for matching
+      name: item.name,
+      description: item.description,
+      type: 'overlay', // Assume all dynamic store items are image overlays for now
+      imageUrl: item.imageUrl,
+    }));
 
-  // 2. Get active static cosmetics (from /lib/avatar-cosmetics.ts)
+    // Combine hardcoded cosmetics with dynamic ones from the store
+    return [...COSMETIC_ITEMS, ...dynamicCosmetics];
+  }, [storeItems]);
+
+  // 3. Get active static cosmetics by filtering the combined list
   const activeStaticCosmetics = useMemo(() => {
-    return COSMETIC_ITEMS.filter(item => activeLayers[item.id] === true);
-  }, [activeLayers]);
+    return allStaticCosmetics.filter(item => activeLayers[item.id] === true);
+  }, [activeLayers, allStaticCosmetics]);
+
   
   // Combine all active cosmetics for effect calculation
   const allActiveCosmetics = [...activeAiCosmetics, ...activeStaticCosmetics];
 
-  // 3. Memoize the base RPM URL. The base image may have been processed by OpenAI (DALL-E 2) for background removal.
+  // 4. Memoize the base RPM URL. The base image may have been processed by OpenAI (DALL-E 2) for background removal.
   const rpmUrl = useMemo(() => {
     if (!user.avatarUrl) return '';
     return buildRpmUrl(user.avatarUrl, []);
   }, [user.avatarUrl]);
 
-  // 4. Combine CSS effects from all active cosmetics
+  // 5. Combine CSS effects from all active cosmetics
   const combinedEffects = useMemo(() => {
     const effects: React.CSSProperties = {};
     const backgrounds: string[] = [];

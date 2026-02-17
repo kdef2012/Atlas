@@ -22,6 +22,7 @@ const formSchema = z.object({
   price: z.coerce.number().int().min(0, 'Price cannot be negative.'),
   icon: z.enum(Object.keys(STORE_ITEM_ICONS) as [keyof typeof STORE_ITEM_ICONS]),
   layerKey: z.string().min(3, 'Layer key is required.').regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores are allowed.'),
+  imageUrl: z.string().url('Must be a valid image URL.').optional(),
 });
 
 interface EditStoreItemDialogProps {
@@ -43,6 +44,7 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
       price: item?.price || 0,
       icon: item?.icon || 'RectangleHorizontal',
       layerKey: item?.layerKey || '',
+      imageUrl: item?.imageUrl || '',
     },
   });
 
@@ -149,6 +151,18 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
                   <FormLabel>Layer Key</FormLabel>
                   <FormControl><Input placeholder="e.g., cosmetic_shadow_cloak" {...field} disabled={isEditing} /></FormControl>
                    <FormDescription>A unique key used in the database. Cannot be changed after creation.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="imageUrl"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Image URL</FormLabel>
+                  <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
+                   <FormDescription>The URL for the transparent PNG overlay for this cosmetic.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

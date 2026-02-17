@@ -187,6 +187,7 @@ export interface StoreItem {
   price: number;
   icon: keyof typeof STORE_ITEM_ICONS;
   layerKey: string;
+  imageUrl?: string;
 }
 
 export interface PublicLog {
