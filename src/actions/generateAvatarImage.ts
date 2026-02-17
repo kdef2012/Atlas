@@ -25,9 +25,28 @@ export async function generateAvatarImage(
     throw new Error('Base avatar image is required');
   }
 
+  let imageDataUri = input.baseAvatarDataUri;
+
+  // If the input is a URL, fetch it and convert it to a data URI
+  if (!imageDataUri.startsWith('data:image')) {
+    try {
+      const response = await fetch(imageDataUri);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+      const contentType = response.headers.get('content-type') || 'image/png';
+      const buffer = Buffer.from(await response.arrayBuffer());
+      imageDataUri = `data:${contentType};base64,${buffer.toString('base64')}`;
+    } catch (error) {
+      console.error('Failed to convert image URL to data URI:', error);
+      throw new Error('Could not process the base avatar image URL.');
+    }
+  }
+
+
   // If no cosmetics, we can just return the base image.
   if (!input.cosmeticVisualDescriptions || input.cosmeticVisualDescriptions.length === 0) {
-    return { generatedAvatarDataUri: input.baseAvatarDataUri };
+    return { generatedAvatarDataUri: imageDataUri };
   }
 
   const cosmeticsList = input.cosmeticVisualDescriptions
@@ -47,7 +66,7 @@ CRITICAL REQUIREMENTS:
 - Output ONLY the edited image with no text, watermarks, or explanations.`;
 
   const generatedAvatarDataUri = await editImageWithGPTImage({
-    imageDataUri: input.baseAvatarDataUri,
+    imageDataUri: imageDataUri, // Use the potentially converted data URI
     prompt,
     quality: 'high', // Use high quality for the final result
   });
