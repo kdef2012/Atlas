@@ -1,9 +1,7 @@
 
 export { 
   onActivityUpdate,
-  nightlyEvolutionAnalysis,
+  weeklyEvolutionAnalysis,
   triggerEvolutionAnalysis,
   getEvolutionStatus 
 } from './analyze-activity';
-
-    

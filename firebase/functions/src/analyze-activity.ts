@@ -110,14 +110,14 @@ export const onActivityUpdate = functions.firestore
   });
 
 /**
- * Scheduled function: Nightly evolution analysis
- * Runs at 2 AM daily to analyze all users and generate suggestions
+ * Scheduled function: Weekly evolution analysis
+ * Runs at 2 AM every Sunday to analyze all users and generate suggestions
  */
-export const nightlyEvolutionAnalysis = functions.pubsub
-  .schedule('0 2 * * *') // 2 AM daily
+export const weeklyEvolutionAnalysis = functions.pubsub
+  .schedule('0 2 * * 0') // 2 AM every Sunday
   .timeZone('America/New_York')
   .onRun(async (context) => {
-    console.log('Starting nightly evolution analysis');
+    console.log('Starting weekly evolution analysis');
     
     // Get all active users (logged in within last 7 days)
     const weekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
@@ -178,7 +178,7 @@ export const nightlyEvolutionAnalysis = functions.pubsub
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
     
-    console.log(`Nightly analysis complete: ${processed} processed, ${failed} failed`);
+    console.log(`Weekly analysis complete: ${processed} processed, ${failed} failed`);
     return null;
   });
 
@@ -286,5 +286,3 @@ export const getEvolutionStatus = functions.https.onRequest(async (req, res) => 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-    
