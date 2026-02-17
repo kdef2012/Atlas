@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
@@ -121,7 +122,7 @@ export default function WardrobePage() {
 
     try {
       // First, update the avatarLayers in Firestore so the server action can read them
-      await updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
+      updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
 
       // Fallback to avatarUrl if baseAvatarUrl is missing.
       const baseAvatar = user.baseAvatarUrl || user.avatarUrl;
@@ -142,7 +143,7 @@ export default function WardrobePage() {
       });
 
       // Update the active avatarUrl with the generated image
-      await updateDocumentNonBlocking(userRef, { avatarUrl: result.generatedAvatarDataUri });
+      updateDocumentNonBlocking(userRef, { avatarUrl: result.generatedAvatarDataUri });
 
       toast({
         title: '✨ Avatar Updated!',
@@ -161,34 +162,29 @@ export default function WardrobePage() {
     }
   };
 
-  const handleRevertToBase = async () => {
+  const handleRevertToBase = () => {
     if (!user || !userRef) return;
     
     if (user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl) {
-      setIsGenerating(true); // Reuse the same loading state
-      try {
-        await updateDocumentNonBlocking(userRef, {
-          avatarUrl: user.baseAvatarUrl,
-          avatarLayers: {}, // Clear all equipped layers
-        });
+      setIsGenerating(true);
+      
+      updateDocumentNonBlocking(userRef, {
+        avatarUrl: user.baseAvatarUrl,
+        avatarLayers: {}, // Clear all equipped layers
+      });
 
-        setEquippedLayers({}); // Update local state to match
+      setEquippedLayers({}); // Update local state to match
 
+      // The useDoc hook will catch the Firestore update and re-render the component.
+      // We'll show a toast and reset the loading state after a short delay for better UX.
+      setTimeout(() => {
         toast({
           title: 'Avatar Reset',
           description: 'Your Twinskie has been reverted to its base form.',
         });
-
-      } catch (error) {
-        console.error('Failed to revert to base avatar:', error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not revert your avatar. Please try again.',
-        });
-      } finally {
         setIsGenerating(false);
-      }
+      }, 1500);
+
     } else {
         toast({
             description: 'Your avatar is already in its base form.',
@@ -405,3 +401,5 @@ export default function WardrobePage() {
       </div>
     </div>
   );
+
+    
