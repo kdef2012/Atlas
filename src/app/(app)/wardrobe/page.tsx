@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
@@ -166,22 +165,26 @@ export default function WardrobePage() {
     if (!user || !userRef) return;
 
     const hasEquippedLayers = Object.keys(equippedLayers).length > 0;
-    const urlsAreDifferent = user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl;
+    const needsRevert = hasEquippedLayers || (user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl);
 
-    if (!hasEquippedLayers && !urlsAreDifferent) {
-        toast({
-            description: 'Your avatar is already in its base form.',
-        });
-        return;
+    if (!needsRevert) {
+      toast({
+        description: 'Your avatar is already in its base form.',
+      });
+      return;
     }
 
     setIsGenerating(true);
 
-    updateDocumentNonBlocking(userRef, {
-      avatarUrl: user.baseAvatarUrl || '',
+    const updates: { avatarLayers: Record<string, boolean>; avatarUrl?: string } = {
       avatarLayers: {},
-    });
+    };
 
+    if (user.baseAvatarUrl) {
+      updates.avatarUrl = user.baseAvatarUrl;
+    }
+
+    updateDocumentNonBlocking(userRef, updates);
     setEquippedLayers({});
 
     setTimeout(() => {
@@ -404,4 +407,5 @@ export default function WardrobePage() {
   );
 
     
+
 
