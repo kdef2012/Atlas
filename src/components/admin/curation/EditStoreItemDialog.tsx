@@ -160,9 +160,9 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
               name="imageUrl"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Image URL (Optional)</FormLabel>
+                  <FormLabel>Image URL</FormLabel>
                   <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                   <FormDescription>For visual cosmetics, provide a URL to a transparent PNG to be overlaid on the avatar.</FormDescription>
+                   <FormDescription>For visual items like hats or shirts, provide a URL to a transparent PNG. Leave blank for non-visual items (e.g., a streak freeze).</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
