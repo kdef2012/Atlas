@@ -1,6 +1,7 @@
 'use server';
 
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
+import sharp from 'sharp';
 
 if (!process.env.OPENAI_API_KEY) {
   throw new Error('OPENAI_API_KEY environment variable is required');
@@ -11,42 +12,59 @@ export const openai = new OpenAI({
 });
 
 /**
- * Edit/generate images using DALL-E 2 with image input
+ * Convert image buffer to RGBA PNG format (required for image editing)
  */
-export async function editImageWithDALLE({
+async function convertToRGBA(imageBuffer: Buffer): Promise<Buffer> {
+  return sharp(imageBuffer)
+    .ensureAlpha()
+    .png()
+    .toBuffer();
+}
+
+/**
+ * Edit an existing image using gpt-image-1.5
+ */
+export async function editImageWithGPTImage({
   imageDataUri,
   prompt,
+  quality = 'medium',
+  size = '1024x1024',
 }: {
   imageDataUri: string;
   prompt: string;
+  quality?: 'low' | 'medium' | 'high';
+  size?: '1024x1024' | '1024x1536' | '1536x1024';
 }): Promise<string> {
-  // Convert data URI to buffer. The client is now responsible for ensuring
-  // the image is a square RGBA PNG.
   const base64Data = imageDataUri.split(',')[1];
-  const imageBuffer = Buffer.from(base64Data, 'base64');
+  if (!base64Data) {
+    throw new Error('Invalid data URI format');
+  }
 
-  // Create a File object from buffer
-  const imageFile = new File([imageBuffer], 'avatar.png', {
+  // Convert to RGBA PNG buffer
+  const imageBuffer = Buffer.from(base64Data, 'base64');
+  const rgbaBuffer = await convertToRGBA(imageBuffer);
+
+  // Use toFile from OpenAI SDK (correct way to pass images)
+  const imageFile = await toFile(rgbaBuffer, 'avatar.png', {
     type: 'image/png',
   });
 
-  // DALL-E 2 edit endpoint (DALL-E 3 doesn't support editing yet)
   const response = await openai.images.edit({
-    model: 'dall-e-2',
+    model: 'gpt-image-1.5',
     image: imageFile,
-    prompt: prompt,
+    prompt,
     n: 1,
-    size: '1024x1024',
-    response_format: 'b64_json',
+    size,
+    quality,
   });
 
   if (!response.data || response.data.length === 0) {
-    throw new Error('No data returned from DALL-E API');
+    throw new Error('No data returned from gpt-image-1.5 API');
   }
 
   const b64Image = response.data[0]?.b64_json;
   if (!b64Image) {
-    throw new Error('No image returned from DALL-E');
+    throw new Error('No image returned from gpt-image-1.5');
   }
 
   return `data:image/png;base64,${b64Image}`;

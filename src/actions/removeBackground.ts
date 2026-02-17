@@ -2,9 +2,9 @@
 
 /**
  * @fileOverview Defines a function to remove the background from an image, making it transparent.
- * This now uses OpenAI's DALL-E 2 for high-quality background removal.
+ * Uses gpt-image-1.5 for high-quality background removal.
  */
-import { editImageWithDALLE } from '@/ai/openai';
+import { editImageWithGPTImage } from '@/ai/openai';
 
 // Define the input type for the function
 export interface RemoveBackgroundInput {
@@ -20,16 +20,23 @@ export interface RemoveBackgroundOutput {
 export async function removeBackground(
   input: RemoveBackgroundInput
 ): Promise<RemoveBackgroundOutput> {
-    const prompt = "Remove the background from this image, making it transparent.";
-    
-    const generatedImageUrl = await editImageWithDALLE({
-      imageDataUri: input.imageDataUri,
-      prompt: prompt,
-    });
+  const prompt = `Remove the background from this avatar image completely, making it fully transparent.
+  
+CRITICAL REQUIREMENTS:
+- Preserve the subject (avatar/character) in full detail with clean, precise edges
+- Make the entire background completely transparent
+- Do not alter the avatar's appearance, colors, or style in any way
+- Output ONLY the avatar on a transparent background`;
 
-    if (!generatedImageUrl) {
-      throw new Error('Image generation failed to return a valid image for background removal.');
-    }
+  const transparentImageDataUri = await editImageWithGPTImage({
+    imageDataUri: input.imageDataUri,
+    prompt,
+    quality: 'high',
+  });
 
-    return { transparentImageDataUri: generatedImageUrl };
+  if (!transparentImageDataUri) {
+    throw new Error('Background removal failed to return a valid image.');
+  }
+
+  return { transparentImageDataUri };
 }
