@@ -164,32 +164,33 @@ export default function WardrobePage() {
 
   const handleRevertToBase = () => {
     if (!user || !userRef) return;
-    
-    if (user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl) {
-      setIsGenerating(true);
-      
-      updateDocumentNonBlocking(userRef, {
-        avatarUrl: user.baseAvatarUrl,
-        avatarLayers: {}, // Clear all equipped layers
-      });
 
-      setEquippedLayers({}); // Update local state to match
+    const hasEquippedLayers = Object.keys(equippedLayers).length > 0;
+    const urlsAreDifferent = user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl;
 
-      // The useDoc hook will catch the Firestore update and re-render the component.
-      // We'll show a toast and reset the loading state after a short delay for better UX.
-      setTimeout(() => {
-        toast({
-          title: 'Avatar Reset',
-          description: 'Your Twinskie has been reverted to its base form.',
-        });
-        setIsGenerating(false);
-      }, 1500);
-
-    } else {
+    if (!hasEquippedLayers && !urlsAreDifferent) {
         toast({
             description: 'Your avatar is already in its base form.',
         });
+        return;
     }
+
+    setIsGenerating(true);
+
+    updateDocumentNonBlocking(userRef, {
+      avatarUrl: user.baseAvatarUrl,
+      avatarLayers: {},
+    });
+
+    setEquippedLayers({});
+
+    setTimeout(() => {
+      toast({
+        title: 'Avatar Reset',
+        description: 'Your Twinskie has been reverted to its base form.',
+      });
+      setIsGenerating(false);
+    }, 1500);
   };
 
 
