@@ -1,25 +1,17 @@
-
 'use client';
 
 import { TwinskieAvatar } from '@/components/TwinskieAvatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { useUser, useDoc, useFirestore, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useDoc, useFirestore } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { User, SkillCategory } from '@/lib/types';
 import { CATEGORY_COLORS } from '@/lib/types';
-import { COSMETIC_ITEMS, getActiveCosmetics, combineCosmeticEffects } from '@/lib/avatar-cosmetics';
-import { Loader2, ShoppingBag, Check, Lock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { Loader2, ShoppingBag } from 'lucide-react';
 import { useMemoFirebase } from '@/firebase/provider';
 
 export default function ProfilePage() {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
-  const { toast } = useToast();
-  const [purchasingItem, setPurchasingItem] = useState<string | null>(null);
 
   const userDocRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: userData, isLoading: isDocLoading } = useDoc<User>(userDocRef);
@@ -54,12 +46,12 @@ export default function ProfilePage() {
               <div className="mt-6 w-full space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">XP Progress</span>
-                  <span className="font-bold">{userData.xp} / {(userData.level + 1) * 100}</span>
+                  <span className="font-bold">{userData.xp.toLocaleString()} / {((userData.level || 0) + 1) * 100}</span>
                 </div>
                 <div className="w-full bg-secondary rounded-full h-2">
                   <div
                     className="bg-primary h-2 rounded-full transition-all"
-                    style={{ width: `${(userData.xp / ((userData.level + 1) * 100)) * 100}%` }}
+                    style={{ width: `${(userData.xp / (((userData.level || 0) + 1) * 100)) * 100}%` }}
                   />
                 </div>
               </div>
@@ -114,5 +106,3 @@ export default function ProfilePage() {
     </main>
   );
 }
-
-    

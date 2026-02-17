@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -33,14 +32,12 @@ import {
   BookUser,
   FileText,
   Sparkles,
-  FlaskConical,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
-import { useRouter } from "next/navigation";
 import { TwinskieAvatarCompact } from "@/components/TwinskiAvatarCompact";
 import {
   AlertDialog,
@@ -81,7 +78,6 @@ const adminNavItems = [
 
 export function SideNav() {
   const pathname = usePathname();
-  const router = useRouter();
   const auth = useAuth();
   const { user: authUser } = useUser();
   const firestore = useFirestore();
@@ -222,7 +218,7 @@ export function SideNav() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Your journey will be saved, but you will need to sign back in to continue.
+                        Your journey is saved, but you will need to sign back in to continue.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -238,5 +234,3 @@ export function SideNav() {
     </>
   );
 }
-
-    

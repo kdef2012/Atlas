@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useUser, useDoc, useMemoFirebase } from '@/firebase';
+import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
 import { TwinskieAvatar } from '@/components/TwinskieAvatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -19,11 +18,12 @@ import {
   Loader2
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem as StaticCosmeticItem } from '@/lib/types';
+import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem, StoreItem } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
+import { collection } from 'firebase/firestore';
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'text-gray-400 border-gray-400',
@@ -41,8 +41,7 @@ const RARITY_ICONS: Record<string, React.ElementType> = {
   legendary: Crown,
 };
 
-// Unified type for any cosmetic item
-type AnyCosmetic = (GeneratedCosmetic & { source: 'ai' }) | (StaticCosmeticItem & { source: 'static', rarity: string, visualDescription: string });
+type AnyCosmetic = (GeneratedCosmetic & { source: 'ai', id: string, name: string, description: string, rarity: string }) | (CosmeticItem & { source: 'static', id: string, name: string, description: string, rarity: string, visualDescription?: string, position?: string, color?: string });
 
 export default function WardrobePage() {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -50,53 +49,71 @@ export default function WardrobePage() {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  const [equippedCosmetics, setEquippedCosmetics] = useState<Set<string>>(new Set());
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
+  const { data: storeItems, isLoading: areStoreItemsLoading } = useCollection<StoreItem>(storeItemsCollection);
   
-  const isLoading = isAuthLoading || isUserDocLoading;
+  const [equippedLayers, setEquippedLayers] = useState<Record<string, boolean>>({});
+  
+  const isLoading = isAuthLoading || isUserDocLoading || areStoreItemsLoading;
 
   useEffect(() => {
     if (user?.avatarLayers) {
-      const equipped = new Set(
-        Object.entries(user.avatarLayers)
-          .filter(([_, enabled]) => enabled)
-          .map(([id]) => id)
-      );
-      setEquippedCosmetics(equipped);
+      setEquippedLayers(user.avatarLayers);
     }
   }, [user]);
 
   const allOwnedCosmetics = useMemo(() => {
+    if (!user) return [];
+    
     const cosmetics: AnyCosmetic[] = [];
 
     // Add AI-generated cosmetics
-    if (user?.aiGeneratedCosmetics) {
-      Object.values(user.aiGeneratedCosmetics).forEach(cosmetic => {
-        cosmetics.push({ ...cosmetic, source: 'ai' });
+    if (user.aiGeneratedCosmetics) {
+      Object.entries(user.aiGeneratedCosmetics).forEach(([id, cosmetic]) => {
+        cosmetics.push({ ...cosmetic, id, source: 'ai' });
       });
     }
 
-    // Add static starter cosmetics if user has them (level >= 1)
-    if (user && user.level >= 1) {
-        const starterItems = COSMETIC_ITEMS.filter(item => item.requirement?.type === 'starter');
-        starterItems.forEach(item => {
-            // Adapt the static item to the AnyCosmetic shape
-            cosmetics.push({
+    // Combine static starter items and dynamic store items
+    const dynamicCosmetics: CosmeticItem[] = (storeItems || []).map(item => ({
+      id: item.layerKey,
+      name: item.name,
+      description: item.description,
+      type: 'overlay',
+      imageUrl: item.imageUrl,
+    }));
+    const allPurchasableCosmetics = [...COSMETIC_ITEMS, ...dynamicCosmetics];
+
+    // Add owned static/store cosmetics
+    allPurchasableCosmetics.forEach(item => {
+        const isOwnedStarter = item.requirement?.type === 'starter' && user.level >= 1;
+        const isPurchased = user.avatarLayers && item.id in user.avatarLayers;
+
+        if (isOwnedStarter || isPurchased) {
+             cosmetics.push({
                 ...item,
-                id: item.id,
-                name: item.name,
-                description: item.description,
-                rarity: 'uncommon', // Assign a default rarity for display
-                visualDescription: item.description,
                 source: 'static',
-                position: item.type, // Map type to position
-            });
-        });
-    }
+                rarity: item.costGems ? (item.costGems > 100 ? 'epic' : 'rare') : 'uncommon',
+             } as AnyCosmetic);
+        }
+    });
 
     return cosmetics;
-  }, [user]);
+  }, [user, storeItems]);
 
+  const toggleCosmetic = (cosmeticId: string) => {
+    if (!userRef) return;
+    const newLayers = { ...equippedLayers };
+    
+    if (newLayers[cosmeticId]) {
+      delete newLayers[cosmeticId];
+    } else {
+      newLayers[cosmeticId] = true;
+    }
+    
+    setEquippedLayers(newLayers);
+    updateDocumentNonBlocking(userRef, { avatarLayers: newLayers });
+  };
 
   if (isLoading || !user || !userRef) {
     return (
@@ -108,44 +125,14 @@ export default function WardrobePage() {
     )
   }
 
-  const aiGeneratedCosmetics = (user.aiGeneratedCosmetics as Record<string, GeneratedCosmetic>) || {};
   const suggestedCosmetics = (user.suggestedCosmetics as GeneratedCosmetic[]) || [];
   const evolutionPath = user.evolutionPath as EvolutionPathData;
 
-  const ownedCosmetics = allOwnedCosmetics;
-  
-  // Filter by category
-  const filteredCosmetics = selectedCategory === 'all' 
-    ? ownedCosmetics 
-    : ownedCosmetics.filter(c => c.position === selectedCategory);
-
-  // Toggle cosmetic
-  const toggleCosmetic = async (cosmeticId: string) => {
-    if (!userRef) return;
-    const newEquipped = new Set(equippedCosmetics);
-    
-    if (newEquipped.has(cosmeticId)) {
-      newEquipped.delete(cosmeticId);
-    } else {
-      newEquipped.add(cosmeticId);
-    }
-    
-    setEquippedCosmetics(newEquipped);
-    
-    // Update Firestore
-    try {
-      await updateDoc(userRef, {
-        [`avatarLayers.${cosmeticId}`]: !equippedCosmetics.has(cosmeticId),
-      });
-    } catch (error) {
-      console.error('Failed to update cosmetic:', error);
-    }
-  };
+  const filteredCosmetics = allOwnedCosmetics; // In a future step, we can add category filtering here.
 
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 font-headline">Your Wardrobe</h1>
           <p className="text-muted-foreground">
@@ -153,13 +140,12 @@ export default function WardrobePage() {
           </p>
         </div>
 
-        {/* Stats Banner */}
         <Card className="mb-8 bg-gradient-to-r from-primary/10 to-accent/10 border-border">
           <CardContent className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <Activity className="w-8 h-8 mx-auto mb-2 text-green-400" />
-                <div className="text-2xl font-bold">{ownedCosmetics.length}</div>
+                <div className="text-2xl font-bold">{allOwnedCosmetics.length}</div>
                 <div className="text-sm text-muted-foreground">Cosmetics Owned</div>
               </div>
               <div className="text-center">
@@ -182,7 +168,6 @@ export default function WardrobePage() {
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Avatar Preview */}
           <div className="lg:col-span-1">
             <Card className="sticky top-8 bg-card">
               <CardHeader>
@@ -190,23 +175,22 @@ export default function WardrobePage() {
                 <CardDescription>Your current look</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                <TwinskieAvatar user={user} size="lg" />
+                <TwinskieAvatar user={{...user, avatarLayers: equippedLayers}} size="lg" />
               </CardContent>
               <CardContent>
                 <div className="text-sm text-muted-foreground text-center">
-                  {equippedCosmetics.size} cosmetics equipped
+                  {Object.keys(equippedLayers).length} cosmetics equipped
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Cosmetics Grid */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="owned" className="space-y-6">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="owned">
                   <Check className="w-4 h-4 mr-2" />
-                  Owned ({ownedCosmetics.length})
+                  Owned ({allOwnedCosmetics.length})
                 </TabsTrigger>
                 <TabsTrigger value="coming-soon">
                   <Lock className="w-4 h-4 mr-2" />
@@ -214,35 +198,12 @@ export default function WardrobePage() {
                 </TabsTrigger>
               </TabsList>
 
-              {/* Owned Cosmetics */}
               <TabsContent value="owned" className="space-y-6">
-                {/* Category Filter */}
-                <div className="flex gap-2 flex-wrap">
-                  <Button 
-                    variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory('all')}
-                  >
-                    All
-                  </Button>
-                  {['head', 'face', 'body', 'background', 'aura', 'border', 'glow'].map(category => (
-                    <Button
-                      key={category}
-                      variant={selectedCategory === category ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSelectedCategory(category)}
-                    >
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
-                    </Button>
-                  ))}
-                </div>
-
-                {/* Cosmetics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {filteredCosmetics.map((cosmetic) => {
                     const rarity = cosmetic.rarity || 'common';
                     const RarityIcon = RARITY_ICONS[rarity] || Star;
-                    const isEquipped = equippedCosmetics.has(cosmetic.id);
+                    const isEquipped = equippedLayers[cosmetic.id] === true;
                     
                     return (
                       <Card 
@@ -270,16 +231,19 @@ export default function WardrobePage() {
                                 dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
                               />
                             )}
+                             {cosmetic.source === 'static' && (cosmetic as CosmeticItem).imageUrl && (
+                              <img src={(cosmetic as CosmeticItem).imageUrl} alt={cosmetic.name} className="w-16 h-16 flex-shrink-0 object-contain" />
+                            )}
                           </div>
                         </CardHeader>
                         <CardContent>
                           <p className="text-sm text-muted-foreground mb-2">
                             {cosmetic.description}
                           </p>
-                          {cosmetic.earnedThrough && (
+                          {(cosmetic as any).earnedThrough && (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                 <Activity className="w-3 h-3" />
-                                <span>Earned through {cosmetic.earnedThrough}</span>
+                                <span>Earned through {(cosmetic as any).earnedThrough}</span>
                             </div>
                           )}
                         </CardContent>
@@ -292,16 +256,15 @@ export default function WardrobePage() {
                   <Card>
                     <CardContent className="p-12 text-center">
                       <Sparkles className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                      <h3 className="text-xl font-bold mb-2">No cosmetics here</h3>
+                      <h3 className="text-xl font-bold mb-2">Wardrobe is Empty</h3>
                       <p className="text-muted-foreground">
-                        No cosmetics in the '{selectedCategory}' category. Keep playing to earn more!
+                        Keep playing to earn new cosmetics!
                       </p>
                     </CardContent>
                   </Card>
                 )}
               </TabsContent>
 
-              {/* Coming Soon Cosmetics */}
               <TabsContent value="coming-soon" className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {suggestedCosmetics.map((cosmetic, index) => {
@@ -359,5 +322,3 @@ export default function WardrobePage() {
     </div>
   );
 }
-
-    
