@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
@@ -162,6 +161,41 @@ export default function WardrobePage() {
     }
   };
 
+  const handleRevertToBase = async () => {
+    if (!user || !userRef) return;
+    
+    if (user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl) {
+      setIsGenerating(true); // Reuse the same loading state
+      try {
+        await updateDocumentNonBlocking(userRef, {
+          avatarUrl: user.baseAvatarUrl,
+          avatarLayers: {}, // Clear all equipped layers
+        });
+
+        setEquippedLayers({}); // Update local state to match
+
+        toast({
+          title: 'Avatar Reset',
+          description: 'Your Twinskie has been reverted to its base form.',
+        });
+
+      } catch (error) {
+        console.error('Failed to revert to base avatar:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Could not revert your avatar. Please try again.',
+        });
+      } finally {
+        setIsGenerating(false);
+      }
+    } else {
+        toast({
+            description: 'Your avatar is already in its base form.',
+        });
+    }
+  };
+
 
   if (isLoading || !user || !userRef) {
     return (
@@ -225,10 +259,15 @@ export default function WardrobePage() {
                 <TwinskieAvatar user={user} size="lg" />
               </CardContent>
               <CardContent>
-                 <Button onClick={handleApplyChanges} disabled={isGenerating} className="w-full">
-                    {isGenerating ? <Loader2 className="mr-2 animate-spin"/> : <Wand2 className="mr-2"/>}
-                    {isGenerating ? 'Generating...' : 'Apply & Generate Avatar'}
-                </Button>
+                 <div className="flex flex-col gap-2">
+                    <Button onClick={handleApplyChanges} disabled={isGenerating} className="w-full">
+                        {isGenerating ? <Loader2 className="mr-2 animate-spin"/> : <Wand2 className="mr-2"/>}
+                        {isGenerating ? 'Generating...' : 'Finalize Changes'}
+                    </Button>
+                     <Button onClick={handleRevertToBase} disabled={isGenerating} variant="outline" className="w-full">
+                        Base Twinskie
+                    </Button>
+                 </div>
               </CardContent>
             </Card>
           </div>
@@ -366,4 +405,3 @@ export default function WardrobePage() {
       </div>
     </div>
   );
-}
