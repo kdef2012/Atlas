@@ -1,6 +1,7 @@
 
 'use client';
 
+import Image from 'next/image';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Gem, Store, PlusCircle, Trash2 } from "lucide-react";
@@ -49,6 +50,7 @@ export function StoreItemList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Preview</TableHead>
                             <TableHead>Item Name</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead>Price</TableHead>
@@ -59,6 +61,7 @@ export function StoreItemList() {
                          {isLoading ? (
                             [...Array(3)].map((_, i) => (
                                 <TableRow key={i}>
+                                    <TableCell><Skeleton className="h-10 w-10" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-32" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-48" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
@@ -67,6 +70,15 @@ export function StoreItemList() {
                             ))
                         ) : items?.map(item => (
                             <TableRow key={item.id}>
+                                <TableCell>
+                                    {item.imageUrl ? (
+                                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="rounded-md object-cover bg-secondary" />
+                                    ) : (
+                                        <div className="w-10 h-10 flex items-center justify-center bg-secondary rounded-md">
+                                            <Store className="w-5 h-5 text-muted-foreground" />
+                                        </div>
+                                    )}
+                                </TableCell>
                                 <TableCell>
                                     <div className="font-medium">{item.name}</div>
                                 </TableCell>
@@ -117,5 +129,3 @@ export function StoreItemList() {
         </Card>
     );
 }
-
-    
