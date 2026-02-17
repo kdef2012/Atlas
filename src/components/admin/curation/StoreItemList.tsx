@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { EditStoreItemDialog } from "./EditStoreItemDialog";
+import { STORE_ITEM_ICONS } from '@/lib/types';
 
 export function StoreItemList() {
     const firestore = useFirestore();
@@ -50,9 +51,8 @@ export function StoreItemList() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Preview</TableHead>
                             <TableHead>Item Name</TableHead>
-                            <TableHead>Description</TableHead>
+                            <TableHead>AI Description</TableHead>
                             <TableHead>Price</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -61,60 +61,56 @@ export function StoreItemList() {
                          {isLoading ? (
                             [...Array(3)].map((_, i) => (
                                 <TableRow key={i}>
-                                    <TableCell><Skeleton className="h-10 w-10" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-32" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-48" /></TableCell>
                                     <TableCell><Skeleton className="h-6 w-16" /></TableCell>
                                     <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                                 </TableRow>
                             ))
-                        ) : items?.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell>
-                                    {item.imageUrl ? (
-                                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="rounded-md object-cover bg-secondary" />
-                                    ) : (
-                                        <div className="w-10 h-10 flex items-center justify-center bg-secondary rounded-md">
-                                            <Store className="w-5 h-5 text-muted-foreground" />
+                        ) : items?.map(item => {
+                            const Icon = STORE_ITEM_ICONS[item.icon] || Store;
+                            return (
+                                <TableRow key={item.id}>
+                                    <TableCell>
+                                        <div className="font-medium flex items-center gap-2">
+                                            <Icon className="w-4 h-4 text-muted-foreground"/>
+                                            {item.name}
                                         </div>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    <div className="font-medium">{item.name}</div>
-                                </TableCell>
-                                <TableCell>
-                                    <p className="text-sm text-muted-foreground">{item.description}</p>
-                                </TableCell>
-                                <TableCell>
-                                    <div className="flex items-center gap-1 font-semibold">
-                                        <Gem className="w-4 h-4 text-accent" />
-                                        {item.price}
-                                    </div>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                    <EditStoreItemDialog item={item} />
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the item "{item.name}" from the store.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                                    </TableCell>
+                                    <TableCell>
+                                        <p className="text-sm text-muted-foreground max-w-xs truncate">{item.visualDescription}</p>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1 font-semibold">
+                                            <Gem className="w-4 h-4 text-accent" />
+                                            {item.price}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <EditStoreItemDialog item={item} />
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the item "{item.name}" from the store.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(item)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </TableCell>
+                                </TableRow>
+                            )
+                        })}
                     </TableBody>
                 </Table>
             </CardContent>

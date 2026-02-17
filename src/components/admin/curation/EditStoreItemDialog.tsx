@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useFirestore, updateDocumentNonBlocking, addDocumentNonBlocking } from '@/firebase';
 import { doc, collection } from 'firebase/firestore';
 import { Loader2, Pencil } from 'lucide-react';
-import { StoreItem, STORE_ITEM_ICONS, CosmeticPosition } from '@/lib/types';
+import { StoreItem, STORE_ITEM_ICONS } from '@/lib/types';
 
 const formSchema = z.object({
   name: z.string().min(3, 'Item name must be at least 3 characters.').max(50, 'Item name is too long.'),
@@ -23,8 +23,7 @@ const formSchema = z.object({
   price: z.coerce.number().int().min(0, 'Price cannot be negative.'),
   icon: z.enum(Object.keys(STORE_ITEM_ICONS) as [keyof typeof STORE_ITEM_ICONS]),
   layerKey: z.string().min(3, 'Layer key is required.').regex(/^[a-z0-9_]+$/, 'Only lowercase letters, numbers, and underscores are allowed.'),
-  imageUrl: z.string().url('Must be a valid image URL.').optional().or(z.literal('')),
-  position: z.enum(['head', 'face', 'body', 'background', 'aura']),
+  visualDescription: z.string().min(10, 'Visual description is required for the AI to generate the item.'),
 });
 
 interface EditStoreItemDialogProps {
@@ -46,8 +45,7 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
       price: item?.price || 0,
       icon: item?.icon || 'RectangleHorizontal',
       layerKey: item?.layerKey || '',
-      imageUrl: item?.imageUrl || '',
-      position: item?.position || 'body',
+      visualDescription: item?.visualDescription || '',
     },
   });
 
@@ -105,8 +103,22 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Store Description</FormLabel>
                   <FormControl><Textarea {...field} /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="visualDescription"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Visual Description for AI</FormLabel>
+                  <FormControl><Textarea placeholder="e.g., a futuristic top hat with a glowing blue band" {...field} /></FormControl>
+                   <FormDescription>
+                    Describe the cosmetic for the image generation AI. Be specific.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -128,7 +140,7 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
                   name="icon"
                   render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Icon</FormLabel>
+                        <FormLabel>Store Icon</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
@@ -155,43 +167,6 @@ export function EditStoreItemDialog({ item, children }: EditStoreItemDialogProps
                   <FormControl><Input placeholder="e.g., cosmetic_shadow_cloak" {...field} disabled={isEditing} /></FormControl>
                    <FormDescription>A unique key used in the database. Cannot be changed after creation.</FormDescription>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="imageUrl"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Image URL</FormLabel>
-                  <FormControl><Input placeholder="https://example.com/image.png" {...field} /></FormControl>
-                   <FormDescription>
-                    Required for visual items. This must be a direct link to an image file (e.g., ending in .png, .jpg), not a webpage.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="position"
-              render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Render Position</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select a position" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                           {(['head', 'face', 'body', 'background', 'aura'] as CosmeticPosition[]).map(pos => (
-                                <SelectItem key={pos} value={pos}>{pos.charAt(0).toUpperCase() + pos.slice(1)}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormDescription>Where the cosmetic image should be layered on the avatar.</FormDescription>
-                    <FormMessage />
                 </FormItem>
               )}
             />

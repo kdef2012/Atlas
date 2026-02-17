@@ -41,6 +41,7 @@ export interface User {
   gender?: Gender;
   avatarStyle?: AvatarStyle;
   avatarUrl?: string;
+  baseAvatarUrl?: string;
   physicalStat: number;
   mentalStat: number;
   socialStat: number;
@@ -158,6 +159,7 @@ export interface CosmeticItem {
   id: string;
   name: string;
   description: string;
+  visualDescription: string;
   type: 'glow' | 'aura' | 'background' | 'border' | 'url-mod' | 'overlay';
   position?: CosmeticPosition;
   imageUrl?: string;
@@ -189,8 +191,7 @@ export interface StoreItem {
   price: number;
   icon: keyof typeof STORE_ITEM_ICONS;
   layerKey: string;
-  imageUrl?: string | '';
-  position: CosmeticPosition;
+  visualDescription: string;
 }
 
 export interface PublicLog {

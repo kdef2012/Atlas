@@ -6,6 +6,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'newbie_glow',
     name: 'Newbie Glow',
     description: 'Your first steps shine bright',
+    visualDescription: 'A faint, glowing green aura surrounding the character.',
     type: 'glow',
     boxShadow: '0 0 20px 5px rgba(34, 197, 94, 0.6), 0 0 40px 10px rgba(34, 197, 94, 0.4)',
     requirement: { type: 'starter', value: 1 },
@@ -14,6 +15,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'newbie_border',
     name: 'Newbie Frame',
     description: 'A fresh start',
+    visualDescription: 'A glowing green border frame around the avatar.',
     type: 'border',
     border: '3px solid rgba(34, 197, 94, 0.6)',
     requirement: { type: 'starter', value: 1 },
@@ -24,6 +26,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'performance_mode',
     name: 'Performance Mode',
     description: 'Faster loading with lower quality textures',
+    visualDescription: 'A rendering style with lower quality textures for faster performance.',
     type: 'url-mod',
     urlModifications: {
       textureAtlas: 512,
@@ -35,6 +38,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'balanced_mode',
     name: 'Balanced Quality',
     description: 'Good balance of quality and performance',
+    visualDescription: 'A rendering style with a balance of quality and performance.',
     type: 'url-mod',
     urlModifications: {
       textureAtlas: 1024,
@@ -46,6 +50,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'ultra_quality',
     name: 'Ultra HD Mode',
     description: 'Maximum quality rendering for your avatar',
+    visualDescription: 'A rendering style with maximum texture quality.',
     type: 'url-mod',
     urlModifications: {
       textureAtlas: 2048,
@@ -57,6 +62,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'expressive_mode',
     name: 'Expressive Face',
     description: 'Enable advanced facial expression support',
+    visualDescription: 'An avatar with advanced facial expression capabilities.',
     type: 'url-mod',
     urlModifications: {
       morphTargets: ['ARKit', 'Oculus'],
@@ -67,6 +73,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 'a_pose',
     name: 'Power Stance',
     description: 'Display your avatar in an A-pose',
+    visualDescription: 'The character is standing in a stiff A-pose.',
     type: 'url-mod',
     urlModifications: {
       pose: 'A',
@@ -77,6 +84,7 @@ export const COSMETIC_ITEMS: CosmeticItem[] = [
     id: 't_pose',
     name: 'T-Pose Dominance',
     description: 'Assert dominance with the classic T-pose',
+    visualDescription: 'The character is standing in a stiff T-pose.',
     type: 'url-mod',
     urlModifications: {
       pose: 'T',

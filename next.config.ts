@@ -42,12 +42,6 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'img.stockcake.com',
-        port: '',
-        pathname: '/**',
-      }
     ],
   },
   experimental: {

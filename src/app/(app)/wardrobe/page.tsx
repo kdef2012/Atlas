@@ -15,6 +15,8 @@ import {
   TrendingUp,
   Activity,
   Zap,
+  Wand2,
+  Loader2
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { doc } from 'firebase/firestore';
@@ -23,6 +25,10 @@ import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem, StoreIte
 import { Skeleton } from '@/components/ui/skeleton';
 import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
 import { collection } from 'firebase/firestore';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { generateAvatarImage } from '@/actions/generateAvatarImage';
+
 
 const RARITY_COLORS: Record<string, string> = {
   common: 'text-gray-400 border-gray-400',
@@ -40,18 +46,20 @@ const RARITY_ICONS: Record<string, React.ElementType> = {
   legendary: Crown,
 };
 
-type AnyCosmetic = (GeneratedCosmetic & { source: 'ai', id: string, name: string, description: string, rarity: string }) | (CosmeticItem & { source: 'static', id: string, name: string, description: string, rarity: string, visualDescription?: string, position?: 'head' | 'face' | 'body' | 'background' | 'aura', color?: string });
+type AnyCosmetic = (GeneratedCosmetic & { source: 'ai' | 'static'; visualDescription: string; });
 
 export default function WardrobePage() {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
   const firestore = useFirestore();
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+  const { toast } = useToast();
 
   const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
   const { data: storeItems, isLoading: areStoreItemsLoading } = useCollection<StoreItem>(storeItemsCollection);
   
   const [equippedLayers, setEquippedLayers] = useState<Record<string, boolean>>({});
+  const [isGenerating, setIsGenerating] = useState(false);
   
   const isLoading = isAuthLoading || isUserDocLoading || areStoreItemsLoading;
 
@@ -61,59 +69,93 @@ export default function WardrobePage() {
     }
   }, [user]);
 
-  const allOwnedCosmetics = useMemo(() => {
+  const allOwnedCosmetics: AnyCosmetic[] = useMemo(() => {
     if (!user) return [];
     
     const cosmetics: AnyCosmetic[] = [];
 
     // Add AI-generated cosmetics
     if (user.aiGeneratedCosmetics) {
-      Object.entries(user.aiGeneratedCosmetics).forEach(([id, cosmetic]) => {
-        cosmetics.push({ ...cosmetic, id, source: 'ai' });
+      Object.values(user.aiGeneratedCosmetics).forEach((cosmetic) => {
+        cosmetics.push({ ...cosmetic, source: 'ai' });
       });
     }
 
     // Combine starter items with dynamic store items that are owned
-    const ownedStoreItems = (storeItems || []).filter(item => user.ownedCosmetics?.[item.layerKey]);
-    const dynamicCosmetics: CosmeticItem[] = ownedStoreItems.map(item => ({
-      id: item.layerKey,
-      name: item.name,
-      description: item.description,
-      type: 'overlay',
-      imageUrl: item.imageUrl,
-      position: item.position,
-    }));
+    const allPurchasableCosmetics = [...COSMETIC_ITEMS, ...(storeItems || [])];
     
-    const allPurchasableCosmetics = [...COSMETIC_ITEMS, ...dynamicCosmetics];
-
     allPurchasableCosmetics.forEach(item => {
-        const isOwnedStarter = item.requirement?.type === 'starter' && user.level >= 1;
-        // The check for dynamicCosmetics is already handled by filtering storeItems
-        if (isOwnedStarter || dynamicCosmetics.some(dc => dc.id === item.id)) {
-             cosmetics.push({
-                ...item,
-                source: 'static',
-                rarity: item.costGems ? (item.costGems > 100 ? 'epic' : 'rare') : 'uncommon',
-             } as AnyCosmetic);
-        }
+      const isOwnedStarter = 'requirement' in item && item.requirement?.type === 'starter';
+      const isOwnedPurchase = 'layerKey' in item && user.ownedCosmetics?.[item.layerKey];
+      
+      if (isOwnedStarter || isOwnedPurchase) {
+           cosmetics.push({
+              ...(item as any), // Cast to avoid type conflicts between StoreItem and CosmeticItem
+              id: 'layerKey' in item ? item.layerKey : item.id,
+              source: 'static',
+              rarity: ('price' in item && item.price > 100) ? 'epic' : ('price' in item && item.price > 20) ? 'rare' : 'uncommon',
+           });
+      }
     });
 
     return cosmetics;
   }, [user, storeItems]);
 
-  const toggleCosmetic = (cosmeticId: string) => {
-    if (!userRef) return;
+  const handleToggleCosmetic = (cosmeticId: string) => {
     const newLayers = { ...equippedLayers };
-    
     if (newLayers[cosmeticId]) {
       delete newLayers[cosmeticId];
     } else {
       newLayers[cosmeticId] = true;
     }
-    
     setEquippedLayers(newLayers);
-    updateDocumentNonBlocking(userRef, { avatarLayers: newLayers });
   };
+  
+  const handleApplyChanges = async () => {
+    if (!user || !userRef) return;
+    setIsGenerating(true);
+    
+    toast({
+      title: 'Generating New Avatar...',
+      description: 'The AI is rendering your new look. This may take a moment.',
+    });
+
+    try {
+      // First, update the avatarLayers in Firestore so the server action can read them
+      await updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
+
+      if (!user.baseAvatarUrl) {
+        throw new Error("Base avatar is missing. Cannot generate new image.");
+      }
+
+      // Collect visual descriptions
+      const activeDescriptions = Object.keys(equippedLayers)
+        .map(layerId => allOwnedCosmetics.find(c => c.id === layerId)?.visualDescription)
+        .filter((d): d is string => !!d);
+
+      // Call the server action
+      await generateAvatarImage({
+        baseAvatarDataUri: user.baseAvatarUrl,
+        cosmeticVisualDescriptions: activeDescriptions,
+      });
+
+      toast({
+        title: '✨ Avatar Updated!',
+        description: 'Your new look has been saved.',
+      });
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: 'destructive',
+        title: 'Generation Failed',
+        description: 'Could not generate your new avatar. Please try again.',
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
 
   if (isLoading || !user || !userRef) {
     return (
@@ -127,16 +169,15 @@ export default function WardrobePage() {
 
   const suggestedCosmetics = (user.suggestedCosmetics as GeneratedCosmetic[]) || [];
   const evolutionPath = user.evolutionPath as EvolutionPathData;
-
-  const filteredCosmetics = allOwnedCosmetics; // In a future step, we can add category filtering here.
+  const filteredCosmetics = allOwnedCosmetics; 
 
   return (
     <div className="p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 font-headline">Your Wardrobe</h1>
-          <p className="text-muted-foreground">
-            Customize your Twinskie by equipping cosmetics earned on your journey. New AI-generated cosmetics are unlocked by hitting activity milestones, not by leveling up. Your Evolution Level tracks your overall progress.
+           <p className="text-muted-foreground">
+            Customize your Twinskie by equipping cosmetics. New AI-generated items are unlocked via activity milestones.
           </p>
         </div>
 
@@ -175,12 +216,13 @@ export default function WardrobePage() {
                 <CardDescription>Your current look</CardDescription>
               </CardHeader>
               <CardContent className="flex justify-center">
-                <TwinskieAvatar user={{...user, avatarLayers: equippedLayers}} size="lg" />
+                <TwinskieAvatar user={user} size="lg" />
               </CardContent>
               <CardContent>
-                <div className="text-sm text-muted-foreground text-center">
-                  {Object.keys(equippedLayers).length} cosmetics equipped
-                </div>
+                 <Button onClick={handleApplyChanges} disabled={isGenerating} className="w-full">
+                    {isGenerating ? <Loader2 className="mr-2 animate-spin"/> : <Wand2 className="mr-2"/>}
+                    {isGenerating ? 'Generating...' : 'Apply & Generate Avatar'}
+                </Button>
               </CardContent>
             </Card>
           </div>
@@ -211,7 +253,7 @@ export default function WardrobePage() {
                         className={`bg-card border-2 transition-all cursor-pointer hover:scale-105 ${
                           isEquipped ? 'border-green-500 bg-green-900/20' : 'border-border'
                         }`}
-                        onClick={() => toggleCosmetic(cosmetic.id)}
+                        onClick={() => handleToggleCosmetic(cosmetic.id)}
                       >
                         <CardHeader>
                           <div className="flex items-start justify-between">
@@ -230,9 +272,6 @@ export default function WardrobePage() {
                                 className="w-16 h-16 flex-shrink-0"
                                 dangerouslySetInnerHTML={{ __html: cosmetic.svgCode }}
                               />
-                            )}
-                             {cosmetic.source === 'static' && (cosmetic as CosmeticItem).imageUrl && (
-                              <img src={(cosmetic as CosmeticItem).imageUrl} alt={cosmetic.name} className="w-16 h-16 flex-shrink-0 object-contain" />
                             )}
                           </div>
                         </CardHeader>

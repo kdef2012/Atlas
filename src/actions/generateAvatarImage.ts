@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -10,7 +11,6 @@ import { editImageWithGPTImage } from '@/ai/openai';
 export interface GenerateAvatarImageInput {
   baseAvatarDataUri: string;
   cosmeticVisualDescriptions: string[];
-  quality?: 'low' | 'medium' | 'high';
 }
 
 // Define the output type for the function
@@ -25,8 +25,9 @@ export async function generateAvatarImage(
     throw new Error('Base avatar image is required');
   }
 
-  if (!input.cosmeticVisualDescriptions.length) {
-    throw new Error('At least one cosmetic description is required');
+  // If no cosmetics, we can just return the base image.
+  if (!input.cosmeticVisualDescriptions || input.cosmeticVisualDescriptions.length === 0) {
+    return { generatedAvatarDataUri: input.baseAvatarDataUri };
   }
 
   const cosmeticsList = input.cosmeticVisualDescriptions
@@ -39,16 +40,16 @@ ${cosmeticsList}
 
 CRITICAL REQUIREMENTS:
 - Maintain the exact same 3D render quality and lighting as the original
-- Keep the original character's background
-- Preserve the character's pose, expression, and base clothing
-- Only add/modify the specified cosmetic items
-- Ensure cosmetics look naturally integrated with the 3D avatar style
-- Output ONLY the edited image with no text, watermarks, or explanations`;
+- The original image has a transparent background; ensure the output also has a fully transparent background.
+- Preserve the character's pose, expression, and base clothing.
+- Only add/modify the specified cosmetic items.
+- Ensure cosmetics look naturally integrated with the 3D avatar style.
+- Output ONLY the edited image with no text, watermarks, or explanations.`;
 
   const generatedAvatarDataUri = await editImageWithGPTImage({
     imageDataUri: input.baseAvatarDataUri,
     prompt,
-    quality: input.quality ?? 'medium',
+    quality: 'high', // Use high quality for the final result
   });
 
   if (!generatedAvatarDataUri) {

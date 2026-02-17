@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -159,12 +160,13 @@ export default function CustomizeAvatarPage() {
 
     const userRef = doc(firestore, 'users', user.uid);
     
-    const updates: { avatarUrl?: string; avatarStyle: string } = {
+    const updates: { avatarUrl?: string; baseAvatarUrl?: string; avatarStyle: string } = {
       avatarStyle: avatarUrl ? 'readyplayerme' : 'default',
     };
 
     if (avatarUrl) {
       updates.avatarUrl = avatarUrl;
+      updates.baseAvatarUrl = avatarUrl; // Set both initially
     }
     
     updateDocumentNonBlocking(userRef, updates);
