@@ -70,7 +70,6 @@ const navItems = [
   { href: "/mentorships", label: "Mentorships", icon: BookUser },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
-  { href: "/test-avatar", label: "Avatar Test", icon: FlaskConical },
 ];
 
 const adminNavItems = [
