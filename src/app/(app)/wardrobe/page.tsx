@@ -124,7 +124,10 @@ export default function WardrobePage() {
       // First, update the avatarLayers in Firestore so the server action can read them
       await updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
 
-      if (!user.baseAvatarUrl) {
+      // Fallback to avatarUrl if baseAvatarUrl is missing.
+      const baseAvatar = user.baseAvatarUrl || user.avatarUrl;
+
+      if (!baseAvatar) {
         throw new Error("Base avatar is missing. Cannot generate new image.");
       }
 
@@ -133,11 +136,14 @@ export default function WardrobePage() {
         .map(layerId => allOwnedCosmetics.find(c => c.id === layerId)?.visualDescription)
         .filter((d): d is string => !!d);
 
-      // Call the server action
-      await generateAvatarImage({
-        baseAvatarDataUri: user.baseAvatarUrl,
+      // Call the server action to get the new image
+      const result = await generateAvatarImage({
+        baseAvatarDataUri: baseAvatar,
         cosmeticVisualDescriptions: activeDescriptions,
       });
+
+      // Update the active avatarUrl with the generated image
+      await updateDocumentNonBlocking(userRef, { avatarUrl: result.generatedAvatarDataUri });
 
       toast({
         title: '✨ Avatar Updated!',
