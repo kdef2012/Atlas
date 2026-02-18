@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -30,6 +31,7 @@ export async function generateFirstQuest(input: GenerateFirstQuestInput): Promis
 
 const firstQuestPrompt = ai.definePrompt({
   name: 'firstQuestPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateFirstQuestInputSchema},
   output: {schema: GenerateFirstQuestOutputSchema},
   prompt: `You are an expert in user onboarding and gamification. Your goal is to suggest an initial quest for a new user of the ATLAS app, an RPG that gamifies real life.
@@ -48,10 +50,7 @@ Consider these examples of very easy, auto-verifiable quests:
 
 Ensure that the quest aligns with the user's selected archetype to create a personalized experience.
 
-Respond with a quest name and quest description.
-
-Quest Name:
-Quest Description:`,
+Respond with a quest name and quest description.`,
 });
 
 const generateFirstQuestFlow = ai.defineFlow(

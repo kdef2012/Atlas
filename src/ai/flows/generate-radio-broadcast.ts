@@ -13,7 +13,6 @@ import { z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
 import wav from 'wav';
 import { collection, addDoc } from 'firebase/firestore';
-import { getFirestore } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase/index';
 
 // Define the input data schemas for the different types of news
@@ -65,8 +64,8 @@ export async function generateRadioBroadcast(
 // Define the prompt for the AI model
 const generateRadioScriptPrompt = ai.definePrompt({
   name: 'generateRadioScriptPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: GenerateRadioBroadcastInputSchema },
-  // The output of this prompt is just the script text
   output: { schema: z.object({ script: z.string() }) },
   prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
 
@@ -100,8 +99,7 @@ Your task is to generate a short (2-3 minute) radio script based on the followin
 3.  Talk about the trending skills. Why do you think they're popular? Give a shout-out to the communities practicing them.
 4.  Celebrate the pioneers of new skills. Emphasize how they are expanding the world for everyone.
 5.  End with a positive and motivational sign-off.
-6.  Keep the language exciting and use in-world slang (e.g., "log those stats," "climbing the leaderboards," "sync up," "new data streams").
-7.  The final output should be a single JSON object containing the entire script in the 'script' field.
+6.  The final output should be a single JSON object containing the entire script in the 'script' field.
 
 Now, generate the broadcast script!`,
 });
@@ -194,5 +192,3 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     };
   }
 );
-
-    

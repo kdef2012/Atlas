@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -13,7 +14,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { SkillCategory } from '@/lib/types';
 
 // Define the schema for each individual quest object in the output
 const QuestSchema = z.object({
@@ -53,6 +53,7 @@ export async function generateQuests(input: GenerateQuestsInput): Promise<Genera
 // Define the prompt for the AI model
 const generateQuestsPrompt = ai.definePrompt({
   name: 'generateQuestsPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateQuestsInputSchema},
   output: {schema: GenerateQuestsOutputSchema},
   prompt: `You are a creative Dungeon Master for a real-life RPG called ATLAS. Your job is to generate a list of three engaging and challenging quests for a user.
@@ -77,17 +78,6 @@ The quests should be personalized based on the user's profile. They should encou
 5.  The quest 'name' should be catchy and short.
 6.  The 'description' should be a clear, single-sentence call to action.
 7.  The 'category' must be one of the five valid skill categories.
-
-**Example for a Level 5 Titan with high Physical stats:**
-- name: "The Push-Up Gauntlet"
-  description: "Complete 100 push-ups in a single day, breaking them into sets as needed."
-  category: "Physical"
-- name: "Meal Prep Master"
-  description: "Prepare your meals for the next three days to optimize your nutrition."
-  category: "Practical"
-- name: "Team Rally"
-  description: "Organize a workout session with a friend or your Fireteam."
-  category: "Social"
 
 Now, generate a new set of three quests for the provided user profile.`,
 });

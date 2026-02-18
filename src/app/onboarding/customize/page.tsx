@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -5,9 +6,9 @@ import { useRouter, useSearchParams, redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
-import { doc } from 'firebase/firestore';
-import { Loader2, ArrowRight, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'lucide-react';
+import { useFirestore, useUser } from '@/firebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
@@ -56,7 +57,6 @@ export default function CustomizeAvatarPage() {
     });
 
     try {
-      // Step 1: Generate the base image with uniform background
       const genResult = await generateBaseAvatar({
         gender,
         complexionName: complexion.name,
@@ -66,7 +66,6 @@ export default function CustomizeAvatarPage() {
         height,
       });
 
-      // Step 2: Automatically remove the background for a clean transparent PNG
       toast({
         title: 'Optimizing for the Nebula...',
         description: 'Removing background and isolating biological signature.',
@@ -101,21 +100,26 @@ export default function CustomizeAvatarPage() {
     }
 
     setIsLoading(true);
-    const userRef = doc(firestore, 'users', user.uid);
-    const updates = { 
-      avatarStyle: 'guided_forge',
-      avatarUrl: avatarUrl,
-      baseAvatarUrl: avatarUrl,
-      gender: gender === 'Non-Binary' ? undefined : gender // Match our User type
-    };
+    try {
+      const userRef = doc(firestore, 'users', user.uid);
+      const updates = { 
+        avatarStyle: 'guided_forge',
+        avatarUrl: avatarUrl,
+        baseAvatarUrl: avatarUrl,
+        gender: gender === 'Non-Binary' ? undefined : gender 
+      };
 
-    updateDocumentNonBlocking(userRef, updates);
+      // Use blocking update here to ensure AppLayout sees the change before redirecting
+      await updateDoc(userRef, updates);
 
-    setTimeout(() => {
       toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
+    } catch (error) {
+      console.error("Failed to save profile:", error);
+      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not sync your system profile.' });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   if (!user) {
@@ -165,7 +169,6 @@ export default function CustomizeAvatarPage() {
                   value={gender} 
                   onValueChange={(v: any) => {
                     setGender(v);
-                    // Reset hair if switching gender to ensure it's valid
                     setHairStyle(v === 'Female' ? FEMALE_HAIR_STYLES[0] : MALE_HAIR_STYLES[0]);
                   }} 
                   className="grid grid-cols-1 sm:grid-cols-3 gap-4"
@@ -302,10 +305,10 @@ export default function CustomizeAvatarPage() {
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button onClick={() => setAvatarUrl(null)} variant="outline" size="sm" className="font-bold border-2">
+                      <Button onClick={() => setAvatarUrl(null)} variant="outline" size="sm" className="font-bold border-2" disabled={isLoading}>
                         Re-calibrate
                       </Button>
-                      <Button onClick={handleProceed} size="sm" className="font-bold border-2 border-primary group px-8">
+                      <Button onClick={handleProceed} size="sm" className="font-bold border-2 border-primary group px-8" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
                         Confirm Profile
                       </Button>

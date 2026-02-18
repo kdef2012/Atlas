@@ -79,11 +79,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       // If a user document *does* exist but they haven't finished onboarding (no avatarStyle set)
       // and they navigate away from onboarding, bring them back to the customize step.
       else if (user && !user.avatarStyle && !pathname.startsWith('/onboarding')) {
-        router.replace(`/onboarding/customize?archetype=${user.archetype}`);
+        router.replace(`/onboarding/archetype`);
       }
-      // If the user *has* completed onboarding (has an avatarStyle) but tries to go back to an onboarding page,
-      // redirect them to the dashboard.
-      else if (user && user.avatarStyle && pathname.startsWith('/onboarding')) {
+      // If the user *has* completed onboarding (has an avatarStyle) but tries to go back to onboarding START,
+      // redirect them to the dashboard. We allow /welcome and /reward to be finished.
+      else if (user && user.avatarStyle && pathname === '/onboarding/archetype') {
         router.replace('/dashboard');
       }
     }
@@ -132,5 +132,3 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </SidebarProvider>
   );
 }
-
-    

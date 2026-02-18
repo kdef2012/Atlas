@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -12,7 +13,6 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { SkillCategory } from '@/lib/types';
 
 // Define the schema for each individual challenge in the output
 const ChallengeSchema = z.object({
@@ -48,6 +48,7 @@ export async function generateFactionChallenges(): Promise<GenerateFactionChalle
 // Define the prompt for the AI model
 const generateChallengesPrompt = ai.definePrompt({
   name: 'generateChallengesPrompt',
+  model: 'googleai/gemini-1.5-flash',
   output: {schema: GenerateFactionChallengesOutputSchema},
   prompt: `You are the Game Master for a real-life RPG called ATLAS. Your task is to create a new set of 5 weekly "Faction Challenges".
 
@@ -57,13 +58,6 @@ Each challenge is tied to one of the five core skill Factions: Physical, Mental,
 1.  Generate exactly FIVE unique challenges, one for each Faction.
 2.  The 'challengeDescription' should be a clear, measurable goal that users can contribute to by logging activities.
 3.  Be creative and thematic! The descriptions should be engaging and fit the tone of a futuristic RPG. Avoid generic goals like "log the most XP". Focus on specific, fun activities.
-
-**Example Output:**
-- faction: "Physical", challengeDescription: "The Grav-Cycle Marathon: Log the most distance cycling this week."
-- faction: "Mental", challengeDescription: "Neural Pathway Expansion: Complete the most new skill unlocks in the Nebula."
-- faction: "Social", challengeDescription: "Alliance Building: Log the most activities with a Fireteam member."
-- faction: "Practical", challengeDescription: "The Chicken Dish Challenge: Log the most varied and creative chicken-based meals."
-- faction: "Creative", challengeDescription: "The Muse's Embrace: Log the most time practicing a new creative skill."
 
 Now, generate a new set of five Faction Challenges.`,
 });

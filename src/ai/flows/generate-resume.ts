@@ -43,6 +43,7 @@ export async function generateResume(
 
 const generateResumePrompt = ai.definePrompt({
   name: 'generateResumePrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateResumeInputSchema},
   output: {schema: GenerateResumeOutputSchema},
   prompt: `You are an expert resume writer and career coach AI. Your task is to create a professional, skills-based resume for a user of the ATLAS app, which gamifies real-life activities. You must translate their in-app data into compelling, professional language.
@@ -66,14 +67,11 @@ const generateResumePrompt = ai.definePrompt({
     *   Create sub-sections for each skill category where the user has skills (e.g., "Technical Skills," "Creative Skills," "Physical Skills"). List the relevant skills under each.
 4.  **Experience/Projects Section:**
     *   This is the most important section. Do NOT just list the skills again.
-    *   **Synthesize activities into project-like experiences.** Group related skills into thematic projects. For example, if a user has 'Coding,' 'Web Development,' and 'UI/UX Design,' create a project like "Full-Stack Web Application Development."
-    *   For each "project," write 2-3 bullet points describing accomplishments in professional terms. Quantify achievements using XP as a proxy for dedication (e.g., "Invested over 1500 XP in mastering front-end frameworks...").
-    *   **Example Transformation:** "Logged 'Running' (XP: 2000)" becomes "### Personal Fitness & Discipline: Consistently logged over 2000 experience points in personal fitness, demonstrating high levels of self-discipline, goal-setting, and perseverance."
+    *   **Synthesize activities into project-like experiences.** Group related skills into thematic projects.
+    *   For each "project," write 2-3 bullet points describing accomplishments in professional terms. Quantify achievements using XP as a proxy for dedication.
 5.  **Achievements/Traits Section:**
     *   List the user's earned traits under a sub-section titled "Key Traits."
-    *   Briefly explain what each trait signifies in a professional context (e.g., "Pioneer: Demonstrates initiative and innovation by discovering and charting new skills.").
-
-**Tone:** Professional, confident, and achievement-oriented. The goal is to create a document that the user could genuinely use for a job application.
+    *   Briefly explain what each trait signifies in a professional context.
 
 Now, generate the complete resume in Markdown.`,
 });
