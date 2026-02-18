@@ -1,9 +1,7 @@
-
 'use client';
 
 import { cn } from '@/lib/utils';
 import type { User } from '@/lib/types';
-import { Skeleton } from './ui/skeleton';
 
 interface TwinskieAvatarProps {
   user: User;
@@ -19,28 +17,37 @@ const SIZE_MAP = {
 };
 
 /**
- * The TwinskieAvatar component renders a single, pre-generated avatar image.
- * The complex work of layering cosmetics is handled by an AI image generation model,
- * which produces the final `avatarUrl`. This component simply displays that result.
+ * Standard TwinskieAvatar component.
+ * Displays the high-fidelity AI-generated render or the base Union Avatar.
  */
 export function TwinskieAvatar({ user, size = 'md', className }: TwinskieAvatarProps) {
   const dimensions = SIZE_MAP[size];
 
   if (!user.avatarUrl) {
     return (
-      <div className={cn("bg-secondary animate-pulse rounded-xl", dimensions, className)} />
+      <div className={cn("bg-secondary animate-pulse rounded-2xl flex items-center justify-center", dimensions, className)}>
+        <span className="text-muted-foreground font-headline font-bold">Lvl {user.level}</span>
+      </div>
     );
   }
 
   return (
     <div 
-        className={cn("relative flex items-center justify-center rounded-lg", dimensions, className)}
+        className={cn("relative flex items-center justify-center rounded-2xl overflow-hidden bg-card/50 backdrop-blur-sm border border-border shadow-inner", dimensions, className)}
     >
       <img
         src={user.avatarUrl}
-        alt={`${user.userName}'s Avatar`}
-        className="relative z-10 w-full h-full object-contain"
+        alt={`${user.userName}'s Twinskie`}
+        className="relative z-10 w-full h-full object-contain p-2"
       />
+      
+      {/* Dynamic glow based on archetype */}
+      <div className={cn(
+        "absolute inset-0 opacity-20 blur-2xl",
+        user.archetype === 'Titan' && "bg-red-500",
+        user.archetype === 'Sage' && "bg-blue-500",
+        user.archetype === 'Maverick' && "bg-yellow-500"
+      )} />
     </div>
   );
 }

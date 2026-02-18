@@ -1,6 +1,5 @@
 'use client';
 
-import { ReadyPlayerMeAvatar } from './ready-player-me';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -12,7 +11,8 @@ interface TwinskieAvatarCompactProps {
 }
 
 /**
- * TwinskieAvatarCompact - Small circular avatar for lists and cards
+ * TwinskieAvatarCompact - Small circular avatar for lists and cards.
+ * Now standardized for AI-generated images and Union Avatars.
  */
 export function TwinskieAvatarCompact({ 
   user, 
@@ -20,16 +20,14 @@ export function TwinskieAvatarCompact({
   className,
   showInactive = true
 }: TwinskieAvatarCompactProps) {
-  // Check if user is inactive (no activity in 24 hours)
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactive && user.lastLogTimestamp < twentyFourHoursAgo;
 
-  // Check if user has an avatar URL
   if (!user.avatarUrl) {
     return (
       <div 
         className={cn(
-          "flex items-center justify-center bg-muted rounded-full border",
+          "flex items-center justify-center bg-secondary rounded-full border border-border",
           isInactive && "opacity-50 grayscale",
           className
         )}
@@ -43,21 +41,22 @@ export function TwinskieAvatarCompact({
   }
 
   return (
-    <div className={cn("relative rounded-full overflow-hidden border-2 border-border", className)}>
-      <ReadyPlayerMeAvatar
-        avatarUrl={user.avatarUrl}
-        size={size}
-        scene="bust-portrait-v1"
+    <div 
+      className={cn("relative rounded-full overflow-hidden border-2 border-border bg-card shadow-sm", className)}
+      style={{ width: size, height: size }}
+    >
+      <img
+        src={user.avatarUrl}
+        alt={user.userName}
         className={cn(
-          "rounded-full",
+          "h-full w-full object-cover",
           isInactive && "opacity-50 grayscale"
         )}
       />
       
-      {/* Inactive indicator */}
       {isInactive && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/30 rounded-full">
-          <span className="text-[8px] font-bold text-white">OFFLINE</span>
+        <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px]">
+          <span className="text-[8px] font-black text-white tracking-tighter">OFFLINE</span>
         </div>
       )}
     </div>
