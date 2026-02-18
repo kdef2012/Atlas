@@ -2,6 +2,7 @@
 
 /**
  * @fileOverview Defines a server action to generate a high-fidelity 2D base avatar using GenAI.
+ * Forces a uniform AAA game aesthetic.
  */
 import { ai } from '@/ai/genkit';
 
@@ -21,6 +22,7 @@ export interface GenerateBaseAvatarOutput {
 export async function generateBaseAvatar(
   input: GenerateBaseAvatarInput
 ): Promise<GenerateBaseAvatarOutput> {
+  // STRICT PROMPT TEMPLATE for visual uniformity
   const prompt = `A professional 3D character portrait of a ${input.gender} with ${input.complexionName} skin (color reference hex: ${input.complexionHex}). 
   Hair style: ${input.hairStyle}. 
   Body type: ${input.bodyType}, height: ${input.height}. 
