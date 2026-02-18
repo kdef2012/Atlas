@@ -21,6 +21,35 @@ async function convertToRGBA(imageBuffer: Buffer): Promise<Buffer> {
 }
 
 /**
+ * Generate a new image from scratch using gpt-image-1.5
+ */
+export async function generateImageWithGPTImage({
+  prompt,
+  quality = 'standard',
+  size = '1024x1024',
+}: {
+  prompt: string;
+  quality?: 'standard' | 'hd';
+  size?: '1024x1024' | '1024x1792' | '1792x1024';
+}): Promise<string> {
+  const response = await openai.images.generate({
+    model: 'gpt-image-1.5',
+    prompt,
+    n: 1,
+    size: size as any,
+    quality,
+    response_format: 'b64_json',
+  });
+
+  const b64Image = response.data[0]?.b64_json;
+  if (!b64Image) {
+    throw new Error('No image returned from gpt-image-1.5 generation');
+  }
+
+  return `data:image/png;base64,${b64Image}`;
+}
+
+/**
  * Edit an existing image using gpt-image-1.5
  */
 export async function editImageWithGPTImage({
@@ -53,7 +82,7 @@ export async function editImageWithGPTImage({
     image: imageFile,
     prompt,
     n: 1,
-    size,
+    size: size as any,
     quality,
   });
 
