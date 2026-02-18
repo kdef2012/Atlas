@@ -13,8 +13,7 @@
         "userName": { "type": "string", "description": "The user's display name or username." },
         "gender": { "type": "string", "enum": ["Male", "Female"], "description": "The user's selected gender identity." },
         "avatarStyle": { "type": "string", "description": "The user's selected avatar style." },
-        "avatarUrl": { "type": "string", "description": "The URL for the user's currently rendered avatar portrait." },
-        "baseAvatarUrl": { "type": "string", "description": "The URL for the user's base, unedited avatar portrait." },
+        "avatarUrl": { "type": "string", "description": "The URL for the user's selected avatar portrait." },
         "physicalStat": { "type": "number", "description": "The user's physical skill points" },
         "mentalStat": { "type": "number", "description": "The user's mental skill points." },
         "socialStat": { "type": "number", "description": "The user's social skill points." },
@@ -32,6 +31,19 @@
         "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." }
       },
       "required": ["id"]
+    },
+    "SavedAvatar": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Saved Avatar",
+      "type": "object",
+      "description": "Stores a unique AI-generated avatar variation for a user's wardrobe.",
+      "properties": {
+        "id": { "type": "string", "description": "The unique signature of the combined assets." },
+        "avatarUrl": { "type": "string", "description": "The URL of the generated image." },
+        "equippedLayers": { "type": "object", "description": "The combination of layers used." },
+        "createdAt": { "type": "number", "description": "Timestamp of creation." }
+      },
+      "required": ["id", "avatarUrl", "equippedLayers", "createdAt"]
     },
     "UserSettings": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -120,7 +132,7 @@
     "Guild": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Guild", "type": "object", "description": "Represents a large, global community focused on a specific skill, with a collective weekly challenge.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Guild." }, "name": { "type": "string", "description": "The name of the Guild (e.g., 'Guild of Running')." }, "skillId": { "type": "string", "description": "The ID of the skill this guild is associated with." }, "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"], "description": "The skill category this Guild is focused on." }, "region": { "type": "string", "description": "The region where the Guild was first founded." }, "members": { "type": "object", "description": "A map of user IDs who are members of this Guild. Keys are user IDs, values are true.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } }, "challengeGoal": { "type": "number", "description": "The collective XP target for the current weekly challenge." }, "challengeProgress": { "type": "number", "description": "The current collective XP contributed by all members." }, "challengeEndsAt": { "type": "number", "description": "The Unix timestamp when the current challenge cycle ends." }, "isBuffActive": { "type": "boolean", "description": "Whether the Guild-wide XP buff is currently active." } }, "required": ["id", "name", "skillId", "category", "region", "challengeGoal", "challengeProgress", "challengeEndsAt", "isBuffActive"] },
     "Suggestion": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Suggestion", "type": "object", "description": "Represents a user-submitted suggestion for the app.", "properties": { "id": { "type": "string" }, "userId": { "type": "string" }, "userName": { "type": "string" }, "suggestion": { "type": "string" }, "timestamp": { "type": "number" }, "isArchived": { "type": "boolean" } }, "required": ["id", "userId", "userName", "suggestion", "timestamp", "isArchived"] },
     "GlobalEvent": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Global Event", "type": "object", "description": "Represents a limited-time global event for all users.", "properties": { "id": { "type": "string", "description": "Unique identifier for the event." }, "title": { "type": "string", "description": "The name of the event." }, "description": { "type": "string", "description": "A brief explanation of the event." }, "startAt": { "type": "number", "description": "The Unix timestamp when the event starts." }, "endAt": { "type": "number", "description": "The Unix timestamp when the event ends." }, "xpMultiplier": { "type": "number", "description": "A global XP multiplier to apply during the event (e.g., 1.5 for 1.5x XP)." }, "isActive": { "type": "boolean", "description": "Whether the event is currently active and visible to users." }, "bannerMessage": { "type": "string", "description": "An optional banner message to display to all users." }, "hasBanner": { "type": "boolean", "description": "A flag indicating if a banner message exists, for efficient querying." } }, "required": ["id", "title", "description", "startAt", "endAt", "isActive"] },
-    "StoreItem": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Store Item", "type": "object", "description": "Represents an item available for purchase in the store.", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "number" }, "icon": { "type": "string", "description": "The name of the lucide-react icon to display." }, "layerKey": { "type": "string", "description": "The key to use in the user's avatarLayers map." }, "visualDescription": { "type": "string", "description": "A text prompt for the AI to generate the cosmetic." } }, "required": ["id", "name", "description", "price", "icon", "layerKey", "visualDescription"] },
+    "StoreItem": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Store Item", "type": "object", "description": "Represents an item available for purchase in the store.", "properties": { "id": { "type": "string" }, "name": { "type": "string" }, "description": { "type": "string" }, "price": { "type": "number" }, "icon": { "type": "string", "description": "The name of the lucide-react icon to display." }, "layerKey": { "type": "string", "description": "The key to use in the user's avatarLayers map." } }, "required": ["id", "name", "description", "price", "icon", "layerKey"] },
     "AtlasRadioBroadcast": {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "ATLAS Radio Broadcast",
@@ -133,22 +145,6 @@
             "audioUrl": { "type": "string", "format": "uri", "description": "The URL to the generated audio file." }
         },
         "required": ["id", "timestamp", "script", "audioUrl"]
-    },
-    "Mentorship": {
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "Mentorship",
-        "type": "object",
-        "description": "Represents a mentorship relationship between two users for a specific skill.",
-        "properties": {
-            "id": { "type": "string" },
-            "mentorId": { "type": "string", "description": "The user ID of the mentor." },
-            "menteeId": { "type": "string", "description": "The user ID of the mentee." },
-            "skillId": { "type": "string", "description": "The ID of the skill being taught." },
-            "status": { "type": "string", "enum": ["pending", "active", "completed", "denied"], "description": "The current status of the mentorship." },
-            "createdAt": { "type": "number", "description": "Timestamp when the request was created." },
-            "startedAt": { "type": "number", "description": "Timestamp when the mentorship became active." }
-        },
-        "required": ["id", "mentorId", "menteeId", "skillId", "status", "createdAt"]
     }
   },
   "auth": { "providers": ["password"] },
@@ -157,6 +153,7 @@
     "rules": "firestore.rules",
     "structure": [
       { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user profile data.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }] } },
+      { "path": "/users/{userId}/wardrobe/{avatarId}", "definition": { "entityName": "SavedAvatar", "schema": { "$ref": "#/backend/entities/SavedAvatar" }, "description": "Stores cached AI-generated avatar variations for quick swapping.", "params": [{ "name": "userId", "description": "The user ID." }, { "name": "avatarId", "description": "Stable signature of selected assets." }] } },
       { "path": "/users/{userId}/settings/{settingsId}", "definition": { "entityName": "UserSettings", "schema": { "$ref": "#/backend/entities/UserSettings" }, "description": "Stores user-specific settings.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "settingsId", "description": "A singleton document ID, e.g., 'main'."}] } },
       { "path": "/admins/{adminId}", "definition": { "entityName": "Admin", "schema": { "$ref": "#/backend/entities/Admin" }, "description": "Stores administrator user data.", "params": [{ "name": "adminId", "description": "The unique identifier for the admin." }] } },
       { "path": "/skills/{skillId}", "definition": { "entityName": "Skill", "schema": { "$ref": "#/backend/entities/Skill" }, "description": "Stores skill data created by pioneer user.", "params": [{ "name": "skillId", "description": "The unique identifier for the skill." }] } },
@@ -172,9 +169,7 @@
       { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
       { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
       { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } },
-      { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } },
-      { "path": "/mentorships/{mentorshipId}", "definition": { "entityName": "Mentorship", "schema": { "$ref": "#/backend/entities/Mentorship" }, "description": "Stores mentorship relationships between users.", "params": [{ "name": "mentorshipId", "description": "The unique identifier for the mentorship." }] } }
+      { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } }
     ]
   }
 }
-

@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking } from '@/firebase';
+import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { TwinskieAvatar } from '@/components/TwinskieAvatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,12 +19,11 @@ import {
   Loader2
 } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
-import { doc } from 'firebase/firestore';
+import { doc, getDoc, collection } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
-import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem, StoreItem } from '@/lib/types';
+import type { GeneratedCosmetic, EvolutionPathData, User, CosmeticItem, StoreItem, SavedAvatar } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import { COSMETIC_ITEMS } from '@/lib/avatar-cosmetics';
-import { collection } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { generateAvatarImage } from '@/actions/generateAvatarImage';
@@ -111,42 +111,71 @@ export default function WardrobePage() {
   };
   
   const handleApplyChanges = async () => {
-    if (!user || !userRef) return;
+    if (!user || !userRef || !authUser) return;
     setIsGenerating(true);
     
-    toast({
-      title: 'Generating New Avatar...',
-      description: 'The AI is rendering your new look. This may take a moment.',
-    });
+    // Generate a stable signature for this wardrobe combination
+    const sortedLayerIds = Object.keys(equippedLayers).filter(k => equippedLayers[k]).sort();
+    const signature = sortedLayerIds.length > 0 ? sortedLayerIds.join('|') : 'base';
 
     try {
-      // First, update the avatarLayers in Firestore so the server action can read them
-      updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
+      // Check if this variation already exists in the user's wardrobe collection
+      const savedAvatarRef = doc(firestore, 'users', authUser.uid, 'wardrobe', signature);
+      const savedAvatarSnap = await getDoc(savedAvatarRef);
 
-      // Fallback to avatarUrl if baseAvatarUrl is missing.
-      const baseAvatar = user.baseAvatarUrl || user.avatarUrl;
+      if (savedAvatarSnap.exists()) {
+        const savedData = savedAvatarSnap.data() as SavedAvatar;
+        
+        // Fast path: Reuse the existing URL
+        updateDocumentNonBlocking(userRef, { 
+          avatarLayers: equippedLayers,
+          avatarUrl: savedData.avatarUrl 
+        });
 
-      if (!baseAvatar) {
-        throw new Error("Base avatar is missing. Cannot generate new image.");
+        toast({
+          title: 'Avatar Swapped!',
+          description: 'Recalled your saved look from the ATLAS memory.',
+        });
+        setIsGenerating(false);
+        return;
       }
 
-      // Collect visual descriptions
-      const activeDescriptions = Object.keys(equippedLayers)
-        .map(layerId => allOwnedCosmetics.find(c => c.id === layerId)?.visualDescription)
+      // Slow path: Generate via AI
+      toast({
+        title: 'Generating New Look...',
+        description: 'This unique combination hasn\'t been rendered before. Designing...',
+      });
+
+      // Update layers in Firestore so the server action can see them if needed
+      updateDocumentNonBlocking(userRef, { avatarLayers: equippedLayers });
+
+      const baseAvatar = user.baseAvatarUrl || user.avatarUrl;
+      if (!baseAvatar) throw new Error("Base avatar missing.");
+
+      const activeDescriptions = sortedLayerIds
+        .map(id => allOwnedCosmetics.find(c => c.id === id)?.visualDescription)
         .filter((d): d is string => !!d);
 
-      // Call the server action to get the new image
       const result = await generateAvatarImage({
         baseAvatarDataUri: baseAvatar,
         cosmeticVisualDescriptions: activeDescriptions,
       });
 
-      // Update the active avatarUrl with the generated image
+      // Save the new result to the wardrobe collection for future reuse
+      const newSavedAvatar: SavedAvatar = {
+        id: signature,
+        avatarUrl: result.generatedAvatarDataUri,
+        equippedLayers: equippedLayers,
+        createdAt: Date.now()
+      };
+      setDocumentNonBlocking(savedAvatarRef, newSavedAvatar, {});
+
+      // Update current profile
       updateDocumentNonBlocking(userRef, { avatarUrl: result.generatedAvatarDataUri });
 
       toast({
         title: '✨ Avatar Updated!',
-        description: 'Your new look has been saved.',
+        description: 'A new masterpiece added to your collection.',
       });
 
     } catch (error) {
@@ -154,7 +183,7 @@ export default function WardrobePage() {
       toast({
         variant: 'destructive',
         title: 'Generation Failed',
-        description: 'Could not generate your new avatar. Please try again.',
+        description: 'The AI encountered an error. Please try again.',
       });
     } finally {
       setIsGenerating(false);
@@ -164,28 +193,26 @@ export default function WardrobePage() {
   const handleRevertToBase = () => {
     if (!user || !userRef) return;
 
-    const hasEquippedLayers = Object.keys(equippedLayers).length > 0;
-    const needsRevert = hasEquippedLayers || (user.baseAvatarUrl && user.avatarUrl !== user.baseAvatarUrl);
+    // Check if anything is actually selected to clear
+    const hasActiveLayers = Object.keys(equippedLayers).length > 0;
+    const isCurrentlyNotBase = user.avatarUrl !== user.baseAvatarUrl;
 
-    if (!needsRevert) {
-      toast({
-        description: 'Your avatar is already in its base form.',
-      });
+    if (!hasActiveLayers && !isCurrentlyNotBase) {
+      toast({ description: 'Your avatar is already in its base form.' });
       return;
     }
 
     setIsGenerating(true);
 
-    const updates: { avatarLayers: Record<string, boolean>; avatarUrl?: string } = {
-      avatarLayers: {},
-    };
+    // Clear local selection
+    setEquippedLayers({});
 
+    // Update Firestore
+    const updates: any = { avatarLayers: {} };
     if (user.baseAvatarUrl) {
       updates.avatarUrl = user.baseAvatarUrl;
     }
-
     updateDocumentNonBlocking(userRef, updates);
-    setEquippedLayers({});
 
     setTimeout(() => {
       toast({
@@ -193,7 +220,7 @@ export default function WardrobePage() {
         description: 'Your Twinskie has been reverted to its base form.',
       });
       setIsGenerating(false);
-    }, 1500);
+    }, 1000);
   };
 
 
@@ -405,7 +432,4 @@ export default function WardrobePage() {
       </div>
     </div>
   );
-
-    
-
-
+}
