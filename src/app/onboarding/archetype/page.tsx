@@ -1,4 +1,3 @@
-
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
@@ -10,7 +9,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 
 const archetypes: {
   name: Archetype;
@@ -49,13 +47,6 @@ export default function ArchetypeSelectionPage() {
   const { data: userDoc, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
   const isLoading = isAuthLoading || isUserDocLoading;
-
-  useEffect(() => {
-    // If we're not loading and a user document *does* exist, they shouldn't be here.
-    if (!isLoading && userDoc) {
-      router.replace('/dashboard');
-    }
-  }, [isLoading, userDoc, router]);
 
   const handleSelectArchetype = async (archetype: Archetype) => {
     if (!authUser) {
@@ -100,8 +91,9 @@ export default function ArchetypeSelectionPage() {
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
   
-  // While checking, show a loading state. Or if the user doc exists and we're about to redirect.
-  if (isLoading || userDoc) {
+  // While checking, show a loading state. 
+  // AppLayout handles the actual redirection if the user is already "done" with onboarding.
+  if (isLoading) {
       return (
         <div className="flex h-screen w-screen items-center justify-center">
             <Loader2 className="h-16 w-16 animate-spin text-primary" />
@@ -147,5 +139,3 @@ export default function ArchetypeSelectionPage() {
     </main>
   );
 }
-
-    
