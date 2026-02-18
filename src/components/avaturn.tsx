@@ -21,9 +21,8 @@ export function AvaturnCreator({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Using the standard Avaturn demo URL. 
-  // In production, you would use your own project's subdomain.
-  const avaturnUrl = 'https://demo.avaturn.me';
+  // Using the stable Avaturn main portal URL for broader compatibility.
+  const avaturnUrl = 'https://avaturn.me';
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
