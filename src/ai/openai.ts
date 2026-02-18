@@ -1,3 +1,4 @@
+
 import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
@@ -23,13 +24,18 @@ async function convertToRGBA(imageBuffer: Buffer): Promise<Buffer> {
  * Helper to fetch a remote image URL and convert it to a Base64 data URI
  */
 async function urlToDataUri(url: string): Promise<string> {
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to fetch image from ${url}: ${response.statusText}`);
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image from ${url}: ${response.statusText}`);
+    }
+    const contentType = response.headers.get('content-type') || 'image/png';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    return `data:${contentType};base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    console.error('urlToDataUri error:', error);
+    throw new Error(`Could not convert image URL to data URI: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  const contentType = response.headers.get('content-type') || 'image/png';
-  const buffer = Buffer.from(await response.arrayBuffer());
-  return `data:${contentType};base64,${buffer.toString('base64')}`;
 }
 
 /**
@@ -50,24 +56,29 @@ export async function generateImageWithGPTImage({
   size?: '1024x1024' | '1024x1536' | '1536x1024';
 }): Promise<string> {
   try {
-    const response = await openai.images.generate({
+    // Use 'any' to bypass SDK-level defaulting or validation that might force quality to 'standard'
+    const response = await (openai.images as any).generate({
       model: 'gpt-image-1.5',
       prompt,
       n: 1,
-      size: size as any,
-      quality: quality as any,
+      size,
+      quality,
     });
 
     if (!response.data || response.data.length === 0) {
+      console.error('OpenAI Full Response (Empty Data):', JSON.stringify(response));
       throw new Error('No data returned from gpt-image-1.5 API');
     }
 
-    const imageUrl = response.data[0]?.url;
-    if (!imageUrl) {
-      throw new Error('No image URL returned from gpt-image-1.5 generation');
+    const item = response.data[0];
+    if (item.url) {
+      return await urlToDataUri(item.url);
+    } else if (item.b64_json) {
+      return `data:image/png;base64,${item.b64_json}`;
+    } else {
+      console.error('OpenAI Data Object (Missing Image Data):', JSON.stringify(item));
+      throw new Error('No image URL or Base64 data returned from gpt-image-1.5 generation');
     }
-
-    return await urlToDataUri(imageUrl);
   } catch (error) {
     console.error('GPT-Image-1.5 generation error:', error);
     throw new Error(
@@ -97,40 +108,42 @@ export async function editImageWithGPTImage({
   size?: '1024x1024' | '1024x1536' | '1536x1024';
 }): Promise<string> {
   try {
-    // Extract base64 data from data URI
     const base64Data = imageDataUri.split(',')[1];
     if (!base64Data) {
       throw new Error('Invalid data URI format - expected "data:image/png;base64,..."');
     }
 
-    // Convert to RGBA PNG buffer (required by OpenAI API)
     const imageBuffer = Buffer.from(base64Data, 'base64');
     const rgbaBuffer = await convertToRGBA(imageBuffer);
 
-    // Create file object for OpenAI SDK
     const imageFile = await toFile(rgbaBuffer, 'image.png', {
       type: 'image/png',
     });
 
-    const response = await openai.images.edit({
+    // Use 'any' to bypass SDK-level defaulting or validation that might force quality to 'standard'
+    const response = await (openai.images as any).edit({
       model: 'gpt-image-1.5',
       image: imageFile,
       prompt,
       n: 1,
-      size: size as any,
-      quality: quality as any,
+      size,
+      quality,
     });
 
     if (!response.data || response.data.length === 0) {
+      console.error('OpenAI Full Response (Empty Data):', JSON.stringify(response));
       throw new Error('No data returned from gpt-image-1.5 API');
     }
 
-    const imageUrl = response.data[0]?.url;
-    if (!imageUrl) {
-      throw new Error('No image URL returned from gpt-image-1.5 editing');
+    const item = response.data[0];
+    if (item.url) {
+      return await urlToDataUri(item.url);
+    } else if (item.b64_json) {
+      return `data:image/png;base64,${item.b64_json}`;
+    } else {
+      console.error('OpenAI Data Object (Missing Image Data):', JSON.stringify(item));
+      throw new Error('No image URL or Base64 data returned from gpt-image-1.5 editing');
     }
-
-    return await urlToDataUri(imageUrl);
   } catch (error) {
     console.error('GPT-Image-1.5 editing error:', error);
     throw new Error(
