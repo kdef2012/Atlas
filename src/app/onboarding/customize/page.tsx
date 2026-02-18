@@ -7,9 +7,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, updateDocumentNonBlocking } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { Loader2, ArrowRight, Sparkles, Check } from 'lucide-react';
+import { Loader2, ArrowRight, Sparkles } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
-import { UnionAvatarsCreator } from '@/components/union-avatars';
+import { AvaturnCreator } from '@/components/avaturn';
 import { removeBackground } from '@/actions/removeBackground';
 
 export default function CustomizeAvatarPage() {
@@ -23,21 +23,18 @@ export default function CustomizeAvatarPage() {
   const searchParams = useSearchParams();
   const archetype = searchParams.get('archetype') as Archetype | null;
 
-  const handleAvatarCreated = async (glbUrl: string, previewUrl?: string) => {
+  const handleAvatarCreated = async (glbUrl: string, previewUrl: string) => {
     setIsProcessing(true);
     toast({
-      title: '✨ Avatar Forged!',
-      description: 'The Union is established. Optimizing for ATLAS...',
+      title: '✨ Avatar Captured!',
+      description: 'Avaturn has rendered your twin. Optimizing for ATLAS...',
     });
     
     try {
-        // If Union Avatars provided a preview image, use that.
-        // Otherwise, we might need a fallback, but we'll assume a preview is available.
-        const sourceImage = previewUrl || glbUrl.replace('.glb', '.png'); 
-        
-        // Fetch the image to get a data URI for the AI
-        const response = await fetch(sourceImage);
-        if (!response.ok) throw new Error("Failed to fetch preview image");
+        // Avaturn provides a high-quality preview image.
+        // We fetch it to get a data URI for our AI background removal step.
+        const response = await fetch(previewUrl);
+        if (!response.ok) throw new Error("Failed to fetch Avaturn preview image");
         
         const blob = await response.blob();
         const reader = new FileReader();
@@ -45,13 +42,13 @@ export default function CustomizeAvatarPage() {
         reader.onloadend = async () => {
             const base64data = reader.result as string;
             
-            // Call our AI Stylist's background removal flow
+            // Call our AI Stylist's background removal flow to ensure a clean, transparent base.
             const result = await removeBackground({ imageDataUri: base64data });
             
             setAvatarUrl(result.transparentImageDataUri);
             toast({
                 title: '✅ Optimization Complete!',
-                description: 'Your transparent base Twinskie is ready.',
+                description: 'Your transparent base Twinskie is ready for the Nebula.',
             });
             setIsProcessing(false);
         };
@@ -60,9 +57,9 @@ export default function CustomizeAvatarPage() {
         toast({
             variant: 'destructive',
             title: 'Processing Failed',
-            description: 'Could not optimize the background. Using original preview.',
+            description: 'Could not optimize the background. Using original render.',
         });
-        setAvatarUrl(previewUrl || glbUrl.replace('.glb', '.png'));
+        setAvatarUrl(previewUrl);
         setIsProcessing(false);
     }
   };
@@ -90,7 +87,7 @@ export default function CustomizeAvatarPage() {
     const userRef = doc(firestore, 'users', user.uid);
     
     const updates: { avatarUrl?: string; baseAvatarUrl?: string; avatarStyle: string } = {
-      avatarStyle: 'union-avatars',
+      avatarStyle: 'avaturn',
     };
 
     if (avatarUrl) {
@@ -128,7 +125,7 @@ export default function CustomizeAvatarPage() {
         <h1 className="font-headline text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
           Forge Your Twinskie
         </h1>
-        <p className="text-muted-foreground mt-2">Create your realistic digital twin using Union Avatars.</p>
+        <p className="text-muted-foreground mt-2">Create your ultra-realistic 3D character using Avaturn.</p>
       </div>
       
       <div className="w-full max-w-4xl space-y-4">
@@ -136,15 +133,15 @@ export default function CustomizeAvatarPage() {
           <CardHeader className="text-center">
             <CardTitle className="font-headline text-2xl flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5 text-primary" />
-              Union Avatars Creator
+              Avaturn Studio
             </CardTitle>
             <CardDescription>
-              Design your character below. When finished, save to synchronize with ATLAS.
+              Design your identity. When finished, your avatar will be optimized for the ATLAS.
             </CardDescription>
           </CardHeader>
           <CardContent className="p-0">
             <div className="w-full h-[600px]">
-              <UnionAvatarsCreator
+              <AvaturnCreator
                 onAvatarCreated={handleAvatarCreated}
                 className="h-full"
               />
