@@ -14,7 +14,8 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // Direct check to avoid recursion
+      // Direct check for the bootstrap super-admin to avoid recursion.
+      // Other admins are verified by existence in the /admins collection.
       return isSignedIn() && (
         request.auth.uid == "D2q0IIDPXXaXzVRhG1hFURv0Awe2" || 
         exists(/databases/$(database)/documents/admins/$(request.auth.uid))
@@ -31,8 +32,8 @@ service cloud.firestore {
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      // Changed to direct UID check to resolve permission errors during user creation
-      allow read: if request.auth.uid == adminId || isAdmin();
+      // Users can read their own admin status; admins can read all.
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
       allow create: if isOwner(adminId);
       allow update, delete: if isAdmin();
     }

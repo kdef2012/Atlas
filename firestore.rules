@@ -14,24 +14,26 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // The super admin's UID is hardcoded to bootstrap permissions.
-      // All other admins are verified by checking for their document's existence.
-      return isSignedIn() && (request.auth.uid == "D2q0IIDPXXaXzVRhG1hFURv0Awe2" || exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      // Direct check for the bootstrap super-admin to avoid recursion.
+      // Other admins are verified by existence in the /admins collection.
+      return isSignedIn() && (
+        request.auth.uid == "D2q0IIDPXXaXzVRhG1hFURv0Awe2" || 
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
     }
 
     function isFireteamMember(fireteamId) {
-      // Correctly check if the user's UID is a key in the members map
       return isSignedIn() && request.auth.uid in get(/databases/$(database)/documents/fireteams/$(fireteamId)).data.members;
     }
 
     function isGuildMember(guildId) {
-      // Correctly check if the guildId is a key in the user's guilds map
       return isSignedIn() && guildId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds;
     }
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
-      allow read: if isOwner(adminId) || isAdmin();
+      // Users can read their own admin status; admins can read all.
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
       allow create: if isOwner(adminId);
       allow update, delete: if isAdmin();
     }
@@ -53,6 +55,10 @@ service cloud.firestore {
 
        match /settings/{settingsId} {
          allow read, write: if isOwner(userId) || isAdmin();
+      }
+
+      match /wardrobe/{avatarId} {
+        allow read, write: if isOwner(userId);
       }
     }
     
@@ -102,19 +108,15 @@ service cloud.firestore {
     
     // MENTORSHIPS COLLECTION
     match /mentorships/{mentorshipId} {
-      // Users can see mentorships they are part of
       allow read: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
-      // A user can request to be a mentee
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.menteeId;
-      // Mentor can accept/deny, either can complete/cancel
       allow update: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
-      allow delete: if false; // Mentorships are archived, not deleted
+      allow delete: if false;
     }
 
     // RADIO BROADCASTS COLLECTION
     match /radio-broadcasts/{broadcastId} {
         allow get, list: if isSignedIn();
-        // Writes are handled by the trusted server-side AI flow
         allow write: if false;
     }
 
@@ -146,5 +148,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
