@@ -20,26 +20,22 @@ export function UnionAvatarsCreator({
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Union Avatars generic creator URL. 
-  // In production, you would use your specific slug or API key.
-  const unionUrl = 'https://unionavatars.com/creator';
+  // Dedicated iframe integration URL for Union Avatars
+  const unionUrl = 'https://creator.unionavatars.com/';
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      // Security check: Only accept messages from Union Avatars
+      // Security check: Only accept messages from Union Avatars domains
       if (!event.origin.includes('unionavatars.com')) return;
 
       try {
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
-        // Union Avatars common event structure
-        // Note: Union Avatars often uses 'avatar-created' or sends the GLB URL directly
-        if (data.type === 'union-avatars' || data.source === 'union-avatars') {
-          if (data.event === 'avatar-created' || data.action === 'avatar-exported') {
-            const glbUrl = data.url || data.glb;
-            const previewUrl = data.preview || data.image;
-            onAvatarCreated(glbUrl, previewUrl);
-          }
+        // Union Avatars common event structure for exports
+        if (data.event === 'avatar-created' || data.action === 'avatar-exported' || data.type === 'avatar-created') {
+          const glbUrl = data.url || data.glb || data.data?.url;
+          const previewUrl = data.preview || data.image || data.data?.preview;
+          onAvatarCreated(glbUrl, previewUrl);
         }
         
         // Handle iframe readiness
@@ -48,7 +44,7 @@ export function UnionAvatarsCreator({
         }
 
       } catch (error) {
-        // Silent catch for non-JSON messages
+        // Silent catch for non-JSON or malformed messages
       }
     };
 

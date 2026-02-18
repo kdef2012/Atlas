@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -53,6 +52,7 @@ export async function assignPersonalityTraits(
 
 const assignTraitsPrompt = ai.definePrompt({
   name: 'assignTraitsPrompt',
+  model: 'googleai/gemini-1.5-flash', // Explicitly set to modern model to avoid 404 errors
   input: {schema: AssignPersonalityTraitsInputSchema},
   output: {schema: AssignPersonalityTraitsOutputSchema},
   prompt: `You are an AI Game Master for a real-life RPG called ATLAS. Your task is to analyze a user's activity logs and assign them personality traits.
