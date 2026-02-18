@@ -1,15 +1,13 @@
-
 'use client'
 
 import { useState, useEffect } from 'react';
 import { CATEGORY_COLORS, type Skill, type SkillCategory, type User } from '@/lib/types';
-import { useCollection, useUser, useMemoFirebase, useDoc, updateDocumentNonBlocking } from '@/firebase';
+import { useCollection, useUser, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, doc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase/provider';
 import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useToast } from '@/hooks/use-toast';
 import { SkillPopoverContent } from './SkillPopoverContent';
 
 interface SkillNodeData extends Skill {
@@ -25,17 +23,18 @@ interface Connection {
 }
 
 const SkillNodeComponent = ({ node, index, user }: { node: SkillNodeData, index: number, user: User }) => {
-    const isPioneer = node.pioneerUserId === user?.id;
     const color = CATEGORY_COLORS[node.category] || 'gray';
     const isUnlocked = user.userSkills?.[node.id]?.isUnlocked === true;
     const prereqsMet = node.prerequisites?.every(prereqId => user.userSkills?.[prereqId]?.isUnlocked) ?? true;
+    
+    // Check if user has enough energy to unlock (considering potential discounts)
+    let finalCost = node.cost?.points ?? 0;
+    if (user.traits?.specialist && node.cost?.category === user.archetype) finalCost = Math.round(finalCost * 0.9);
+    if (user.traits?.jack_of_all_trades) finalCost = Math.round(finalCost * 0.95);
+    
     const userStat = user[`${node.cost?.category.toLowerCase()}Stat` as keyof User] as number || 0;
-    const hasEnoughPoints = node.cost ? userStat >= node.cost.points : true;
+    const hasEnoughPoints = userStat >= finalCost;
     const canUnlock = !isUnlocked && prereqsMet && hasEnoughPoints;
-
-    let statusStyles = 'opacity-40 grayscale-[50%]';
-    if(isUnlocked) statusStyles = 'opacity-100 grayscale-0';
-    if(canUnlock) statusStyles = 'opacity-80 grayscale-0 animate-pulse-glow';
 
     return (
        <Popover>
@@ -45,8 +44,9 @@ const SkillNodeComponent = ({ node, index, user }: { node: SkillNodeData, index:
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5, delay: index * 0.05 }}
             className={cn(
-                "absolute flex items-center justify-center rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent",
-                statusStyles
+                "absolute flex items-center justify-center rounded-full cursor-pointer group focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent border-2",
+                isUnlocked ? "opacity-100 shadow-[0_0_20px_rgba(255,255,255,0.3)]" : "opacity-40 grayscale-[50%]",
+                canUnlock && "opacity-90 grayscale-0 animate-nebula-pulse"
             )}
             style={{
               width: node.size,
@@ -54,23 +54,24 @@ const SkillNodeComponent = ({ node, index, user }: { node: SkillNodeData, index:
               left: `${node.x}%`,
               top: `${node.y}%`,
               transform: 'translate(-50%, -50%)',
-              borderColor: color,
-              boxShadow: `0 0 ${node.size / 5}px ${color}`,
+              borderColor: isUnlocked ? 'white' : color,
+              backgroundColor: color.replace(')', ' / 0.3)'),
             }}
           >
             <div 
-              className="absolute inset-0 rounded-full" 
+              className={cn(
+                "absolute inset-0 rounded-full",
+                isUnlocked && "bg-white/10"
+              )} 
               style={{ 
-                backgroundColor: color.replace(')', ' / 0.2)'),
-                animation: isUnlocked ? `pulse-nebula 3s infinite ease-in-out` : undefined,
-                animationDelay: `${Math.random() * 3}s`
+                boxShadow: isUnlocked ? `0 0 ${node.size / 2}px ${color}` : `0 0 ${node.size / 5}px ${color}`,
               }}
             ></div>
             <div className="z-10 text-center p-1">
-              <p className="font-bold text-xs sm:text-sm text-white truncate" style={{ textShadow: '0 0 5px black' }}>
+              <p className="font-bold text-[10px] sm:text-xs text-white leading-tight drop-shadow-md">
                 {node.name}
               </p>
-              {isPioneer && <p className="text-xs font-bold text-accent neon-text">PIONEER</p>}
+              {isUnlocked && <div className="mt-0.5 h-1 w-1 bg-white rounded-full mx-auto shadow-sm" />}
             </div>
           </motion.button>
         </PopoverTrigger>
@@ -96,13 +97,18 @@ export function NebulaView() {
       const maxXP = Math.max(...skills.map(s => s.xp || 10), 1);
       const skillMap = new Map<string, SkillNodeData>();
 
-      const generatedNodes = skills.map(skill => {
-        const size = 30 + ((skill.xp || 10) / maxXP) * 120; // min 30px, max 150px
+      const generatedNodes = skills.map((skill, i) => {
+        const size = 40 + ((skill.xp || 10) / maxXP) * 80;
+        // Seeded random for consistent layout per skill
+        const seed = skill.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        const x = 15 + ((seed % 70));
+        const y = 15 + (((seed * 7) % 70));
+        
         const node: SkillNodeData = {
           ...skill,
           size,
-          x: Math.random() * 80 + 10,
-          y: Math.random() * 80 + 10,
+          x,
+          y,
         };
         skillMap.set(skill.id, node);
         return node;
@@ -126,25 +132,26 @@ export function NebulaView() {
 
   const isLoading = areSkillsLoading || isUserLoading;
 
-  if (isLoading || nodes.length === 0 || !user) {
+  if (isLoading) {
       return (
-          <div className="w-full h-[60vh] flex items-center justify-center bg-black/20 rounded-lg">
-              <p className="text-muted-foreground">
-                {isLoading ? 'Generating your Nebula...' : 'No skills logged yet. Start your journey!'}
-              </p>
+          <div className="w-full h-[60vh] flex flex-col items-center justify-center bg-black/20 rounded-lg gap-4">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <p className="text-muted-foreground animate-pulse">Syncing Nebula clusters...</p>
           </div>
       )
   }
 
   return (
-    <div className="relative w-full h-[60vh] bg-black/20 rounded-lg overflow-hidden border border-border">
-      <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'radial-gradient(white 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+    <div className="relative w-full h-[60vh] bg-black/40 rounded-lg overflow-hidden border border-border shadow-inner">
+      {/* Starfield background */}
+      <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
+      <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, white 1.5px, transparent 1.5px)', backgroundSize: '100px 100px' }}></div>
       
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
         <defs>
           <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.8 }} />
-            <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 0.8 }} />
+            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.4 }} />
+            <stop offset="100%" style={{ stopColor: 'hsl(var(--accent))', stopOpacity: 0.4 }} />
           </linearGradient>
         </defs>
         <AnimatePresence>
@@ -156,11 +163,11 @@ export function NebulaView() {
                 x2={`${conn.to.x}%`}
                 y2={`${conn.to.y}%`}
                 stroke="url(#line-gradient)"
-                strokeWidth="1.5"
-                strokeDasharray="4 2"
+                strokeWidth="1"
+                strokeDasharray="5 5"
                 initial={{ pathLength: 0, opacity: 0 }}
                 animate={{ pathLength: 1, opacity: 1 }}
-                transition={{ duration: 1, delay: 0.5 + (i * 0.1) }}
+                transition={{ duration: 1.5, delay: 0.5 }}
               />
             ))}
         </AnimatePresence>
@@ -168,23 +175,21 @@ export function NebulaView() {
       
       <AnimatePresence>
         {nodes.map((node, i) => (
-          <SkillNodeComponent key={node.id} node={node} index={i} user={user} />
+          <SkillNodeComponent key={node.id} node={node} index={i} user={user!} />
         ))}
       </AnimatePresence>
 
        <style jsx>{`
-        @keyframes pulse-nebula {
-          0% { transform: scale(1); opacity: 0.3; }
-          50% { transform: scale(1.05); opacity: 0.5; }
-          100% { transform: scale(1); opacity: 0.3; }
+        @keyframes nebula-float {
+          0%, 100% { transform: translateY(0px); }
+          50% { transform: translateY(-5px); }
         }
-        @keyframes pulse-glow {
-          0% { box-shadow: 0 0 10px ${'hsl(var(--accent))'}; }
-          50% { box-shadow: 0 0 25px ${'hsl(var(--accent))'}; }
-          100% { box-shadow: 0 0 10px ${'hsl(var(--accent))'}; }
+        @keyframes nebula-pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); filter: brightness(1); }
+          50% { transform: translate(-50%, -50%) scale(1.1); filter: brightness(1.3); }
         }
-        .animate-pulse-glow {
-            animation: pulse-glow 2s infinite ease-in-out;
+        .animate-nebula-pulse {
+            animation: nebula-pulse 3s infinite ease-in-out;
         }
       `}</style>
     </div>
