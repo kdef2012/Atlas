@@ -25,7 +25,7 @@ export interface GenerateBaseAvatarOutput {
  * 
  * Creates a consistent 3D-style character portrait with:
  * - AAA game aesthetic (Overwatch/Fortnite style)
- * - Uniform neutral bodysuit
+ * - Uniform plain white t-shirt
  * - Professional studio lighting
  * - Clean, centered composition
  * 
@@ -36,10 +36,11 @@ export async function generateBaseAvatar(
   input: GenerateBaseAvatarInput
 ): Promise<GenerateBaseAvatarOutput> {
   // Construct detailed prompt for visual consistency
+  // Updated attire to a plain white t-shirt as requested
   const prompt = `A professional 3D character portrait of a ${input.gender} with ${input.complexionName} skin (hex: ${input.complexionHex}). 
 Hair style: ${input.hairStyle}. 
 Body type: ${input.bodyType}, height: ${input.height}. 
-Wearing a simple, minimalist neutral dark-gray futuristic base-layer bodysuit with subtle tech details. 
+Wearing a simple, plain white short-sleeved t-shirt with a clean fit. 
 Character is facing forward with a confident neutral expression, medium shot framing from waist up, centered in frame. 
 Cinematic studio lighting with soft realistic shadows and rim lighting for depth. 
 Style: High-fidelity stylized 3D render with smooth surfaces, clean edges, and polished materials. 
