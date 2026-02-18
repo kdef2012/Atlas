@@ -50,7 +50,7 @@ Render quality: Sharp details, clean anti-aliased edges, professional game asset
   try {
     const imageDataUri = await generateImageWithGPTImage({
       prompt,
-      quality: 'standard', // $0.040 per image - good balance of quality and cost
+      quality: 'medium', // Valid quality value for gpt-image-1.5
       size: '1024x1024',
     });
 

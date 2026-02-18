@@ -36,30 +36,29 @@ async function urlToDataUri(url: string): Promise<string> {
  * Generate a new image from scratch using gpt-image-1.5
  * 
  * @param prompt - Detailed description of the image to generate
- * @param quality - 'standard' ($0.040) or 'hd' ($0.080)
+ * @param quality - 'low', 'medium', 'high', or 'auto'
  * @param size - Image dimensions
  * @returns Base64 data URI of the generated image
  */
 export async function generateImageWithGPTImage({
   prompt,
-  quality = 'standard',
+  quality = 'medium',
   size = '1024x1024',
 }: {
   prompt: string;
-  quality?: 'standard' | 'hd';
-  size?: '1024x1024' | '1024x1792' | '1792x1024';
+  quality?: 'low' | 'medium' | 'high' | 'auto';
+  size?: '1024x1024' | '1024x1536' | '1536x1024';
 }): Promise<string> {
   try {
     const response = await openai.images.generate({
       model: 'gpt-image-1.5',
       prompt,
       n: 1,
-      size,
-      quality,
+      size: size as any,
+      quality: quality as any,
     });
 
-    // ✅ Fixed: Explicit null/undefined checks
-    if (!response.data) {
+    if (!response.data || response.data.length === 0) {
       throw new Error('No data returned from gpt-image-1.5 API');
     }
 
@@ -79,10 +78,6 @@ export async function generateImageWithGPTImage({
 
 /**
  * Edit an existing image using gpt-image-1.5
- * 
- * NOTE: Editing uses different quality values than generation:
- * - Generation: 'standard' | 'hd'
- * - Editing: 'low' | 'medium' | 'high' | 'auto'
  * 
  * @param imageDataUri - Base64 data URI of the image to edit
  * @param prompt - Description of the edits to apply
@@ -122,17 +117,12 @@ export async function editImageWithGPTImage({
       image: imageFile,
       prompt,
       n: 1,
-      size,
-      quality,
+      size: size as any,
+      quality: quality as any,
     });
 
-    // ✅ Fixed: Explicit null/undefined checks
-    if (!response.data) {
+    if (!response.data || response.data.length === 0) {
       throw new Error('No data returned from gpt-image-1.5 API');
-    }
-
-    if (response.data.length === 0) {
-      throw new Error('Empty data array returned from gpt-image-1.5 API');
     }
 
     const imageUrl = response.data[0]?.url;
