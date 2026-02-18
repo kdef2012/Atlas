@@ -14,7 +14,7 @@ import {
   FormItem,
   FormMessage,
   FormLabel,
-} from "react-hook-form";
+} from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse, Sparkles } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild, Trait } from "@/lib/types";
@@ -108,7 +108,6 @@ export function LogActivityForm() {
       let userStatUpdate: any = {
         lastLogTimestamp: timestamp,
         momentumFlameActive: true,
-        // EVERY log grants energy points to its category, fueling the Nebula expansion
         [`${category.toLowerCase()}Stat`]: increment(10),
       };
 
@@ -145,8 +144,6 @@ export function LogActivityForm() {
         }
       }
       
-      const isSkillUnlocked = userData.userSkills?.[skillId]?.isUnlocked;
-
       let proofUrl = '';
       if (hasProof && values.proof) {
         proofUrl = await uploadProofOfWork(user.uid, values.proof[0]);

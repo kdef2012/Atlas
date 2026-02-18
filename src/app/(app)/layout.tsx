@@ -1,4 +1,3 @@
-
 'use client';
 import type { ReactNode } from "react";
 import { useEffect, useRef } from "react";
@@ -13,7 +12,7 @@ import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/fire
 import { redirect, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
-import { collection, doc } from "firebase/firestore";
+import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 
@@ -26,10 +25,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
+  // Hardcoded super-admin check for bootstrap
   const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
 
   const adminRef = useMemoFirebase(() => {
-    // Only check for admin doc if the email matches
     if (authUser && isAdminLogin) {
       return doc(firestore, 'admins', authUser.uid);
     }
@@ -40,29 +39,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   const hasUserDocLoadingStarted = useRef(false);
   const hasAdminDocLoadingStarted = useRef(false);
-  const prevAuthUser = useRef(authUser);
 
   useEffect(() => {
-    if (isUserDocLoading) {
-      hasUserDocLoadingStarted.current = true;
-    }
-    if (isAdminDocLoading) {
-      hasAdminDocLoadingStarted.current = true;
-    }
+    if (isUserDocLoading) hasUserDocLoadingStarted.current = true;
+    if (isAdminDocLoading) hasAdminDocLoadingStarted.current = true;
   }, [isUserDocLoading, isAdminDocLoading]);
   
-  // The admin doc is only "ready" if it wasn't supposed to be loaded in the first place, OR if it has finished loading.
-  const isAdminDocReady = !isAdminLogin || (hasAdminDocLoadingStarted.current && !isAdminDocLoading);
   const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
+  const isAdminDocReady = !isAdminLogin || (hasAdminDocLoadingStarted.current && !isAdminDocLoading);
   const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
 
   useEffect(() => {
-    if (!isReadyToDecide || !authUser) {
-      return;
-    }
+    if (!isReadyToDecide || !authUser) return;
 
     if (isAdminLogin) {
-      if (!adminData) {
+      if (!adminData && !isAdminDocLoading) {
         const newAdminDocRef = doc(firestore, 'admins', authUser.uid);
         setDocumentNonBlocking(newAdminDocRef, {
           id: authUser.uid,
@@ -72,17 +63,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         }, {});
       }
     } else {
-      // If the user document doesn't exist and they are not on an onboarding page, redirect them to the start.
-      if (!user && !pathname.startsWith('/onboarding')) {
+      const isOnboarding = pathname.startsWith('/onboarding');
+      
+      // If profile is totally missing, go to start of onboarding
+      if (!user && !isOnboarding) {
         router.replace('/onboarding/archetype');
       } 
-      // If a user document *does* exist but they haven't finished onboarding (no avatarStyle set)
-      // and they navigate away from onboarding, bring them back to the customize step.
-      else if (user && !user.avatarStyle && !pathname.startsWith('/onboarding')) {
-        router.replace(`/onboarding/archetype`);
+      // If profile exists but is incomplete (no avatarStyle), go to onboarding
+      else if (user && !user.avatarStyle && !isOnboarding) {
+        router.replace('/onboarding/archetype');
       }
-      // If the user *has* completed onboarding (has an avatarStyle) but tries to go back to onboarding START,
-      // redirect them to the dashboard. We allow /welcome and /reward to be finished.
+      // If profile is complete but user is trying to go back to the START of onboarding, push to dashboard
+      // We allow /welcome and /reward to finish normally.
       else if (user && user.avatarStyle && pathname === '/onboarding/archetype') {
         router.replace('/dashboard');
       }
@@ -93,27 +85,23 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     user,
     adminData,
     isAdminLogin,
+    isAdminDocLoading,
     router,
     pathname,
     firestore
   ]);
   
-  const justLoggedOut = prevAuthUser.current && !authUser;
-  
-  useEffect(() => {
-    prevAuthUser.current = authUser;
-  }, [authUser]);
-  
-  if (!isAuthLoading && !authUser && !justLoggedOut && !pathname.startsWith('/logout') && !pathname.startsWith('/login')) {
+  if (!isAuthLoading && !authUser && !pathname.startsWith('/logout') && !pathname.startsWith('/login')) {
     return redirect('/login');
   }
 
-  const isLoading = isAuthLoading || (authUser && !isAdminDocReady) || (authUser && !isUserDocReady && !pathname.startsWith('/onboarding'));
-  const shouldShowSkeleton = !pathname.startsWith('/onboarding') && !pathname.startsWith('/admin');
+  const isLoading = isAuthLoading || (authUser && !isReadyToDecide);
+  const isActuallyOnboarding = pathname.startsWith('/onboarding');
 
-  if (isLoading && shouldShowSkeleton) {
+  // While deciding or loading, show a skeleton unless we are already on an onboarding page
+  if (isLoading && !isActuallyOnboarding && !pathname.startsWith('/admin')) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center">
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
         <Skeleton className="h-16 w-16 rounded-full" />
       </div>
     );
