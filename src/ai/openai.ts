@@ -1,4 +1,3 @@
-
 import OpenAI, { toFile } from 'openai';
 import sharp from 'sharp';
 
@@ -65,12 +64,14 @@ export async function generateImageWithGPTImage({
       quality,
     });
 
-    if (!response.data || response.data.length === 0) {
+    // Explicit null check to satisfy TypeScript
+    const data = response.data;
+    if (!data || data.length === 0) {
       console.error('OpenAI Full Response (Empty Data):', JSON.stringify(response));
       throw new Error('No data returned from gpt-image-1.5 API');
     }
 
-    const item = response.data[0];
+    const item = data[0];
     if (item.url) {
       return await urlToDataUri(item.url);
     } else if (item.b64_json) {
@@ -130,12 +131,14 @@ export async function editImageWithGPTImage({
       quality,
     });
 
-    if (!response.data || response.data.length === 0) {
+    // Explicit null check to satisfy TypeScript
+    const data = response.data;
+    if (!data || data.length === 0) {
       console.error('OpenAI Full Response (Empty Data):', JSON.stringify(response));
       throw new Error('No data returned from gpt-image-1.5 API');
     }
 
-    const item = response.data[0];
+    const item = data[0];
     if (item.url) {
       return await urlToDataUri(item.url);
     } else if (item.b64_json) {
