@@ -19,6 +19,23 @@ export interface GenerateBaseAvatarOutput {
   imageDataUri: string;
 }
 
+/**
+ * Utility to convert a remote image URL to a Base64 Data URI.
+ * This is necessary because our image-to-image pipeline requires local image data.
+ */
+async function urlToDataUri(url: string): Promise<string> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Failed to fetch generated image: ${response.statusText}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const contentType = response.headers.get('content-type') || 'image/png';
+    return `data:${contentType};base64,${buffer.toString('base64')}`;
+  } catch (error) {
+    console.error('Error converting URL to Data URI:', error);
+    throw new Error('Could not process the generated image data.');
+  }
+}
+
 export async function generateBaseAvatar(
   input: GenerateBaseAvatarInput
 ): Promise<GenerateBaseAvatarOutput> {
@@ -33,18 +50,23 @@ export async function generateBaseAvatar(
   Background: Solid flat neutral medium-gray studio background.`;
 
   try {
+    // Using imagen-3 as it is currently the most stable and high-quality production model for text-to-image.
     const { media } = await ai.generate({
-      model: 'googleai/imagen-4.0-fast-generate-001',
+      model: 'googleai/imagen-3',
       prompt,
     });
 
     if (!media || !media.url) {
-      throw new Error('Avatar generation failed to return media.');
+      throw new Error('Avatar generation system failed to return a valid image.');
     }
 
-    return { imageDataUri: media.url };
-  } catch (error) {
-    console.error('Base avatar generation error:', error);
-    throw new Error('Failed to generate base avatar. Please try again.');
+    // Convert the cloud storage URL to a Data URI for the next step in the pipeline (Background Removal)
+    const imageDataUri = await urlToDataUri(media.url);
+
+    return { imageDataUri };
+  } catch (error: any) {
+    console.error('Base avatar generation error details:', error);
+    const detail = error?.message || 'Unknown AI error';
+    throw new Error(`Failed to generate base avatar: ${detail}. Please try again.`);
   }
 }
