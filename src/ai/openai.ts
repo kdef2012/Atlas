@@ -21,6 +21,19 @@ async function convertToRGBA(imageBuffer: Buffer): Promise<Buffer> {
 }
 
 /**
+ * Helper to fetch a remote image URL and convert it to a Base64 data URI
+ */
+async function urlToDataUri(url: string): Promise<string> {
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch generated image from ${url}: ${response.statusText}`);
+  }
+  const contentType = response.headers.get('content-type') || 'image/png';
+  const buffer = Buffer.from(await response.arrayBuffer());
+  return `data:${contentType};base64,${buffer.toString('base64')}`;
+}
+
+/**
  * Generate a new image from scratch using gpt-image-1.5
  */
 export async function generateImageWithGPTImage({
@@ -38,15 +51,14 @@ export async function generateImageWithGPTImage({
     n: 1,
     size: size as any,
     quality,
-    response_format: 'b64_json',
   });
 
-  const b64Image = response.data[0]?.b64_json;
-  if (!b64Image) {
-    throw new Error('No image returned from gpt-image-1.5 generation');
+  const imageUrl = response.data[0]?.url;
+  if (!imageUrl) {
+    throw new Error('No image URL returned from gpt-image-1.5 generation');
   }
 
-  return `data:image/png;base64,${b64Image}`;
+  return await urlToDataUri(imageUrl);
 }
 
 /**
@@ -90,10 +102,10 @@ export async function editImageWithGPTImage({
     throw new Error('No data returned from gpt-image-1.5 API');
   }
 
-  const b64Image = response.data[0]?.b64_json;
-  if (!b64Image) {
-    throw new Error('No image returned from gpt-image-1.5');
+  const imageUrl = response.data[0]?.url;
+  if (!imageUrl) {
+    throw new Error('No image URL returned from gpt-image-1.5 editing');
   }
 
-  return `data:image/png;base64,${b64Image}`;
+  return await urlToDataUri(imageUrl);
 }
