@@ -76,7 +76,7 @@ export default function WardrobePage() {
     // Add AI-generated cosmetics
     if (user.aiGeneratedCosmetics) {
       Object.values(user.aiGeneratedCosmetics).forEach((cosmetic) => {
-        cosmetics.push({ ...cosmetic, source: 'ai' });
+        cosmetics.push({ ...cosmetic, source: 'ai' } as AnyCosmetic);
       });
     }
 
@@ -159,7 +159,12 @@ export default function WardrobePage() {
         description: 'Saving your new appearance.',
       });
 
+      // Upload to Storage to avoid 1MB document limit
       const permanentUrl = await uploadModifiedAvatar(result.generatedAvatarDataUri, authUser.uid);
+
+      if (!permanentUrl || permanentUrl.startsWith('data:')) {
+        throw new Error("Failed to store your new look in the cloud.");
+      }
 
       const newSavedAvatar: SavedAvatar = {
         id: signature,

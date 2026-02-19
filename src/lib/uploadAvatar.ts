@@ -15,15 +15,19 @@ export async function uploadAvatarToStorage(
   try {
     const storage = getStorage();
     const timestamp = Date.now();
+    // Use a clean path structure
     const storagePath = `avatars/${userId}/${timestamp}_${fileName}`;
     const storageRef = ref(storage, storagePath);
 
-    // Upload the base64 string directly
+    console.log(`Starting upload to: ${storagePath}`);
+
+    // Upload the base64 string directly using 'data_url' format
     const snapshot = await uploadString(storageRef, dataUri, 'data_url');
     
-    // Get the download URL
+    // Get the public URL for the file
     const downloadURL = await getDownloadURL(snapshot.ref);
     
+    console.log(`Upload complete. Download URL: ${downloadURL.substring(0, 50)}...`);
     return downloadURL;
   } catch (error) {
     console.error('Failed to upload avatar to storage:', error);

@@ -25,7 +25,7 @@ export default function CustomizeAvatarPage() {
   const [avatarDataUri, setAvatarDataUri] = useState<string | null>(null);
 
   // Form State
-  const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>('Male');
+  const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>( 'Male');
   const [complexion, setComplexion] = useState(SKIN_TONES[1]);
   const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0]);
   const [bodyType, setBodyType] = useState('Average');
@@ -106,8 +106,14 @@ export default function CustomizeAvatarPage() {
         description: 'Storing your avatar in the cloud.',
       });
 
+      // 1. Upload the base64 image to Storage first
       const avatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
 
+      if (!avatarUrl || avatarUrl.startsWith('data:')) {
+        throw new Error("Failed to generate a valid cloud storage URL.");
+      }
+
+      // 2. Save only the resulting URL to the user document
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
