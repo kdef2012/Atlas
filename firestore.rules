@@ -129,6 +129,14 @@ service cloud.firestore {
         allow write: if isAdmin();
     }
 
+    // TRANSACTIONS COLLECTION (Ledger)
+    match /transactions/{transactionId} {
+        allow get, list: if isAdmin();
+        // Writes are handled by secure server environments (Webhooks/Actions) 
+        // using the Production Firestore SDK. Ensure proper admin context is set if needed.
+        allow create: if isSignedIn(); 
+    }
+
     // PUBLIC & ADMIN-MANAGED COLLECTIONS
     match /territories/{territoryId} {
       allow get, list: if isSignedIn();

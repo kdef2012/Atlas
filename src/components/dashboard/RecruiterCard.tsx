@@ -20,7 +20,6 @@ export function RecruiterCard() {
   const { user: authUser } = useUser();
   const firestore = useFirestore();
   const { toast } = useToast();
-  const [isSimulating, setIsSimulating] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
@@ -33,22 +32,6 @@ export function RecruiterCard() {
       title: 'Invite Signal Broadcast!',
       description: 'Referral link copied to clipboard. Share it with 4 friends to claim your bounty.',
     });
-  };
-
-  const handleSimulateInvite = () => {
-    if (!userRef || !user) return;
-    if ((user.referralCount || 0) >= RECRUIT_GOAL) return;
-
-    setIsSimulating(true);
-    updateDocumentNonBlocking(userRef, { referralCount: increment(1) });
-    
-    setTimeout(() => {
-      toast({
-        title: 'New Citizen Detected!',
-        description: 'A friend has accepted your invite signal.',
-      });
-      setIsSimulating(false);
-    }, 8000);
   };
 
   const handleClaimBounty = async () => {
@@ -127,7 +110,7 @@ export function RecruiterCard() {
         </div>
       </CardContent>
 
-      <CardFooter className="flex flex-col gap-2">
+      <CardFooter>
         {isClaimed ? (
           <Button variant="outline" disabled className="w-full font-bold">
             <PartyPopper className="mr-2 h-4 w-4 text-accent" />
@@ -139,15 +122,10 @@ export function RecruiterCard() {
             Claim Squad Bounty
           </Button>
         ) : (
-          <div className="grid grid-cols-2 gap-2 w-full">
-            <Button onClick={handleShare} variant="outline" className="font-bold border-primary/20">
-              <Share2 className="mr-2 h-4 w-4" />
-              Broadcast
-            </Button>
-            <Button onClick={handleSimulateInvite} disabled={isSimulating} variant="secondary" className="font-bold text-[10px] uppercase tracking-tighter">
-              {isSimulating ? <Loader2 className="h-3 w-3 animate-spin" /> : "Simulate Recruit"}
-            </Button>
-          </div>
+          <Button onClick={handleShare} variant="outline" className="w-full font-bold border-primary/20">
+            <Share2 className="mr-2 h-4 w-4" />
+            Broadcast Invite Signal
+          </Button>
         )}
       </CardFooter>
     </Card>

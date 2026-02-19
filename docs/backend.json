@@ -36,6 +36,22 @@
       },
       "required": ["id"]
     },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a successful financial transaction via Stripe.",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["account_activation", "gem_purchase"] },
+        "amount": { "type": "number", "description": "Amount of digital assets (e.g. Gems) delivered." },
+        "price": { "type": "number", "description": "Real-world currency paid in USD." },
+        "timestamp": { "type": "number" },
+        "sessionId": { "type": "string" }
+      },
+      "required": ["userId", "type", "price", "timestamp"]
+    },
     "UserSettings": {
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "User Settings",
@@ -187,7 +203,8 @@
       { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
       { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } },
       { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } },
-      { "path": "/mentorships/{mentorshipId}", "definition": { "entityName": "Mentorship", "schema": { "$ref": "#/backend/entities/Mentorship" }, "description": "Stores mentorship relationships.", "params": [{ "name": "mentorshipId", "description": "The unique identifier for the mentorship." }] } }
+      { "path": "/mentorships/{mentorshipId}", "definition": { "entityName": "Mentorship", "schema": { "$ref": "#/backend/entities/Mentorship" }, "description": "Stores mentorship relationships.", "params": [{ "name": "mentorshipId", "description": "The unique identifier for the mentorship." }] } },
+      { "path": "/transactions/{transactionId}", "definition": { "entityName": "Transaction", "schema": { "$ref": "#/backend/entities/Transaction" }, "description": "Global ledger of all financial transactions.", "params": [{ "name": "transactionId", "description": "The unique identifier for the transaction." }] } }
     ]
   }
 }

@@ -8,7 +8,7 @@
  */
 
 import { initializeFirebase } from '@/firebase';
-import { doc, updateDoc, increment, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment, getDoc, collection, addDoc } from 'firebase/firestore';
 import Stripe from 'stripe';
 
 const stripe = process.env.STRIPE_SECRET_KEY 
@@ -45,6 +45,7 @@ export async function purchaseGems(userId: string, amount: number, price: number
           userId,
           type: 'gem_purchase',
           amount: amount.toString(),
+          price: price.toString(),
         },
       });
 
@@ -65,6 +66,17 @@ export async function purchaseGems(userId: string, amount: number, price: number
     const { firestore } = initializeFirebase();
     const userRef = doc(firestore, 'users', userId);
     await updateDoc(userRef, { gems: increment(amount) });
+    
+    // Log simulation transaction
+    await addDoc(collection(firestore, 'transactions'), {
+        userId,
+        type: 'gem_purchase',
+        amount,
+        price,
+        timestamp: Date.now(),
+        sessionId: 'sim_' + Date.now()
+    });
+
     return { success: true, message: `Successfully synthesized ${amount} Gems! (Simulated)` };
   } catch (error) {
     return { success: false, message: 'The ATLAS Core rejected the transaction.' };
@@ -98,6 +110,7 @@ export async function activateAccount(userId: string): Promise<{ success: boolea
         metadata: {
           userId,
           type: 'account_activation',
+          price: '4.99',
         },
       });
 
@@ -118,6 +131,17 @@ export async function activateAccount(userId: string): Promise<{ success: boolea
     const { firestore } = initializeFirebase();
     const userRef = doc(firestore, 'users', userId);
     await updateDoc(userRef, { hasPaidAccess: true, gems: increment(5) });
+    
+    // Log simulation transaction
+    await addDoc(collection(firestore, 'transactions'), {
+        userId,
+        type: 'account_activation',
+        amount: 5,
+        price: 4.99,
+        timestamp: Date.now(),
+        sessionId: 'sim_act_' + Date.now()
+    });
+
     return { success: true, message: 'Account activated! (Simulated)' };
   } catch (error) {
     return { success: false, message: 'Activation failed.' };
@@ -147,20 +171,31 @@ export async function verifySession(sessionId: string): Promise<{ success: boole
     if (!userSnap.exists()) throw new Error('User not found');
     const userData = userSnap.data();
 
-    // Prevent double-fulfillment if the webhook already finished
-    if (metadata.type === 'account_activation' && userData.hasPaidAccess) {
-      return { success: true, message: 'Account already active.' };
+    // Check if this session was already logged to prevent double-fulfillment
+    const transQuery = await getDoc(doc(firestore, 'transactions', sessionId));
+    if (transQuery.exists()) {
+        return { success: true, message: 'Transaction already processed.' };
     }
 
     // Fulfill based on type
     if (metadata.type === 'account_activation') {
-      await updateDoc(userRef, { hasPaidAccess: true, gems: increment(5) });
+      if (!userData.hasPaidAccess) {
+        await updateDoc(userRef, { hasPaidAccess: true, gems: increment(5) });
+      }
     } else if (metadata.type === 'gem_purchase') {
-      // NOTE: For gem purchases, checking double-fulfillment is harder without a transaction ledger.
-      // In a "Grand Sweep" production app, we assume the webhook is the primary source.
-      // This fallback is mostly for the critical one-time Activation.
       await updateDoc(userRef, { gems: increment(parseInt(metadata.amount || '0')) });
     }
+
+    // Log the transaction in the ledger
+    await addDoc(collection(firestore, 'transactions'), {
+        id: sessionId,
+        userId: metadata.userId,
+        type: metadata.type,
+        amount: parseInt(metadata.amount || '0') || 0,
+        price: parseFloat(metadata.price || '0'),
+        timestamp: Date.now(),
+        sessionId: sessionId
+    });
 
     return { success: true, message: 'Payment verified and fulfilled successfully.' };
   } catch (error) {

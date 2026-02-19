@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest, Library, UserPlus } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest, Library, UserPlus, CreditCard } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 // We redefine the UI-specific fields to be compatible with React's style objects
@@ -62,7 +62,7 @@ export interface User {
   streakFreezes: number;
   traits?: Record<string, boolean>;
   verificationVotes?: number;
-  failedVerificationCount?: number; // Tracks rejected logs
+  failedVerificationCount?: number; 
   region?: string;
   state?: string;
   country?: string;
@@ -70,13 +70,13 @@ export interface User {
   suggestedCosmetics?: GeneratedCosmetic[];
   evolutionPath?: EvolutionPathData;
   evolutionLevel?: number;
-  hasPaidAccess?: boolean; // True if account activation fee is paid
+  hasPaidAccess?: boolean; 
   referralCount?: number;
   recruiterBonusClaimed?: boolean;
 }
 
 export interface SavedAvatar {
-  id: string; // The stable signature
+  id: string; 
   avatarUrl: string;
   equippedLayers: Record<string, boolean>;
   createdAt: number;
@@ -95,8 +95,8 @@ export interface Skill {
     points: number;
   };
   innovatorAwarded: boolean;
-  isApproved: boolean; // True if validated by community/admin
-  guide?: string; // AI-generated guide markdown
+  isApproved: boolean; 
+  guide?: string; 
 }
 
 export interface Log {
@@ -208,7 +208,6 @@ export interface StoreItem {
   icon: keyof typeof STORE_ITEM_ICONS;
   layerKey: string;
   visualDescription: string;
-  // Prestige Gate Fields
   minLevel?: number;
   requiredTraitId?: string;
 }
@@ -218,7 +217,7 @@ export interface PublicLog {
   category: SkillCategory;
   userRegion: string;
   timestamp: number;
-  id?: string; // from useCollection
+  id?: string; 
 }
 
 export interface AtlasRadioBroadcast {
@@ -236,6 +235,16 @@ export interface Mentorship {
   status: 'pending' | 'active' | 'completed' | 'denied';
   createdAt: number;
   startedAt?: number;
+}
+
+export interface Transaction {
+  id: string;
+  userId: string;
+  type: 'account_activation' | 'gem_purchase';
+  amount: number;
+  price: number;
+  timestamp: number;
+  sessionId: string;
 }
 
 
