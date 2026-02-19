@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest, Library } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 // We redefine the UI-specific fields to be compatible with React's style objects
@@ -94,6 +94,7 @@ export interface Skill {
   };
   innovatorAwarded: boolean;
   isApproved: boolean; // True if validated by community/admin
+  guide?: string; // AI-generated guide markdown
 }
 
 export interface Log {
@@ -257,7 +258,8 @@ export const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Streak: Flame,
   Gems: Gem,
   Events: Megaphone,
-  Radio: Radio
+  Radio: Radio,
+  Library: Library
 };
 
 export const TRAIT_ICONS = {

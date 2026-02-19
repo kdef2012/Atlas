@@ -31,13 +31,15 @@ import {
   MessageSquare,
   Radio,
   BookUser,
+  FileText,
+  Library,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { signOut } from "firebase/auth";
-import { TwinskieAvatar } from "@/components/TwinskieAvatar";
+import { TwinskieAvatarCompact } from "@/components/TwinskiAvatarCompact";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -54,7 +56,9 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
+  { href: "/library", label: "The Rolodex", icon: Library },
   { href: "/quests", label: "Quests", icon: ScrollText },
+  { href: "/resume", label: "Resume", icon: FileText },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/echoes", label: "Echoes", icon: MessageSquare },
   { href: "/radio", label: "Radio", icon: Radio },
@@ -62,7 +66,7 @@ const navItems = [
   { href: "/fireteams", label: "Fireteams", icon: Users },
   { href: "/guilds", label: "Guilds", icon: Building2 },
   { href: "/turf-wars", label: "Faction Challenges", icon: Map },
-  { href: "/mentorships", label: "Mentorships", icon: BookUser },
+  { href: "/mentorships", label: "Mentorship Hub", icon: BookUser },
   { href: "/verify", label: "Verify", icon: ShieldCheck },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
@@ -86,7 +90,6 @@ export function SideNav() {
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData } = useDoc(adminRef);
 
-  // ✅ FIXED: Use window.location.href to avoid hooks error
   const handleLogout = async () => {
     if (!auth) return;
     
@@ -110,6 +113,7 @@ export function SideNav() {
       userName: (adminData as any)?.userName || 'Admin',
       level: 99, // Admins are special
       avatarStyle: undefined, // No avatar for admins in this simple setup
+      lastLogTimestamp: Date.now(), // Ensure admin is always considered active
   } : user;
 
 
@@ -196,8 +200,11 @@ export function SideNav() {
       <SidebarSeparator />
       <SidebarFooter>
         <div className="flex items-center gap-3 p-2">
-           {displayUser && 'avatarStyle' in displayUser && displayUser.avatarStyle && <TwinskieAvatar user={displayUser as User} size="sm" showInactiveLabel={false} />}
-           {displayUser && (!('avatarStyle' in displayUser) || !(displayUser as User).avatarStyle) && <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>}
+           {displayUser && ('avatarStyle' in displayUser || 'avatarUrl' in displayUser) ? 
+                <TwinskieAvatarCompact user={displayUser as User} size={40} showInactive={false} /> 
+                : 
+                <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center"><Shield/></div>
+            }
             <div className="group-data-[collapsible=icon]:hidden">
               <p className="font-bold text-sm">{displayUser?.userName || 'User'}</p>
               <p className="text-xs text-muted-foreground">Level { (displayUser && 'level' in displayUser) ? displayUser?.level : 0}</p>
@@ -228,5 +235,3 @@ export function SideNav() {
     </>
   );
 }
-
-    
