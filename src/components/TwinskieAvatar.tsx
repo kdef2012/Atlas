@@ -26,10 +26,13 @@ export function TwinskieAvatar({ user, size = 'md', className, showInactiveLabel
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = user.lastLogTimestamp < twentyFourHoursAgo;
 
-  if (!user.avatarUrl) {
+  // Use avatarUrl as primary, baseAvatarUrl as fallback
+  const displayUrl = user.avatarUrl || user.baseAvatarUrl;
+
+  if (!displayUrl) {
     return (
       <div className={cn("bg-secondary animate-pulse rounded-2xl flex items-center justify-center", dimensions, className)}>
-        <span className="text-muted-foreground font-headline font-bold">Initializing...</span>
+        <span className="text-muted-foreground font-headline font-bold text-xs px-4 text-center">Initializing Signal...</span>
       </div>
     );
   }
@@ -43,7 +46,7 @@ export function TwinskieAvatar({ user, size = 'md', className, showInactiveLabel
         )}
     >
       <img
-        src={user.avatarUrl}
+        src={displayUrl}
         alt={`${user.userName}'s Twinskie`}
         className={cn(
           "relative z-10 w-[90%] h-[90%] object-contain drop-shadow-2xl transition-all duration-700",

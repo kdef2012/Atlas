@@ -25,7 +25,10 @@ export function TwinskieAvatarCompact({
   const twentyFourHoursAgo = Date.now() - (24 * 60 * 60 * 1000);
   const isInactive = showInactive && user.lastLogTimestamp < twentyFourHoursAgo;
 
-  if (!user.avatarUrl) {
+  // Use avatarUrl as primary, baseAvatarUrl as fallback
+  const displayUrl = user.avatarUrl || user.baseAvatarUrl;
+
+  if (!displayUrl) {
     return (
       <div 
         className={cn(
@@ -55,7 +58,7 @@ export function TwinskieAvatarCompact({
         style={{ width: size, height: size }}
       >
         <img
-          src={user.avatarUrl}
+          src={displayUrl}
           alt={user.userName}
           className={cn(
             "h-full w-full object-contain scale-110",

@@ -1,6 +1,6 @@
 'use client';
 import type { ReactNode } from "react";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import {
@@ -54,7 +54,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
     const isAdmin = !!adminData || isSuperAdminEmail;
     const isOnboardingPage = pathname.startsWith('/onboarding');
-    const isProfileComplete = !!user?.avatarStyle;
+    
+    // Profile is complete if it has an avatar style OR an avatar URL
+    const isProfileComplete = !!(user?.avatarStyle || user?.avatarUrl);
 
     // If they are an admin, let them go anywhere
     if (isAdmin) return;
@@ -67,6 +69,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       }
     } else if (!isProfileComplete) {
       // Profile exists but haven't finished customization
+      // We check !isOnboardingPage to avoid interrupting the current onboarding steps
       if (!isOnboardingPage) {
         router.replace('/onboarding/archetype');
       }
