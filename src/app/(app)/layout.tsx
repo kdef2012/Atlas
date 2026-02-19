@@ -64,8 +64,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     // If they are an admin, let them go anywhere
     if (isAdmin) return;
 
-    // Paywall Redirect (Monetization 2)
-    // Only block if explicitly set to false. If undefined (old user), they pass (Grandfathering).
+    // ==========================================
+    // MONETIZATION: Paywall Redirect Logic
+    // ==========================================
+    // Only block if explicitly set to false. 
+    // If undefined (old user), they pass (Silent Grandfathering).
     if (user && user.hasPaidAccess === false) {
       if (!isPaywallPage) {
         router.replace('/paywall');

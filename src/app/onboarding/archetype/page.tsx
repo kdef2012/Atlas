@@ -85,9 +85,11 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
+        // ==========================================
         // MONETIZATION SWITCH: 
-        // Set to true for 'Grandfathering' (current users get free access).
-        // Change to false when you are ready to start charging the activation fee.
+        // Set to 'true' for Grandfathering (Free Access).
+        // Change to 'false' to enable the Activation Paywall for new users.
+        // ==========================================
         hasPaidAccess: true, 
       },
       { merge: true }
