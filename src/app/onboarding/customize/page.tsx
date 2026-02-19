@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'lucide-react';
+import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2, AlertTriangle } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
@@ -44,7 +44,6 @@ export default function CustomizeAvatarPage() {
     return [...MALE_HAIR_STYLES, ...FEMALE_HAIR_STYLES].sort();
   }, [gender]);
 
-  // Handle step changes
   const nextStep = () => setStep(s => Math.min(4, s + 1));
   const prevStep = () => setStep(s => Math.max(1, s - 1));
 
@@ -103,23 +102,25 @@ export default function CustomizeAvatarPage() {
     try {
       toast({
         title: 'Uploading to ATLAS Core...',
-        description: 'Storing your avatar in the cloud.',
+        description: 'Synchronizing biological data with cloud storage.',
       });
 
-      // 1. Upload the base64 image to Storage first
-      const avatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
+      // 1. Upload to Storage (Blobs handle large data much better)
+      const cloudAvatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
 
-      if (!avatarUrl || avatarUrl.startsWith('data:')) {
-        throw new Error("Failed to generate a valid cloud storage URL.");
+      // 2. ABSOLUTE VALIDATION: Never let a base64 string reach the user document
+      if (!cloudAvatarUrl || !cloudAvatarUrl.startsWith('https://')) {
+        console.error("Storage returned invalid link:", cloudAvatarUrl?.substring(0, 50));
+        throw new Error("The ATLAS Core rejected the data stream. Your image was too large or storage is unavailable. Please try again.");
       }
 
-      // 2. Save only the resulting URL to the user document
+      // 3. Save only the verified URL to Firestore
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
-        avatarUrl: avatarUrl, 
-        baseAvatarUrl: avatarUrl, 
-        gender: gender === 'Non-Binary' ? undefined : gender 
+        avatarUrl: cloudAvatarUrl, 
+        baseAvatarUrl: cloudAvatarUrl, 
+        gender: gender === 'Non-Binary' ? 'Male' : gender // Clean up gender for storage
       };
 
       await setDoc(userRef, updates, { merge: true });
@@ -130,8 +131,8 @@ export default function CustomizeAvatarPage() {
       console.error("Failed to save profile:", error);
       toast({ 
         variant: 'destructive', 
-        title: 'Save Failed', 
-        description: error instanceof Error ? error.message : 'Could not sync your system profile.' 
+        title: 'Synchronization Failed', 
+        description: error instanceof Error ? error.message : 'The ATLAS encountered a critical error saving your profile.' 
       });
     } finally {
       setIsLoading(false);
