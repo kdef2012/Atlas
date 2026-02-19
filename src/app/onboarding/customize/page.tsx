@@ -23,7 +23,8 @@ import {
   CircleUser,
   ScanEye,
   Dna,
-  CheckCircle2
+  CheckCircle2,
+  X
 } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
@@ -513,14 +514,24 @@ export default function CustomizeAvatarPage() {
           </CardContent>
 
           <CardFooter className="flex justify-between border-t p-6 bg-secondary/10">
-            <Button
-              variant="ghost"
-              onClick={prevStep}
-              disabled={step === 1 || isProcessing || isLoading}
-              className="font-bold uppercase tracking-tighter"
-            >
-              <ChevronLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={prevStep}
+                disabled={step === 1 || isProcessing || isLoading}
+                className="font-bold uppercase tracking-tighter"
+              >
+                <ChevronLeft className="mr-2 h-4 w-4" /> Back
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push('/dashboard')}
+                disabled={isProcessing || isLoading}
+                className="font-bold uppercase tracking-tighter border-muted-foreground/20"
+              >
+                <X className="mr-2 h-4 w-4" /> Cancel
+              </Button>
+            </div>
             
             {step < 5 && (
               <Button onClick={nextStep} className="font-bold uppercase tracking-tighter px-10">
