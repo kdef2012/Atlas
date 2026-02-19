@@ -92,7 +92,7 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
         <div>
           <h3 className="text-lg font-bold font-headline">{node.name}</h3>
           <p className="text-sm text-muted-foreground">{node.description || "A skill waiting to be mastered."}</p>
-          {isPioneer && <p className="text-xs font-bold text-accent neon-text mt-1">YOU ARE THE PIONEER OF THIS SKILL</p>}
+          {isPioneer && <p className="text-xs font-bold text-accent neon-text mt-1 uppercase tracking-tighter">Citizen Origin Point</p>}
         </div>
       </div>
       <div className="mt-4 space-y-3">
@@ -116,10 +116,10 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
             <div className="flex items-start gap-2">
               <Key className="w-4 h-4 mt-0.5 text-primary" />
               <div>
-                <p className="font-bold">Cost:</p>
+                <p className="font-bold">Requirement Cost:</p>
                 <p className={cn(hasEnoughPoints ? 'text-green-400' : 'text-red-400')}>
-                  {finalCost} {node.cost.category} Points (You have: {userStat})
-                  {(finalCost < node.cost.points) && <span className="ml-2 text-accent text-xs">(Discounted!)</span>}
+                  {finalCost} {node.cost.category} Points (Available: {userStat})
+                  {(finalCost < node.cost.points) && <span className="ml-2 text-accent text-[10px] font-black uppercase tracking-tighter">(Optimized)</span>}
                 </p>
               </div>
             </div>
@@ -127,26 +127,26 @@ export function SkillPopoverContent({ node }: SkillPopoverContentProps) {
         </div>
 
         {isUnlocked ? (
-          <Button asChild variant="outline" size="sm" className="w-full">
-            <Link href={`/mentors?skillId=${node.id}`}>
-              <BookUser className="mr-2" /> Find a Mentor
+          <Button asChild variant="outline" size="sm" className="w-full font-bold">
+            <Link href={`/mentorships?skillId=${node.id}`}>
+              <BookUser className="mr-2 h-4 w-4" /> Seek Guidance
             </Link>
           </Button>
         ) : !prereqsMet ? (
-             <Button variant="destructive" size="sm" className="w-full" disabled>
-                Prerequisites not met
+             <Button variant="destructive" size="sm" className="w-full font-bold opacity-50 cursor-not-allowed" disabled>
+                Signal Blocked: Prerequisites Pending
             </Button>
         ) : !hasEnoughPoints && node.cost ? (
-            <Button asChild size="sm" className="w-full group" variant="secondary">
+            <Button asChild size="sm" className="w-full group font-bold" variant="secondary">
                 <Link href="/quests">
-                    Earn {node.cost.category} Points
+                    Gather {node.cost.category} Energy
                     <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
             </Button>
         ) : (
-          <Button onClick={handleUnlockSkill} disabled={!canUnlock || isUnlocking} size="sm" className="w-full">
-            {isUnlocking && <Loader2 className="mr-2 animate-spin" />}
-            Unlock Skill
+          <Button onClick={handleUnlockSkill} disabled={!canUnlock || isUnlocking} size="sm" className="w-full font-bold bg-primary hover:bg-primary/90">
+            {isUnlocking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Unlock Mastery
           </Button>
         )}
       </div>

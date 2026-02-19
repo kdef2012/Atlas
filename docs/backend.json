@@ -146,6 +146,21 @@
             "audioUrl": { "type": "string", "format": "uri", "description": "The URL to the generated audio file." }
         },
         "required": ["id", "timestamp", "script", "audioUrl"]
+    },
+    "Mentorship": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "title": "Mentorship",
+        "type": "object",
+        "description": "Represents a mentorship relationship between two users.",
+        "properties": {
+            "id": { "type": "string" },
+            "mentorId": { "type": "string" },
+            "menteeId": { "type": "string" },
+            "skillId": { "type": "string" },
+            "status": { "type": "string", "enum": ["pending", "active", "completed", "denied"] },
+            "createdAt": { "type": "number" }
+        },
+        "required": ["id", "mentorId", "menteeId", "skillId", "status", "createdAt"]
     }
   },
   "auth": { "providers": ["password"] },
@@ -168,8 +183,9 @@
       { "path": "/suggestions/{suggestionId}", "definition": { "entityName": "Suggestion", "schema": { "$ref": "#/backend/entities/Suggestion" }, "description": "Stores user-submitted suggestions.", "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }] } },
       { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
       { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
-      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] },
-      { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } }
+      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } },
+      { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } },
+      { "path": "/mentorships/{mentorshipId}", "definition": { "entityName": "Mentorship", "schema": { "$ref": "#/backend/entities/Mentorship" }, "description": "Stores mentorship relationships.", "params": [{ "name": "mentorshipId", "description": "The unique identifier for the mentorship." }] } }
     ]
   }
 }

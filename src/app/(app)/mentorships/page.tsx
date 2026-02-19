@@ -26,6 +26,7 @@ function MentorFinder() {
     
     const mentorsQuery = useMemoFirebase(() => {
         if (!skillId) return null;
+        // Mentors must have unlocked the skill
         return query(collection(firestore, 'users'), where(`userSkills.${skillId}.isUnlocked`, '==', true));
     }, [firestore, skillId]);
 
@@ -60,8 +61,9 @@ function MentorFinder() {
     
     if (!skillId) {
         return (
-             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                <p>Select a skill from the Nebula to find a mentor.</p>
+             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-secondary/20">
+                <p className="font-headline text-lg uppercase tracking-tighter">Target Signature Required</p>
+                <p className="text-sm mt-2">Select a skill from the Nebula clusters to find an available Guardian.</p>
              </div>
         )
     }
@@ -79,26 +81,35 @@ function MentorFinder() {
 
     return (
         <div className="space-y-4">
-             <h3 className="font-bold text-lg">Available Mentors for "{skill?.name}"</h3>
+             <div className="flex items-center justify-between mb-4">
+                <h3 className="font-headline text-2xl">Guardians of {skill?.name}</h3>
+                <span className="text-xs bg-accent/10 text-accent px-2 py-1 rounded border border-accent/20 uppercase font-bold">{potentialMentors.length} Available</span>
+             </div>
             {potentialMentors.length > 0 ? potentialMentors.map(mentor => {
                 const isPending = pendingMentorIds.has(mentor.id);
                 return (
-                    <Card key={mentor.id} className="flex items-center p-4 gap-4">
+                    <Card key={mentor.id} className="flex items-center p-4 gap-4 bg-card/50 hover:bg-card transition-all border-primary/10">
                         <TwinskieAvatarCompact user={mentor} size={48} />
                         <div className="flex-1">
-                            <p className="font-bold">{mentor.userName}</p>
-                            <p className="text-sm text-muted-foreground">Level {mentor.level} {mentor.archetype}</p>
+                            <p className="font-bold text-lg text-primary">{mentor.userName}</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest font-bold">Lvl {mentor.level} {mentor.archetype}</p>
                         </div>
-                        <Button size="sm" onClick={() => handleRequestMentorship(mentor)} disabled={isPending}>
-                            {isPending ? <Check className="mr-2" /> : <Send className="mr-2" />}
-                            {isPending ? 'Request Sent' : 'Request'}
+                        <Button 
+                            size="sm" 
+                            variant={isPending ? "outline" : "default"}
+                            onClick={() => handleRequestMentorship(mentor)} 
+                            disabled={isPending}
+                            className="font-bold"
+                        >
+                            {isPending ? <Check className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
+                            {isPending ? 'Pending' : 'Request Mastery'}
                         </Button>
                     </Card>
                 )
             }) : (
-                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                    <p>No mentors found for "{skill?.name}".</p>
-                    <p className="text-sm mt-2">You may be the first to master it here!</p>
+                 <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg bg-secondary/10">
+                    <p className="font-headline uppercase">No Guardians Detected</p>
+                    <p className="text-sm mt-2">You may be the first to reach enlightenment in this discipline. Forge ahead!</p>
                 </div>
             )}
         </div>
@@ -121,7 +132,7 @@ function MentorshipDashboard() {
     const { data: activeAsMentor, isLoading: loadingMentor } = useCollection<Mentorship>(activeAsMentorQuery);
     const { data: activeAsMentee, isLoading: loadingMentee } = useCollection<Mentorship>(activeAsMenteeQuery);
 
-    // Get all unique user and skill IDs to fetch their data in fewer reads
+    // Get all unique user and skill IDs to fetch their data efficiently
     const allMentorships = useMemo(() => [
         ...(incomingRequests || []),
         ...(outgoingRequests || []),
@@ -147,119 +158,154 @@ function MentorshipDashboard() {
         const mentorshipRef = doc(firestore, 'mentorships', mentorshipId);
         updateDocumentNonBlocking(mentorshipRef, { status: newStatus });
         toast({
-            title: `Request ${newStatus === 'active' ? 'Accepted' : 'Denied'}`,
-            description: "The mentorship status has been updated.",
+            title: `Signal ${newStatus === 'active' ? 'Accepted' : 'Rejected'}`,
+            description: "The connection protocol has been updated.",
         });
     };
 
     if (isLoading) {
-        return <Skeleton className="h-64 w-full" />
+        return <div className="space-y-6">
+            <Skeleton className="h-48 w-full" />
+            <Skeleton className="h-48 w-full" />
+        </div>
     }
 
     return (
-        <div className="space-y-6">
-            <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><GitPullRequest /> Incoming Requests</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                    {incomingRequests && incomingRequests.length > 0 ? incomingRequests.map(req => {
-                        const mentee = usersMap.get(req.menteeId);
-                        const skill = skillsMap.get(req.skillId);
-                        return (
-                            <Card key={req.id} className="p-3 flex items-center gap-3 bg-secondary">
-                                {mentee && <TwinskieAvatarCompact user={mentee} />}
-                                <div className="flex-1">
-                                    <p className="text-sm">
-                                        <span className="font-bold">{mentee?.userName || '...'}</span> wants to learn <span className="font-bold">{skill?.name || '...'}</span>
-                                    </p>
-                                </div>
-                                <Button size="icon" variant="ghost" className="text-destructive" onClick={() => handleUpdateRequest(req.id, 'denied')}><X className="w-4 h-4"/></Button>
-                                <Button size="icon" className="bg-green-600 hover:bg-green-700" onClick={() => handleUpdateRequest(req.id, 'active')}><Check className="w-4 h-4"/></Button>
-                            </Card>
-                        )
-                    }) : <p className="text-muted-foreground text-sm text-center">No incoming requests.</p>}
-                </CardContent>
-            </Card>
+        <div className="space-y-8">
+            <section className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+                    <GitPullRequest className="w-4 h-4" /> Incoming Transmission
+                </h3>
+                {incomingRequests && incomingRequests.length > 0 ? (
+                    <div className="grid gap-3">
+                        {incomingRequests.map(req => {
+                            const mentee = usersMap.get(req.menteeId);
+                            const skill = skillsMap.get(req.skillId);
+                            return (
+                                <Card key={req.id} className="p-4 flex items-center gap-4 bg-secondary/30 border-primary/10">
+                                    {mentee && <TwinskieAvatarCompact user={mentee} />}
+                                    <div className="flex-1">
+                                        <p className="text-sm">
+                                            <span className="font-bold text-primary">{mentee?.userName || '...'}</span> requests guidance in <span className="font-bold text-accent">{skill?.name || '...'}</span>
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Button size="icon" variant="ghost" className="text-destructive hover:bg-destructive/10" onClick={() => handleUpdateRequest(req.id, 'denied')}><X className="w-5 h-5"/></Button>
+                                        <Button size="icon" className="bg-green-600 hover:bg-green-700" onClick={() => handleUpdateRequest(req.id, 'active')}><Check className="w-5 h-5"/></Button>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <Card className="border-dashed bg-transparent p-8 text-center text-muted-foreground opacity-50">
+                        <p className="text-sm italic">No mentorship requests in queue.</p>
+                    </Card>
+                )}
+            </section>
 
-             <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><Users /> Active Mentorships</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                    {activeAsMentor && activeAsMentor.length > 0 && (
-                        <div>
-                            <h4 className="font-bold mb-1">You are mentoring:</h4>
-                            {activeAsMentor.map(m => {
-                                const mentee = usersMap.get(m.menteeId);
-                                const skill = skillsMap.get(m.skillId);
-                                return <p key={m.id} className="text-sm"> <span className="font-semibold">{mentee?.userName}</span> in <span className="font-semibold">{skill?.name}</span></p>
-                            })}
-                        </div>
-                    )}
-                     {activeAsMentee && activeAsMentee.length > 0 && (
-                        <div>
-                            <h4 className="font-bold mb-1">You are learning:</h4>
-                            {activeAsMentee.map(m => {
-                                const mentor = usersMap.get(m.mentorId);
-                                const skill = skillsMap.get(m.skillId);
-                                return <p key={m.id} className="text-sm"><span className="font-semibold">{skill?.name}</span> from <span className="font-semibold">{mentor?.userName}</span></p>
-                            })}
-                        </div>
-                    )}
-                    {(!activeAsMentor || activeAsMentor.length === 0) && (!activeAsMentee || activeAsMentee.length === 0) && <p className="text-muted-foreground text-sm text-center">No active mentorships.</p>}
-                </CardContent>
-            </Card>
+             <section className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+                    <Users className="w-4 h-4" /> Active Protocols
+                </h3>
+                {(activeAsMentor && activeAsMentor.length > 0) || (activeAsMentee && activeAsMentee.length > 0) ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {activeAsMentor?.map(m => {
+                            const mentee = usersMap.get(m.menteeId);
+                            const skill = skillsMap.get(m.skillId);
+                            return (
+                                <Card key={m.id} className="p-4 flex items-center gap-3 border-accent/20 bg-accent/5">
+                                    <TwinskieAvatarCompact user={mentee!} size={32} />
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-tight text-accent">Mentoring</p>
+                                        <p className="text-sm"> <span className="font-bold">{mentee?.userName}</span> in <span className="font-bold italic">{skill?.name}</span></p>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                        {activeAsMentee?.map(m => {
+                            const mentor = usersMap.get(m.mentorId);
+                            const skill = skillsMap.get(m.skillId);
+                            return (
+                                <Card key={m.id} className="p-4 flex items-center gap-3 border-primary/20 bg-primary/5">
+                                    <TwinskieAvatarCompact user={mentor!} size={32} />
+                                    <div>
+                                        <p className="text-xs font-bold uppercase tracking-tight text-primary">Learning From</p>
+                                        <p className="text-sm"><span className="font-bold italic">{skill?.name}</span> from <span className="font-bold">{mentor?.userName}</span></p>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                ) : (
+                    <Card className="border-dashed bg-transparent p-8 text-center text-muted-foreground opacity-50">
+                        <p className="text-sm italic">No active connections. Visit the Nebula to seek or offer guidance.</p>
+                    </Card>
+                )}
+            </section>
 
-            <Card>
-                <CardHeader><CardTitle className="flex items-center gap-2"><CircleCheck /> Sent Requests</CardTitle></CardHeader>
-                <CardContent className="space-y-2">
-                     {outgoingRequests && outgoingRequests.length > 0 ? outgoingRequests.map(req => {
-                        const mentor = usersMap.get(req.mentorId);
-                        const skill = skillsMap.get(req.skillId);
-                        return (
-                             <Card key={req.id} className="p-3 flex items-center gap-3 bg-secondary/50">
-                                {mentor && <TwinskieAvatarCompact user={mentor} />}
-                                <div className="flex-1">
-                                    <p className="text-sm">
-                                        Request to <span className="font-bold">{mentor?.userName || '...'}</span> for <span className="font-bold">{skill?.name || '...'}</span> is pending.
-                                    </p>
-                                </div>
-                            </Card>
-                        )
-                    }) : <p className="text-muted-foreground text-sm text-center">No pending outgoing requests.</p>}
-                </CardContent>
-            </Card>
+            <section className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-[0.3em] text-muted-foreground flex items-center gap-2">
+                    <CircleCheck className="w-4 h-4" /> Outgoing Signals
+                </h3>
+                {outgoingRequests && outgoingRequests.length > 0 ? (
+                    <div className="grid gap-3">
+                        {outgoingRequests.map(req => {
+                            const mentor = usersMap.get(req.mentorId);
+                            const skill = skillsMap.get(req.skillId);
+                            return (
+                                <Card key={req.id} className="p-4 flex items-center gap-4 bg-secondary/20 border-primary/5">
+                                    {mentor && <TwinskieAvatarCompact user={mentor} size={32} />}
+                                    <div className="flex-1">
+                                        <p className="text-sm italic">
+                                            Mastery request to <span className="font-bold">{mentor?.userName || '...'}</span> for <span className="font-bold">{skill?.name || '...'}</span> is currently pending...
+                                        </p>
+                                    </div>
+                                </Card>
+                            )
+                        })}
+                    </div>
+                ) : null}
+            </section>
         </div>
     )
 }
 
 export default function MentorsPage() {
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-3xl flex items-center gap-2">
-                    <BookUser className="w-8 h-8 text-primary" />
-                    Mentorship Hub
-                </CardTitle>
-                <CardDescription>
-                    Connect with users to learn and grow. Find a mentor by visiting the Nebula and selecting a skill.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <Tabs defaultValue="dashboard">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-                        <TabsTrigger value="finder">Find a Mentor</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="dashboard" className="pt-4">
-                        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-                           <MentorshipDashboard />
-                        </Suspense>
-                    </TabsContent>
-                    <TabsContent value="finder" className="pt-4">
-                        <Suspense fallback={<Skeleton className="h-48 w-full" />}>
-                            <MentorFinder />
-                        </Suspense>
-                    </TabsContent>
-                </Tabs>
-            </CardContent>
-        </Card>
+        <div className="max-w-4xl mx-auto space-y-6">
+            <Card className="border-primary/20 shadow-2xl shadow-primary/5 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none" />
+                <CardHeader className="relative z-10 text-center pb-8 border-b bg-secondary/20">
+                    <div className="mx-auto p-4 rounded-full bg-primary/10 w-fit mb-4">
+                        <BookUser className="w-12 h-12 text-primary" />
+                    </div>
+                    <CardTitle className="font-headline text-4xl mb-2">Guardian Hub</CardTitle>
+                    <CardDescription className="max-w-md mx-auto text-lg">
+                        Bridge the gap between discovery and mastery. Connect with high-level citizens to evolve faster.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Tabs defaultValue="dashboard" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 rounded-none h-14 bg-muted/50 border-b">
+                            <TabsTrigger value="dashboard" className="data-[state=active]:bg-background">Connection Status</TabsTrigger>
+                            <TabsTrigger value="finder" className="data-[state=active]:bg-background">Find a Guardian</TabsTrigger>
+                        </TabsList>
+                        <div className="p-6">
+                            <TabsContent value="dashboard" className="mt-0 outline-none">
+                                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                                <MentorshipDashboard />
+                                </Suspense>
+                            </TabsContent>
+                            <TabsContent value="finder" className="mt-0 outline-none">
+                                <Suspense fallback={<Skeleton className="h-64 w-full" />}>
+                                    <MentorFinder />
+                                </Suspense>
+                            </TabsContent>
+                        </div>
+                    </Tabs>
+                </CardContent>
+            </Card>
+        </div>
     )
 }

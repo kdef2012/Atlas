@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 // We redefine the UI-specific fields to be compatible with React's style objects
@@ -64,6 +64,8 @@ export interface User {
   verificationVotes?: number;
   failedVerificationCount?: number; // Tracks rejected logs
   region?: string;
+  state?: string;
+  country?: string;
   aiGeneratedCosmetics?: Record<string, GeneratedCosmetic>;
   suggestedCosmetics?: GeneratedCosmetic[];
   evolutionPath?: EvolutionPathData;

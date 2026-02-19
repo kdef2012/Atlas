@@ -117,10 +117,10 @@ service cloud.firestore {
     
     // MENTORSHIPS COLLECTION
     match /mentorships/{mentorshipId} {
-      allow read: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
+      allow read: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId || isAdmin());
       allow create: if isSignedIn() && request.auth.uid == request.resource.data.menteeId;
-      allow update: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId);
-      allow delete: if false;
+      allow update: if isSignedIn() && (request.auth.uid == resource.data.mentorId || request.auth.uid == resource.data.menteeId || isAdmin());
+      allow delete: if isAdmin();
     }
 
     // RADIO BROADCASTS COLLECTION
