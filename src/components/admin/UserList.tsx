@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { GiftGemsDialog } from "./GiftGemsDialog";
 import { EditUserDialog } from "./EditUserDialog";
 import { UserLogsDialog } from "./UserLogsDialog";
+import { GiftReferralsDialog } from "./GiftReferralsDialog";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useState, useMemo } from "react";
@@ -114,18 +115,18 @@ export function UserList() {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>User Overview</CardTitle>
-                <CardDescription>A list of all users in the ATLAS system. Toggle the switch to promote citizens to Admin status.</CardDescription>
+                <CardTitle>Citizen Directory</CardTitle>
+                <CardDescription>Manage user profiles, permissions, and biological signatures.</CardDescription>
             </CardHeader>
             <CardContent>
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>User</TableHead>
+                            <TableHead>Citizen</TableHead>
                             <TableHead>Level</TableHead>
-                            <TableHead>Last Active</TableHead>
+                            <TableHead>Invites</TableHead>
                             <TableHead>Admin</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                            <TableHead className="text-right">Protocols</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -133,9 +134,9 @@ export function UserList() {
                             <TableRow key={i}>
                                 <TableCell><Skeleton className="h-8 w-48" /></TableCell>
                                 <TableCell><Skeleton className="h-8 w-12" /></TableCell>
-                                <TableCell><Skeleton className="h-8 w-32" /></TableCell>
+                                <TableCell><Skeleton className="h-8 w-12" /></TableCell>
                                 <TableCell><Skeleton className="h-8 w-16" /></TableCell>
-                                <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                                <TableCell className="text-right"><Skeleton className="h-8 w-24 ml-auto" /></TableCell>
                             </TableRow>
                         ))}
                         {users?.map(user => {
@@ -145,11 +146,16 @@ export function UserList() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <TwinskieAvatarCompact user={user} size={32} showLevel={false} />
-                                            <div className="font-medium">{user.userName}</div>
+                                            <div className="flex flex-col">
+                                                <span className="font-medium">{user.userName}</span>
+                                                <span className="text-[10px] text-muted-foreground uppercase tracking-tighter">
+                                                    {formatDistanceToNow(user.lastLogTimestamp, { addSuffix: true })}
+                                                </span>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell>{user.level}</TableCell>
-                                    <TableCell>{formatDistanceToNow(user.lastLogTimestamp, { addSuffix: true })}</TableCell>
+                                    <TableCell>{user.referralCount || 0} / 4</TableCell>
                                     <TableCell>
                                         <Switch
                                             checked={isAdmin}
@@ -161,6 +167,7 @@ export function UserList() {
                                     <TableCell className="text-right space-x-1">
                                         <UserLogsDialog user={user} />
                                         <GiftGemsDialog user={user} />
+                                        <GiftReferralsDialog user={user} />
                                         <EditUserDialog user={user} />
                                         
                                         <AlertDialog>
@@ -183,8 +190,7 @@ export function UserList() {
                                                     <AlertDialogTitle>Reset Avatar?</AlertDialogTitle>
                                                     <AlertDialogDescription>
                                                         This will clear {user.userName}'s avatar and force them to go through 
-                                                        onboarding again on their next login. This action is useful for clearing 
-                                                        biological interference.
+                                                        onboarding again. Useful for resolving character synthesis errors.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
