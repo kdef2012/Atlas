@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,16 +8,43 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2, User as UserIcon, UserRound, Users as UsersIcon, Glasses as GlassesIcon, Scissors, Palette } from 'lucide-react';
+import { 
+  Loader2, 
+  Sparkles, 
+  Check, 
+  ChevronRight, 
+  ChevronLeft, 
+  Wand2, 
+  User as UserIcon, 
+  UserRound, 
+  Users as UsersIcon, 
+  Glasses as GlassesIcon, 
+  Scissors, 
+  Palette,
+  CircleUser,
+  ScanEye,
+  Dna,
+  CheckCircle2
+} from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
 import { uploadBaseAvatar } from '@/lib/uploadAvatar';
-import { SKIN_TONES, HAIR_COLORS, EYE_COLORS, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS, AGE_RANGES, FACIAL_HAIR_STYLES, GLASSES_STYLES } from '@/lib/avatar-options';
+import { 
+  SKIN_TONES, 
+  HAIR_COLORS, 
+  EYE_COLORS, 
+  MALE_HAIR_STYLES, 
+  FEMALE_HAIR_STYLES, 
+  BODY_TYPES, 
+  HEIGHTS, 
+  AGE_RANGES, 
+  FACIAL_HAIR_STYLES, 
+  GLASSES_STYLES 
+} from '@/lib/avatar-options';
 import { cn } from '@/lib/utils';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function CustomizeAvatarPage() {
   const [step, setStep] = useState(1);
@@ -166,7 +194,7 @@ export default function CustomizeAvatarPage() {
         <p className="text-muted-foreground mt-2">Define your biological signature to initialize the ATLAS interface.</p>
       </div>
 
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-3xl">
         <Card className="border-primary/20 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
           <CardHeader className="bg-secondary/30 border-b">
             <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
@@ -181,59 +209,65 @@ export default function CustomizeAvatarPage() {
             </div>
           </CardHeader>
 
-          <CardContent className="p-6 md:p-10 min-h-[450px] flex flex-col justify-center">
+          <CardContent className="p-6 md:p-8 min-h-[500px] flex flex-col">
             {step === 1 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="text-center">
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary mb-4">
+                    <CircleUser className="w-8 h-8" />
+                  </div>
                   <h3 className="text-2xl font-bold font-headline mb-2">Biological Origin</h3>
                   <p className="text-sm text-muted-foreground">Select your base identity for character synthesis.</p>
                 </div>
-                <RadioGroup 
-                  value={gender} 
-                  onValueChange={(v: any) => {
-                    setGender(v);
-                    setHairStyle(v === 'Female' ? FEMALE_HAIR_STYLES[0] : MALE_HAIR_STYLES[0]);
-                  }} 
-                  className="grid grid-cols-1 sm:grid-cols-3 gap-4"
-                >
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {[
                     { val: 'Male', icon: UserIcon },
                     { val: 'Female', icon: UsersIcon },
                     { val: 'Non-Binary', icon: UserRound }
                   ].map(({ val, icon: Icon }) => (
-                    <div key={val}>
-                      <RadioGroupItem value={val} id={val} className="peer sr-only" />
-                      <Label
-                        htmlFor={val}
-                        className="flex flex-col items-center justify-between rounded-xl border-2 border-muted bg-popover p-6 hover:bg-accent/50 hover:border-primary/50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 cursor-pointer transition-all duration-200"
-                      >
-                        <Icon className="w-10 h-10 mb-3 text-muted-foreground peer-data-[state=checked]:text-primary" />
-                        <span className="text-lg font-bold">{val}</span>
-                      </Label>
-                    </div>
+                    <button
+                      key={val}
+                      onClick={() => {
+                        setGender(val as any);
+                        setHairStyle(val === 'Female' ? FEMALE_HAIR_STYLES[0] : MALE_HAIR_STYLES[0]);
+                      }}
+                      className={cn(
+                        "flex flex-col items-center justify-center rounded-xl border-2 p-6 transition-all duration-200",
+                        gender === val 
+                          ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" 
+                          : "border-muted bg-popover hover:border-primary/50 hover:bg-accent/50"
+                      )}
+                    >
+                      <Icon className={cn("w-12 h-12 mb-3", gender === val ? "text-primary" : "text-muted-foreground")} />
+                      <span className="text-lg font-bold">{val}</span>
+                      {gender === val && <CheckCircle2 className="w-5 h-5 text-primary mt-2" />}
+                    </button>
                   ))}
-                </RadioGroup>
+                </div>
               </div>
             )}
 
             {step === 2 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="text-center">
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary mb-4">
+                    <Palette className="w-8 h-8" />
+                  </div>
                   <h3 className="text-2xl font-bold font-headline mb-2">Chromatic Signature</h3>
                   <p className="text-sm text-muted-foreground">Choose the tones that match your physical form.</p>
                 </div>
                 
-                <div className="space-y-6">
-                  <div className="space-y-3">
-                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Skin Tone</Label>
-                    <div className="grid grid-cols-5 sm:grid-cols-8 gap-3">
+                <div className="space-y-8">
+                  <div className="space-y-4">
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground text-center block">Skin Tone</Label>
+                    <div className="grid grid-cols-5 sm:grid-cols-10 gap-3">
                       {SKIN_TONES.map((tone) => (
                         <button
                           key={tone.name}
                           onClick={() => setComplexion(tone)}
                           className={cn(
                             "group relative w-full aspect-square rounded-full border-2 transition-all hover:scale-110",
-                            complexion.name === tone.name ? "border-primary scale-110 ring-2 ring-primary/20" : "border-transparent"
+                            complexion.name === tone.name ? "border-primary scale-110 ring-4 ring-primary/20" : "border-transparent"
                           )}
                           style={{ backgroundColor: tone.hex }}
                           title={tone.name}
@@ -242,17 +276,17 @@ export default function CustomizeAvatarPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                    <div className="space-y-3">
-                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Hair Color</Label>
-                      <div className="grid grid-cols-5 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-12">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground block text-center">Hair Color</Label>
+                      <div className="grid grid-cols-5 gap-3">
                         {HAIR_COLORS.map((color) => (
                           <button
                             key={color.name}
                             onClick={() => setHairColor(color)}
                             className={cn(
-                              "w-full aspect-square rounded-md border-2 transition-all",
-                              hairColor.name === color.name ? "border-primary scale-110" : "border-transparent"
+                              "w-full aspect-square rounded-lg border-2 transition-all hover:scale-110",
+                              hairColor.name === color.name ? "border-primary scale-110 ring-4 ring-primary/20" : "border-transparent"
                             )}
                             style={{ backgroundColor: color.hex }}
                             title={color.name}
@@ -260,16 +294,16 @@ export default function CustomizeAvatarPage() {
                         ))}
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Eye Color</Label>
-                      <div className="grid grid-cols-5 gap-2">
+                    <div className="space-y-4">
+                      <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground block text-center">Eye Color</Label>
+                      <div className="grid grid-cols-5 gap-3">
                         {EYE_COLORS.map((color) => (
                           <button
                             key={color.name}
                             onClick={() => setEyeColor(color)}
                             className={cn(
-                              "w-full aspect-square rounded-md border-2 transition-all",
-                              eyeColor.name === color.name ? "border-primary scale-110" : "border-transparent"
+                              "w-full aspect-square rounded-lg border-2 transition-all hover:scale-110",
+                              eyeColor.name === color.name ? "border-primary scale-110 ring-4 ring-primary/20" : "border-transparent"
                             )}
                             style={{ backgroundColor: color.hex }}
                             title={color.name}
@@ -283,43 +317,71 @@ export default function CustomizeAvatarPage() {
             )}
 
             {step === 3 && (
-              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+              <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="text-center">
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary mb-4">
+                    <Scissors className="w-8 h-8" />
+                  </div>
                   <h3 className="text-2xl font-bold font-headline mb-2">Hairstyles & Features</h3>
-                  <p className="text-sm text-muted-foreground">Select a stylistic presentation from the ATLAS archives.</p>
+                  <p className="text-sm text-muted-foreground">Select your stylistic presentation from the ATLAS archives.</p>
                 </div>
-                <div className="max-w-sm mx-auto space-y-6">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter text-muted-foreground">
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
                       <Scissors className="w-3 h-3" /> Hair Style
                     </Label>
-                    <Select value={hairStyle} onValueChange={setHairStyle}>
-                      <SelectTrigger className="h-12 border-2">
-                        <SelectValue placeholder="Choose a style" />
-                      </SelectTrigger>
-                      <SelectContent>
+                    <ScrollArea className="h-64 border rounded-xl bg-secondary/20 p-2">
+                      <div className="grid grid-cols-2 gap-2">
                         {currentHairStyles.map(s => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                          <button
+                            key={s}
+                            onClick={() => setHairStyle(s)}
+                            className={cn(
+                              "p-3 text-left text-sm rounded-lg border transition-all hover:bg-accent",
+                              hairStyle === s 
+                                ? "border-primary bg-primary/10 font-bold text-primary shadow-sm" 
+                                : "border-transparent bg-transparent text-muted-foreground"
+                            )}
+                          >
+                            {s}
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    </ScrollArea>
                   </div>
 
-                  {gender !== 'Female' && (
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter text-muted-foreground">
+                  {gender !== 'Female' ? (
+                    <div className="space-y-3">
+                      <Label className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-muted-foreground">
                         <Palette className="w-3 h-3" /> Facial Hair
                       </Label>
-                      <Select value={facialHair} onValueChange={setFacialHair}>
-                        <SelectTrigger className="h-12 border-2">
-                          <SelectValue placeholder="Select Facial Hair" />
-                        </SelectTrigger>
-                        <SelectContent>
+                      <ScrollArea className="h-64 border rounded-xl bg-secondary/20 p-2">
+                        <div className="grid grid-cols-2 gap-2">
                           {FACIAL_HAIR_STYLES.map(s => (
-                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                            <button
+                              key={s}
+                              onClick={() => setFacialHair(s)}
+                              className={cn(
+                                "p-3 text-left text-sm rounded-lg border transition-all hover:bg-accent",
+                                facialHair === s 
+                                  ? "border-primary bg-primary/10 font-bold text-primary shadow-sm" 
+                                  : "border-transparent bg-transparent text-muted-foreground"
+                              )}
+                            >
+                              {s}
+                            </button>
                           ))}
-                        </SelectContent>
-                      </Select>
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center border-2 border-dashed rounded-xl p-8 opacity-50">
+                      <div className="text-center">
+                        <Dna className="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
+                        <p className="text-xs font-bold uppercase tracking-tighter">Features Locked</p>
+                        <p className="text-[10px] text-muted-foreground">Based on biological origin</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -329,73 +391,81 @@ export default function CustomizeAvatarPage() {
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
                 <div className="text-center">
-                  <h3 className="text-2xl font-bold font-headline mb-2">Optical Gear</h3>
-                  <p className="text-sm text-muted-foreground">Enhance your visual interface with specific eyewear.</p>
-                </div>
-                <div className="max-w-sm mx-auto space-y-4">
-                  <div className="space-y-2">
-                    <Label className="flex items-center gap-2 text-xs font-bold uppercase tracking-tighter text-muted-foreground">
-                      <GlassesIcon className="w-3 h-3" /> Glasses Style
-                    </Label>
-                    <Select value={glasses} onValueChange={setGlasses}>
-                      <SelectTrigger className="h-14 text-lg font-medium border-2 focus:ring-primary">
-                        <SelectValue placeholder="Select Eyewear" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {GLASSES_STYLES.map(s => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary mb-4">
+                    <GlassesIcon className="w-8 h-8" />
                   </div>
+                  <h3 className="text-2xl font-bold font-headline mb-2">Optical Gear</h3>
+                  <p className="text-sm text-muted-foreground">Enhance your visual interface with high-fidelity eyewear.</p>
                 </div>
+                
+                <ScrollArea className="h-80 border rounded-2xl bg-secondary/20 p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {GLASSES_STYLES.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => setGlasses(s)}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-6 rounded-xl border-2 transition-all group",
+                          glasses === s 
+                            ? "border-primary bg-primary/10 shadow-lg" 
+                            : "border-transparent bg-popover/50 hover:bg-accent hover:border-primary/30"
+                        )}
+                      >
+                        <GlassesIcon className={cn("w-8 h-8 mb-2 group-hover:scale-110 transition-transform", glasses === s ? "text-primary" : "text-muted-foreground")} />
+                        <span className={cn("text-xs font-bold text-center", glasses === s ? "text-primary" : "text-muted-foreground")}>{s}</span>
+                        {glasses === s && <Check className="w-4 h-4 text-primary mt-2" />}
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
               </div>
             )}
 
             {step === 5 && (
               <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="text-center">
+                  <div className="inline-flex p-3 rounded-full bg-primary/10 text-primary mb-4">
+                    <ScanEye className="w-8 h-8" />
+                  </div>
                   <h3 className="text-2xl font-bold font-headline mb-2">Final Synthesis</h3>
-                  <p className="text-sm text-muted-foreground">Review build parameters and generate your base interface.</p>
+                  <p className="text-sm text-muted-foreground">Review build parameters and generate your biological signature.</p>
                 </div>
                 
                 {!avatarDataUri && !isProcessing && (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Stature</Label>
-                        <Select value={height} onValueChange={setHeight}>
-                          <SelectTrigger className="border-2"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {HEIGHTS.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Build</Label>
-                        <Select value={bodyType} onValueChange={setBodyType}>
-                          <SelectTrigger className="border-2"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {BODY_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2 col-span-2">
-                        <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Age Range</Label>
-                        <Select value={ageRange} onValueChange={setAgeRange}>
-                          <SelectTrigger className="border-2"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {AGE_RANGES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                  <div className="space-y-8 max-w-md mx-auto">
+                    <div className="grid grid-cols-1 gap-4">
+                      {[
+                        { label: 'Stature', options: HEIGHTS, current: height, set: setHeight },
+                        { label: 'Build', options: BODY_TYPES, current: bodyType, set: setBodyType },
+                        { label: 'Age Range', options: AGE_RANGES, current: ageRange, set: setAgeRange }
+                      ].map((item) => (
+                        <div key={item.label} className="space-y-2">
+                          <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{item.label}</Label>
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                            {item.options.map(opt => (
+                              <button
+                                key={opt}
+                                onClick={() => item.set(opt)}
+                                className={cn(
+                                  "py-2 px-1 text-[10px] font-bold rounded-md border transition-all",
+                                  item.current === opt 
+                                    ? "bg-primary text-primary-foreground border-primary" 
+                                    : "bg-secondary/50 border-transparent hover:bg-secondary"
+                                )}
+                              >
+                                {opt}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                     <Button 
                       onClick={handleGenerate} 
                       className="w-full h-16 text-xl font-black uppercase tracking-tighter group hover:shadow-[0_0_30px_hsl(var(--primary)/0.3)] transition-all"
                     >
                       <Wand2 className="mr-3 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                      Synthesize Twinskie
+                      Forge Twinskie
                     </Button>
                   </div>
                 )}
@@ -403,31 +473,31 @@ export default function CustomizeAvatarPage() {
                 {isProcessing && (
                   <div className="flex flex-col items-center gap-6 py-10">
                     <div className="relative">
-                      <Loader2 className="h-20 w-20 animate-spin text-primary opacity-20" />
-                      <Sparkles className="absolute inset-0 h-20 w-20 text-primary animate-pulse" />
+                      <Loader2 className="h-24 w-24 animate-spin text-primary opacity-20" />
+                      <Sparkles className="absolute inset-0 h-24 w-24 text-primary animate-pulse" />
                     </div>
                     <div className="text-center space-y-2">
-                      <p className="text-lg font-black text-primary tracking-[0.2em] animate-pulse">ATLAS CORE ACTIVE</p>
-                      <p className="text-xs text-muted-foreground font-mono">Synthesizing biological data streams...</p>
+                      <p className="text-2xl font-black text-primary tracking-[0.2em] animate-pulse">SYNTHESIZING</p>
+                      <p className="text-xs text-muted-foreground font-mono tracking-widest uppercase">Isolating biological data streams...</p>
                     </div>
                   </div>
                 )}
 
                 {avatarDataUri && (
-                  <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-700">
+                  <div className="flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-700">
                     <div className="relative group">
                       <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full group-hover:bg-primary/30 transition-colors" />
-                      <div className="relative w-56 h-56 rounded-3xl bg-secondary/30 border-2 border-primary/20 overflow-hidden shadow-2xl flex items-center justify-center">
-                        <img src={avatarDataUri} alt="Preview" className="max-w-[90%] max-h-[90%] object-contain drop-shadow-2xl" />
+                      <div className="relative w-64 h-64 rounded-[2rem] bg-card border-2 border-primary/20 overflow-hidden shadow-2xl flex items-center justify-center">
+                        <img src={avatarDataUri} alt="Preview" className="max-w-[90%] max-h-[90%] object-contain drop-shadow-[0_0_20px_rgba(0,0,0,0.5)]" />
                       </div>
                     </div>
-                    <div className="flex gap-3">
-                      <Button onClick={() => setAvatarDataUri(null)} variant="outline" size="sm" className="font-bold border-2" disabled={isLoading}>
+                    <div className="flex gap-4 w-full max-w-sm">
+                      <Button onClick={() => setAvatarDataUri(null)} variant="outline" size="lg" className="flex-1 font-bold border-2" disabled={isLoading}>
                         Re-calibrate
                       </Button>
-                      <Button onClick={handleProceed} size="sm" className="font-bold border-2 border-primary group px-8" disabled={isLoading}>
+                      <Button onClick={handleProceed} size="lg" className="flex-1 font-bold border-2 border-primary group shadow-lg shadow-primary/20" disabled={isLoading}>
                         {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                        Confirm Profile
+                        Initialize
                       </Button>
                     </div>
                   </div>
