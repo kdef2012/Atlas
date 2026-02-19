@@ -61,6 +61,7 @@ export interface User {
   streakFreezes: number;
   traits?: Record<string, boolean>;
   verificationVotes?: number;
+  failedVerificationCount?: number; // Tracks rejected logs
   region?: string;
   aiGeneratedCosmetics?: Record<string, GeneratedCosmetic>;
   suggestedCosmetics?: GeneratedCosmetic[];

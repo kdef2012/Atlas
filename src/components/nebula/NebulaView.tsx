@@ -9,6 +9,7 @@ import { Popover, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SkillPopoverContent } from './SkillPopoverContent';
+import { Loader2 } from 'lucide-react';
 
 interface SkillNodeData extends Skill {
   category: SkillCategory;
@@ -93,11 +94,24 @@ export function NebulaView() {
   const { data: skills, isLoading: areSkillsLoading } = useCollection<Skill>(skillsCollectionRef);
 
   useEffect(() => {
-    if (skills) {
+    if (skills && user) {
       const maxXP = Math.max(...skills.map(s => s.xp || 10), 1);
       const skillMap = new Map<string, SkillNodeData>();
 
-      const generatedNodes = skills.map((skill, i) => {
+      // Fog of War Logic: 
+      // Filter skills to only show those unlocked OR those whose prerequisites are met (neighboring skills)
+      const visibleSkills = skills.filter(skill => {
+          const isUnlocked = user.userSkills?.[skill.id]?.isUnlocked;
+          if (isUnlocked) return true;
+          
+          // Show if it's a starting skill (no prereqs)
+          if (!skill.prerequisites || skill.prerequisites.length === 0) return true;
+          
+          // Show if ANY of its prerequisites are unlocked (Fog of War neighbors)
+          return skill.prerequisites.some(prereqId => user.userSkills?.[prereqId]?.isUnlocked);
+      });
+
+      const generatedNodes = visibleSkills.map((skill, i) => {
         const size = 40 + ((skill.xp || 10) / maxXP) * 80;
         // Seeded random for consistent layout per skill
         const seed = skill.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
@@ -128,7 +142,7 @@ export function NebulaView() {
       });
       setConnections(generatedConnections);
     }
-  }, [skills]);
+  }, [skills, user]);
 
   const isLoading = areSkillsLoading || isUserLoading;
 
