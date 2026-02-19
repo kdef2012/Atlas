@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -31,6 +32,8 @@ import {
   Radio,
   BookUser,
   FileText,
+  Library,
+  CreditCard,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -54,6 +57,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/profile", label: "Profile", icon: UserIcon },
   { href: "/nebula", label: "Nebula", icon: Atom },
+  { href: "/library", label: "The Rolodex", icon: Library },
   { href: "/quests", label: "Quests", icon: ScrollText },
   { href: "/resume", label: "Resume", icon: FileText },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
@@ -72,6 +76,7 @@ const adminNavItems = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/curation", label: "Curation", icon: Palette },
     { href: "/admin/events", label: "Events", icon: Megaphone },
+    { href: "/admin/finance", label: "Finance", icon: CreditCard },
 ]
 
 export function SideNav() {
