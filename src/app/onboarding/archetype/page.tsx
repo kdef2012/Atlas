@@ -85,14 +85,16 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
+        // MONETIZATION SWITCH: 
+        // Set to true for 'Grandfathering' (current users get free access).
+        // Change to false when you are ready to start charging the activation fee.
+        hasPaidAccess: true, 
       },
       { merge: true }
     );
     router.push(`/onboarding/customize?archetype=${archetype}`);
   };
   
-  // While checking, show a loading state. 
-  // AppLayout handles the actual redirection if the user is already "done" with onboarding.
   if (isLoading) {
       return (
         <div className="flex h-screen w-screen items-center justify-center">

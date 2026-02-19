@@ -1,4 +1,3 @@
-
 {
   "entities": {
     "User": {
@@ -14,6 +13,7 @@
         "gender": { "type": "string", "enum": ["Male", "Female"], "description": "The user's selected gender identity." },
         "avatarStyle": { "type": "string", "description": "The user's selected avatar style." },
         "avatarUrl": { "type": "string", "description": "The URL for the user's selected avatar portrait." },
+        "baseAvatarUrl": { "type": "string", "description": "The URL for the user's base avatar (without cosmetics)." },
         "physicalStat": { "type": "number", "description": "The user's physical skill points" },
         "mentalStat": { "type": "number", "description": "The user's mental skill points." },
         "socialStat": { "type": "number", "description": "The user's social skill points." },
@@ -24,6 +24,7 @@
         "lastLogTimestamp": { "type": "number", "description": "The Unix timestamp of the user's last logged activity." },
         "userSkills": { "type": "object", "description": "A map of skills the user has interacted with.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "object", "properties": { "isUnlocked": { "type": "boolean" }, "xp": { "type": "number" } }, "required": ["isUnlocked", "xp"] } } },
         "avatarLayers": { "type": "object", "description": "A map of visual layers active on the user's avatar.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
+        "ownedCosmetics": { "type": "object", "description": "A map of cosmetics the user has purchased.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
         "momentumFlameActive": { "type": "boolean", "description": "Whether the user's daily activity streak (Momentum Flame) is active." },
         "gems": { "type": "number", "description": "The user's balance of premium currency." },
         "streakFreezes": { "type": "number", "description": "The number of streak-repair items the user owns." },
@@ -155,7 +156,7 @@
       { "path": "/suggestions/{suggestionId}", "definition": { "entityName": "Suggestion", "schema": { "$ref": "#/backend/entities/Suggestion" }, "description": "Stores user-submitted suggestions.", "params": [{ "name": "suggestionId", "description": "The unique identifier for the suggestion." }] } },
       { "path": "/events/{eventId}", "definition": { "entityName": "GlobalEvent", "schema": { "$ref": "#/backend/entities/GlobalEvent" }, "description": "Stores global, limited-time events.", "params": [{ "name": "eventId", "description": "The unique identifier for the event." }] } },
       { "path": "/store-items/{itemId}", "definition": { "entityName": "StoreItem", "schema": { "$ref": "#/backend/entities/StoreItem" }, "description": "Stores items available for purchase.", "params": [{ "name": "itemId", "description": "The unique identifier for the store item." }] } },
-      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] } },
+      { "path": "/public-logs/{logId}", "definition": { "entityName": "PublicLog", "schema": { "$ref": "#/backend/entities/PublicLog" }, "description": "Stores sanitized, anonymous logs for public feeds.", "params": [{ "name": "logId", "description": "The unique identifier for the public log." }] },
       { "path": "/radio-broadcasts/{broadcastId}", "definition": { "entityName": "AtlasRadioBroadcast", "schema": { "$ref": "#/backend/entities/AtlasRadioBroadcast" }, "description": "Stores generated ATLAS Radio broadcasts.", "params": [{ "name": "broadcastId", "description": "The unique identifier for the broadcast." }] } }
     ]
   }

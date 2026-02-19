@@ -1,4 +1,3 @@
-
 'use client';
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -66,7 +65,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     if (isAdmin) return;
 
     // Paywall Redirect (Monetization 2)
-    // If user hasn't paid, force them to the paywall unless they are already there
+    // Only block if explicitly set to false. If undefined (old user), they pass (Grandfathering).
     if (user && user.hasPaidAccess === false) {
       if (!isPaywallPage) {
         router.replace('/paywall');

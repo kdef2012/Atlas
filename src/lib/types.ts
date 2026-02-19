@@ -1,4 +1,3 @@
-
 import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
@@ -67,7 +66,7 @@ export interface User {
   suggestedCosmetics?: GeneratedCosmetic[];
   evolutionPath?: EvolutionPathData;
   evolutionLevel?: number;
-  hasPaidAccess?: boolean; // New: Activation fee status
+  hasPaidAccess?: boolean; // True if account activation fee is paid
 }
 
 export interface SavedAvatar {
