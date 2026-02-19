@@ -101,10 +101,9 @@ export default function CustomizeAvatarPage() {
 
     setIsLoading(true);
     try {
-      // ✅ FIXED: Upload to Firebase Storage instead of saving base64 to Firestore
       toast({
         title: 'Uploading to ATLAS Core...',
-        description: 'Storing your avatar in the system.',
+        description: 'Storing your avatar in the cloud.',
       });
 
       const avatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
@@ -112,12 +111,11 @@ export default function CustomizeAvatarPage() {
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
-        avatarUrl: avatarUrl, // ✅ Now storing URL, not base64
-        baseAvatarUrl: avatarUrl, // ✅ Same URL for base avatar
+        avatarUrl: avatarUrl, 
+        baseAvatarUrl: avatarUrl, 
         gender: gender === 'Non-Binary' ? undefined : gender 
       };
 
-      // Use setDoc with merge:true to handle partial documents
       await setDoc(userRef, updates, { merge: true });
 
       toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
