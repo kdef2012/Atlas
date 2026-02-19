@@ -1,4 +1,3 @@
-
 'use client';
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -11,7 +10,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useUser, useDoc, useMemoFirebase, setDocumentNonBlocking } from "@/firebase";
-import { redirect, useRouter, usePathname } from "next/navigation";
+import { redirect, useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
@@ -24,6 +23,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const firestore = useFirestore();
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Primary user profile
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
@@ -70,8 +70,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     // ==========================================
     // MONETIZATION: Paywall Redirect Logic
     // ==========================================
+    const isReturningFromCheckout = searchParams.get('status') === 'success' || searchParams.get('status') === 'activated';
+
     if (user && user.hasPaidAccess === false) {
-      if (!isPaywallPage) {
+      // ✅ Allow the user to stay on the dashboard if they are returning from a successful checkout,
+      // even if the database hasn't updated yet. The dashboard will handle manual verification.
+      if (!isPaywallPage && !isReturningFromCheckout) {
         router.replace('/paywall');
       }
       return;
@@ -116,6 +120,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     isAdminDocLoading,
     router,
     pathname,
+    searchParams,
     firestore
   ]);
   

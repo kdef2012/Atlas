@@ -1,8 +1,8 @@
-
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { TwinskieAvatar } from "@/components/TwinskieAvatar";
@@ -17,15 +17,21 @@ import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
 import type { Quest } from '@/lib/quest';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, FileText } from 'lucide-react';
+import { ArrowRight, FileText, Loader2, ShieldCheck } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
 import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
 import { RecruiterCard } from '@/components/dashboard/RecruiterCard';
+import { useToast } from '@/hooks/use-toast';
+import { verifySession } from '@/actions/payments';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
   const { user: authUser } = useUser();
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
+  const [isVerifying, setIsVerifying] = useState(false);
+
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading } = useDoc<User>(userRef);
   
@@ -34,6 +40,31 @@ function DashboardPageContent() {
       [firestore, authUser]
   );
   const { data: quests, isLoading: areQuestsLoading } = useCollection<Quest>(questsCollectionRef);
+
+  // ==========================================
+  // MONETIZATION: Manual Verification Fallback
+  // ==========================================
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    const status = searchParams.get('status');
+
+    if (sessionId && (status === 'success' || status === 'activated') && user && !isVerifying) {
+      // If the URL says success but the database hasn't updated yet, trigger manual verification
+      const shouldVerify = (status === 'activated' && !user.hasPaidAccess) || (status === 'success');
+      
+      if (shouldVerify) {
+        setIsVerifying(true);
+        verifySession(sessionId).then((res) => {
+          if (res.success) {
+            toast({
+              title: "Payment Fulfilled",
+              description: "Your account has been updated. Welcome to the Nebula.",
+            });
+          }
+        }).finally(() => setIsVerifying(false));
+      }
+    }
+  }, [searchParams, user, isVerifying, toast]);
 
   if (isLoading || !user || areQuestsLoading) {
     return (
@@ -76,6 +107,14 @@ function DashboardPageContent() {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <div className="lg:col-span-1 space-y-6">
+        {isVerifying && (
+          <Card className="bg-primary/5 border-primary/20 border-dashed animate-pulse">
+            <CardContent className="p-4 flex items-center gap-3">
+              <Loader2 className="animate-spin text-primary h-5 w-5" />
+              <p className="text-sm font-bold uppercase tracking-tighter">Synchronizing Payment Signal...</p>
+            </CardContent>
+          </Card>
+        )}
         <Card className="flex flex-col items-center justify-center text-center p-6">
           <CardHeader className="p-0 mb-4">
             <CardTitle className="font-headline text-3xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">Your Twinskie</CardTitle>
