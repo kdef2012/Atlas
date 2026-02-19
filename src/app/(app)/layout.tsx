@@ -1,3 +1,4 @@
+
 'use client';
 import type { ReactNode } from "react";
 import { useEffect } from "react";
@@ -58,32 +59,49 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
 
     const isAdmin = !!adminData || isSuperAdminEmail;
+    const isPaywallPage = pathname === '/paywall';
     const isOnboardingPage = pathname.startsWith('/onboarding');
     
-    // Define onboarding stages
-    const hasArchetype = !!user?.archetype;
-    const hasAvatar = !!(user?.avatarUrl || user?.avatarStyle);
-    const isProfileComplete = hasArchetype && hasAvatar;
-
     // If they are an admin, let them go anywhere
     if (isAdmin) return;
 
-    // Redirection Logic for Standard Users
+    // Paywall Redirect (Monetization 2)
+    // If user hasn't paid, force them to the paywall unless they are already there
+    if (user && user.hasPaidAccess === false) {
+      if (!isPaywallPage) {
+        router.replace('/paywall');
+      }
+      return;
+    }
+
+    // If on paywall but has access, get them out
+    if (isPaywallPage && user?.hasPaidAccess) {
+      router.replace('/dashboard');
+      return;
+    }
+
+    // Standard Onboarding Redirection
     if (!user) {
-      if (!isOnboardingPage) {
+      if (!isOnboardingPage && !isPaywallPage) {
         router.replace('/onboarding/archetype');
       }
-    } else if (!hasArchetype) {
-      if (pathname !== '/onboarding/archetype') {
-        router.replace('/onboarding/archetype');
-      }
-    } else if (hasArchetype && !hasAvatar) {
-      if (!isOnboardingPage) {
-        router.replace(`/onboarding/customize?archetype=${user.archetype}`);
-      }
-    } else if (isProfileComplete) {
-      if (pathname === '/onboarding/archetype') {
-        router.replace('/dashboard');
+    } else {
+      const hasArchetype = !!user?.archetype;
+      const hasAvatar = !!(user?.avatarUrl || user?.avatarStyle);
+      const isProfileComplete = hasArchetype && hasAvatar;
+
+      if (!hasArchetype && !isPaywallPage) {
+        if (pathname !== '/onboarding/archetype') {
+          router.replace('/onboarding/archetype');
+        }
+      } else if (hasArchetype && !hasAvatar && !isPaywallPage) {
+        if (!isOnboardingPage) {
+          router.replace(`/onboarding/customize?archetype=${user.archetype}`);
+        }
+      } else if (isProfileComplete) {
+        if (pathname === '/onboarding/archetype') {
+          router.replace('/dashboard');
+        }
       }
     }
   }, [

@@ -67,6 +67,7 @@ export interface User {
   suggestedCosmetics?: GeneratedCosmetic[];
   evolutionPath?: EvolutionPathData;
   evolutionLevel?: number;
+  hasPaidAccess?: boolean; // New: Activation fee status
 }
 
 export interface SavedAvatar {

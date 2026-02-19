@@ -28,22 +28,10 @@
         "gems": { "type": "number", "description": "The user's balance of premium currency." },
         "streakFreezes": { "type": "number", "description": "The number of streak-repair items the user owns." },
         "traits": { "type": "object", "description": "A map of traits the user has earned.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
-        "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." }
+        "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." },
+        "hasPaidAccess": { "type": "boolean", "description": "Whether the user has paid the account activation fee." }
       },
       "required": ["id"]
-    },
-    "SavedAvatar": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Saved Avatar",
-      "type": "object",
-      "description": "Stores a unique AI-generated avatar variation for a user's wardrobe.",
-      "properties": {
-        "id": { "type": "string", "description": "The unique signature of the combined assets." },
-        "avatarUrl": { "type": "string", "description": "The URL of the generated image." },
-        "equippedLayers": { "type": "object", "description": "The combination of layers used." },
-        "createdAt": { "type": "number", "description": "Timestamp of creation." }
-      },
-      "required": ["id", "avatarUrl", "equippedLayers", "createdAt"]
     },
     "UserSettings": {
       "$schema": "http://json-schema.org/draft-07/schema#",
@@ -153,7 +141,6 @@
     "rules": "firestore.rules",
     "structure": [
       { "path": "/users/{userId}", "definition": { "entityName": "User", "schema": { "$ref": "#/backend/entities/User" }, "description": "Stores user profile data.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }] } },
-      { "path": "/users/{userId}/wardrobe/{avatarId}", "definition": { "entityName": "SavedAvatar", "schema": { "$ref": "#/backend/entities/SavedAvatar" }, "description": "Stores cached AI-generated avatar variations for quick swapping.", "params": [{ "name": "userId", "description": "The user ID." }, { "name": "avatarId", "description": "Stable signature of selected assets." }] } },
       { "path": "/users/{userId}/settings/{settingsId}", "definition": { "entityName": "UserSettings", "schema": { "$ref": "#/backend/entities/UserSettings" }, "description": "Stores user-specific settings.", "params": [{ "name": "userId", "description": "The unique identifier for the user." }, { "name": "settingsId", "description": "A singleton document ID, e.g., 'main'."}] } },
       { "path": "/admins/{adminId}", "definition": { "entityName": "Admin", "schema": { "$ref": "#/backend/entities/Admin" }, "description": "Stores administrator user data.", "params": [{ "name": "adminId", "description": "The unique identifier for the admin." }] } },
       { "path": "/skills/{skillId}", "definition": { "entityName": "Skill", "schema": { "$ref": "#/backend/entities/Skill" }, "description": "Stores skill data created by pioneer user.", "params": [{ "name": "skillId", "description": "The unique identifier for the skill." }] } },
