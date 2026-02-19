@@ -1,35 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Wallet, TrendingUp, History, ShieldCheck, Loader2, Link as LinkIcon, ExternalLink, AlertCircle, Info } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useCollection, useMemoFirebase } from '@/firebase';
-import { useFirestore } from '@/firebase/provider';
-import { collection, query, orderBy, limit } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
+import { CreditCard, TrendingUp, History, Link as LinkIcon, ExternalLink, AlertCircle, Info } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 export default function AdminFinancePage() {
-  const [isConnecting, setIsConnecting] = useState(false);
   const [isTestMode, setIsTestMode] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const { toast } = useToast();
   
   useEffect(() => {
     const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-    if (pk) {
+    if (pk && pk.startsWith('pk_')) {
       setIsConnected(true);
       setIsTestMode(pk.startsWith('pk_test_'));
     }
   }, []);
 
+  // Mock revenue data for the dashboard
   const totalRevenue = 1248.50;
   const gemSales = 845.00;
   const activationFees = 403.50;
@@ -188,8 +182,4 @@ export default function AdminFinancePage() {
       </Tabs>
     </div>
   );
-}
-
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(' ');
 }
