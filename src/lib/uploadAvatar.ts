@@ -1,3 +1,4 @@
+
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { initializeFirebase } from '@/firebase/index';
 
@@ -5,8 +6,11 @@ import { initializeFirebase } from '@/firebase/index';
  * Converts a data URI to a Blob object
  */
 function dataURItoBlob(dataURI: string): Blob {
-  const byteString = atob(dataURI.split(',')[1]);
-  const mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+  const parts = dataURI.split(',');
+  if (parts.length < 2) throw new Error('Invalid data URI');
+  
+  const byteString = atob(parts[1]);
+  const mimeString = parts[0].split(':')[1].split(';')[0];
   const ab = new ArrayBuffer(byteString.length);
   const ia = new Uint8Array(ab);
   for (let i = 0; i < byteString.length; i++) {
@@ -17,7 +21,7 @@ function dataURItoBlob(dataURI: string): Blob {
 
 /**
  * Uploads a base64 data URI to Firebase Storage and returns the download URL
- * Uses Blobs for better reliability and performance with large files.
+ * Uses Blobs for better reliability and adds explicit metadata for security rules.
  */
 export async function uploadAvatarToStorage(
   dataUri: string,
@@ -31,22 +35,35 @@ export async function uploadAvatarToStorage(
   try {
     const { storage } = initializeFirebase();
     const timestamp = Date.now();
+    // Path MUST match the storage.rules exactly: /avatars/{userId}/...
     const storagePath = `avatars/${userId}/${timestamp}_${fileName}`;
     const storageRef = ref(storage, storagePath);
 
-    console.log(`[Storage] Synthesizing Blob for upload to: ${storagePath}`);
+    console.log(`[Storage] Initiating upload for user ${userId} to: ${storagePath}`);
     const blob = dataURItoBlob(dataUri);
-
-    console.log(`[Storage] Committing ${blob.size} bytes to cloud...`);
-    const snapshot = await uploadBytes(storageRef, blob);
     
+    // Explicitly setting metadata helps Storage Rules validate the upload
+    const metadata = {
+      contentType: blob.type,
+      customMetadata: {
+        'owner': userId,
+        'uploadedAt': new Date().toISOString()
+      }
+    };
+
+    const snapshot = await uploadBytes(storageRef, blob, metadata);
     const downloadURL = await getDownloadURL(snapshot.ref);
     
-    console.log(`[Storage] Upload successful. URL generated.`);
+    console.log(`[Storage] Upload successful. Public URL: ${downloadURL}`);
     return downloadURL;
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Storage] Critical upload failure:', error);
-    throw new Error(`Avatar storage failed: ${error instanceof Error ? error.message : 'Unknown cloud error'}`);
+    
+    if (error.code === 'storage/unauthorized') {
+      throw new Error(`Access Denied: Your account (${userId}) does not have permission to write to this storage path. Please ensure your Storage Security Rules are deployed correctly.`);
+    }
+    
+    throw new Error(`Avatar storage failed: ${error.message || 'Unknown cloud error'}`);
   }
 }
 

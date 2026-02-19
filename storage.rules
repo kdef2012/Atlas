@@ -14,6 +14,7 @@ service firebase.storage {
     }
 
     // Avatars: Publicly viewable by all citizens, but only editable by the owner.
+    // The wildcard {allPaths=**} ensures that all files within the user's folder are covered.
     match /avatars/{userId}/{allPaths=**} {
       allow read: if isSignedIn();
       allow write: if isOwner(userId);
