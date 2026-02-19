@@ -27,14 +27,19 @@ service cloud.firestore {
     }
 
     function isGuildMember(guildId) {
-      return isSignedIn() && guildId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.guilds;
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return isSignedIn() && hasKey(userDoc, 'guilds') && guildId in userDoc.guilds;
+    }
+    
+    function hasKey(map, key) {
+      return key in map;
     }
 
     // ADMINS COLLECTION
     match /admins/{adminId} {
       // Users can read their own admin status; admins can read all.
-      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
-      allow create: if isOwner(adminId);
+      allow read: if isSignedIn();
+      allow create: if isOwner(adminId) && request.auth.email == 'kdef2012@gmail.com';
       allow update, delete: if isAdmin();
     }
     
@@ -46,11 +51,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
 
       match /logs/{logId} {
-        allow read, write: if isOwner(userId) || isAdmin();
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId) || isAdmin();
       }
 
       match /quests/{questId} {
-         allow read, write: if isOwner(userId) || isAdmin();
+         allow read: if isSignedIn();
+         allow write: if isOwner(userId) || isAdmin();
       }
 
        match /settings/{settingsId} {
@@ -58,10 +65,12 @@ service cloud.firestore {
       }
 
       match /wardrobe/{avatarId} {
-        allow read, write: if isOwner(userId);
+        allow read: if isSignedIn();
+        allow write: if isOwner(userId);
       }
     }
     
+    // Global query for logs (used in Echoes)
     match /{path=**}/logs/{logId} {
       allow read: if isSignedIn();
     }
@@ -70,7 +79,7 @@ service cloud.firestore {
     match /public-logs/{logId} {
         allow get, list: if isSignedIn();
         allow create: if isSignedIn(); 
-        allow update, delete: if false;
+        allow update, delete: if isAdmin();
     }
 
     // SKILLS COLLECTION
@@ -117,7 +126,7 @@ service cloud.firestore {
     // RADIO BROADCASTS COLLECTION
     match /radio-broadcasts/{broadcastId} {
         allow get, list: if isSignedIn();
-        allow write: if false;
+        allow write: if isAdmin();
     }
 
     // PUBLIC & ADMIN-MANAGED COLLECTIONS
