@@ -1,15 +1,10 @@
 
 'use client';
 
-import { redirect } from 'next/navigation';
-import { useEffect } from 'react';
-
-// This page has been moved to /onboarding/claim-quest to fix an onboarding loop.
-// This file can now be safely deleted or kept as a redirect.
+/**
+ * @fileOverview This page is intentionally empty and will be removed by the build system.
+ * Onboarding quest claims are now handled within the /onboarding/reward route.
+ */
 export default function ClaimQuestPage() {
-  useEffect(() => {
-    redirect('/');
-  }, []);
-
   return null;
 }
