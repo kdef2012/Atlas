@@ -30,7 +30,9 @@
         "traits": { "type": "object", "description": "A map of traits the user has earned.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
         "verificationVotes": { "type": "number", "description": "The total number of verification votes this user has cast." },
         "failedVerificationCount": { "type": "number", "description": "The total number of times this user's logs have been rejected by the community." },
-        "hasPaidAccess": { "type": "boolean", "description": "Whether the user has paid the account activation fee." }
+        "hasPaidAccess": { "type": "boolean", "description": "Whether the user has paid the account activation fee." },
+        "referralCount": { "type": "number", "description": "Number of users invited to the ATLAS." },
+        "recruiterBonusClaimed": { "type": "boolean", "description": "Whether the user has claimed the squad recruitment bonus." }
       },
       "required": ["id"]
     },

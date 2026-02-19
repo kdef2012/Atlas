@@ -21,6 +21,7 @@ import { ArrowRight, FileText } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
 import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
+import { RecruiterCard } from '@/components/dashboard/RecruiterCard';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -85,6 +86,7 @@ function DashboardPageContent() {
         </Card>
         <MomentumFlame />
         <FireteamStatus />
+        <RecruiterCard />
       </div>
 
       <div className="lg:col-span-2 space-y-6">

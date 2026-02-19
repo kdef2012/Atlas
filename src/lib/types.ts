@@ -1,5 +1,5 @@
 
-import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest, Library } from 'lucide-react';
+import { Dumbbell, BrainCircuit, Users, Wrench, Paintbrush, Swords, Flame, Gem, ShieldCheck, Crown, Lightbulb, Star, Award, HeartHandshake, Building2, Trophy, Store, Moon, Sunrise, Crosshair, Sparkles, Zap, Handshake, PersonStanding, BookOpen, MessageSquare, Megaphone, Radio, Glasses, RectangleHorizontal, Shield, Shirt, BookUser, CircleCheck, GitPullRequest, Library, UserPlus } from 'lucide-react';
 import type { GeneratedCosmetic as BaseGeneratedCosmetic, EvolutionPathData } from './ai/activity-analyzer';
 
 // We redefine the UI-specific fields to be compatible with React's style objects
@@ -71,6 +71,8 @@ export interface User {
   evolutionPath?: EvolutionPathData;
   evolutionLevel?: number;
   hasPaidAccess?: boolean; // True if account activation fee is paid
+  referralCount?: number;
+  recruiterBonusClaimed?: boolean;
 }
 
 export interface SavedAvatar {
@@ -259,7 +261,8 @@ export const CATEGORY_ICONS: Record<string, React.ElementType> = {
   Gems: Gem,
   Events: Megaphone,
   Radio: Radio,
-  Library: Library
+  Library: Library,
+  Recruiter: UserPlus
 };
 
 export const TRAIT_ICONS = {
@@ -278,6 +281,7 @@ export const TRAIT_ICONS = {
     socialite: Handshake,
     hermit: PersonStanding,
     mentor: BookOpen,
+    recruiter: UserPlus
 };
 
 export const STORE_ITEM_ICONS: Record<string, React.ElementType> = {
