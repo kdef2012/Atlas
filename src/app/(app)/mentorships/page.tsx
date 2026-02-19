@@ -26,7 +26,6 @@ function MentorFinder() {
     
     const mentorsQuery = useMemoFirebase(() => {
         if (!skillId) return null;
-        // Mentors must have unlocked the skill
         return query(collection(firestore, 'users'), where(`userSkills.${skillId}.isUnlocked`, '==', true));
     }, [firestore, skillId]);
 
@@ -71,7 +70,7 @@ function MentorFinder() {
     if (isLoading) {
         return (
             <div className="space-y-4">
-                {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-20 w-full" />)}
+                {[...Array(3)].map((_, i) => <Skeleton className="h-20 w-full" />)}
             </div>
         )
     }
@@ -121,7 +120,6 @@ function MentorshipDashboard() {
     const { user: authUser, isUserLoading } = useUser();
     const { toast } = useToast();
 
-    // Queries for mentorships
     const incomingQuery = useMemoFirebase(() => authUser ? query(collection(firestore, 'mentorships'), where('mentorId', '==', authUser.uid), where('status', '==', 'pending')) : null, [firestore, authUser]);
     const outgoingQuery = useMemoFirebase(() => authUser ? query(collection(firestore, 'mentorships'), where('menteeId', '==', authUser.uid), where('status', '==', 'pending')) : null, [firestore, authUser]);
     const activeAsMentorQuery = useMemoFirebase(() => authUser ? query(collection(firestore, 'mentorships'), where('mentorId', '==', authUser.uid), where('status', '==', 'active')) : null, [firestore, authUser]);
@@ -132,7 +130,6 @@ function MentorshipDashboard() {
     const { data: activeAsMentor, isLoading: loadingMentor } = useCollection<Mentorship>(activeAsMentorQuery);
     const { data: activeAsMentee, isLoading: loadingMentee } = useCollection<Mentorship>(activeAsMenteeQuery);
 
-    // Get all unique user and skill IDs to fetch their data efficiently
     const allMentorships = useMemo(() => [
         ...(incomingRequests || []),
         ...(outgoingRequests || []),
@@ -294,7 +291,7 @@ export default function MentorsPage() {
                         <div className="p-6">
                             <TabsContent value="dashboard" className="mt-0 outline-none">
                                 <Suspense fallback={<Skeleton className="h-64 w-full" />}>
-                                <MentorshipDashboard />
+                                  <MentorshipDashboard />
                                 </Suspense>
                             </TabsContent>
                             <TabsContent value="finder" className="mt-0 outline-none">

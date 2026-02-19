@@ -44,13 +44,11 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  experimental: {
-    serverComponentsExternalPackages: ['firebase-admin'],
-    outputFileTracingExcludes: {
-      '*': [
-        './firebase/functions/**'
-      ],
-    },
+  serverExternalPackages: ['firebase-admin'],
+  outputFileTracingExcludes: {
+    '*': [
+      './firebase/functions/**'
+    ],
   },
 };
 

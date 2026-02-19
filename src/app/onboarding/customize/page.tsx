@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -41,7 +42,7 @@ function CustomizeAvatarContent() {
   const currentHairStyles = useMemo(() => {
     if (gender === 'Female') return FEMALE_HAIR_STYLES;
     if (gender === 'Male') return MALE_HAIR_STYLES;
-    return [...MALE_HAIR_STYLES, ...FEMALE_HAIR_STYLES].sort();
+    return [...MALE_HAIR_STYLES, ...FEMALE_HAIR_STYLES];
   }, [gender]);
 
   const nextStep = () => setStep(s => Math.min(4, s + 1));
@@ -70,10 +71,6 @@ function CustomizeAvatarContent() {
         glasses: 'None'
       });
 
-      toast({
-        title: 'Optimizing for the Nebula...',
-        description: 'Removing background and isolating biological signature.',
-      });
       const removeResult = await removeBackground({ imageDataUri: genResult.imageDataUri });
 
       setAvatarDataUri(removeResult.transparentImageDataUri);
@@ -94,24 +91,12 @@ function CustomizeAvatarContent() {
   };
 
   const handleProceed = async () => {
-    if (!user) {
-      toast({ variant: 'destructive', title: 'Authentication Error', description: 'User session not found.' });
-      return;
-    }
-    if (!avatarDataUri) {
-      toast({ variant: 'destructive', title: 'System Incomplete', description: 'Please synthesize your form before proceeding.' });
-      return;
-    }
+    if (!user) return;
+    if (!avatarDataUri) return;
 
     setIsLoading(true);
     try {
-      toast({
-        title: 'Uploading to ATLAS Core...',
-        description: 'Storing your avatar in the system.',
-      });
-
       const avatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
-
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
@@ -121,16 +106,9 @@ function CustomizeAvatarContent() {
       };
 
       await setDoc(userRef, updates, { merge: true });
-
-      toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast({ 
-        variant: 'destructive', 
-        title: 'Save Failed', 
-        description: error instanceof Error ? error.message : 'Could not sync your system profile.' 
-      });
     } finally {
       setIsLoading(false);
     }

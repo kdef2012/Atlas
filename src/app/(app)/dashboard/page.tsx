@@ -42,15 +42,11 @@ function DashboardPageContent() {
   );
   const { data: quests, isLoading: areQuestsLoading } = useCollection<Quest>(questsCollectionRef);
 
-  // ==========================================
-  // MONETIZATION: Manual Verification Fallback
-  // ==========================================
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     const status = searchParams.get('status');
 
     if (sessionId && (status === 'success' || status === 'activated') && user && !isVerifying) {
-      // If the URL says success but the database hasn't updated yet, trigger manual verification
       const shouldVerify = (status === 'activated' && !user.hasPaidAccess) || (status === 'success');
       
       if (shouldVerify) {

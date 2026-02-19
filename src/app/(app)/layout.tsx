@@ -1,7 +1,7 @@
 
 'use client';
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import { Footer } from "@/components/common/Footer";
@@ -19,76 +19,38 @@ import type { User, UserSettings } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 import { cn } from "@/lib/utils";
 
-export default function AppLayout({ children }: { children: ReactNode }) {
-  const { user: authUser, isUserLoading: isAuthLoading } = useUser();
-  const firestore = useFirestore();
+/**
+ * Handles payment and onboarding redirect logic that requires useSearchParams.
+ * Wrapped in Suspense to avoid build errors.
+ */
+function NavigationGuard({ children, user, isAdmin, isLoading }: { children: ReactNode, user: User | null, isAdmin: boolean, isLoading: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  // Primary user profile
-  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
-  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
-
-  // Admin profile
-  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
-  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
-
-  // User settings for global accessibility
-  const settingsRef = useMemoFirebase(() => authUser ? doc(firestore, `users/${authUser.uid}/settings/main`) : null, [firestore, authUser]);
-  const { data: settings } = useDoc<UserSettings>(settingsRef);
-
-  // Hardcoded super-admin bootstrap check
-  const isSuperAdminEmail = authUser?.email === 'kdef2012@gmail.com';
-
-  // Comprehensive loading state
-  const isLoading = isAuthLoading || isUserDocLoading || isAdminDocLoading;
-
   useEffect(() => {
-    // Only make routing decisions once all authentication and profile checks are definitive
-    if (isLoading || !authUser) return;
+    if (isLoading) return;
 
-    // Handle SuperAdmin bootstrap
-    if (isSuperAdminEmail && !adminData && !isAdminDocLoading) {
-      const newAdminDocRef = doc(firestore, 'admins', authUser.uid);
-      setDocumentNonBlocking(newAdminDocRef, {
-        id: authUser.uid,
-        email: authUser.email,
-        userName: 'SuperAdmin',
-        createdAt: Date.now(),
-      }, {});
-      return; 
-    }
-
-    const isAdmin = !!adminData || isSuperAdminEmail;
     const isPaywallPage = pathname === '/paywall';
     const isOnboardingPage = pathname.startsWith('/onboarding');
     const isLegalPage = pathname.startsWith('/legal');
     
-    // If they are an admin or on a legal page, let them go anywhere
     if (isAdmin || isLegalPage) return;
 
-    // ==========================================
-    // MONETIZATION: Paywall Redirect Logic
-    // ==========================================
     const isReturningFromCheckout = searchParams.get('status') === 'success' || searchParams.get('status') === 'activated';
 
     if (user && user.hasPaidAccess === false) {
-      // ✅ Allow the user to stay on the dashboard if they are returning from a successful checkout,
-      // even if the database hasn't updated yet. The dashboard will handle manual verification.
       if (!isPaywallPage && !isReturningFromCheckout) {
         router.replace('/paywall');
       }
       return;
     }
 
-    // If on paywall but has access, get them out
     if (isPaywallPage && user?.hasPaidAccess) {
       router.replace('/dashboard');
       return;
     }
 
-    // Standard Onboarding Redirection
     if (!user) {
       if (!isOnboardingPage && !isPaywallPage) {
         router.replace('/onboarding/archetype');
@@ -112,25 +74,47 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         }
       }
     }
-  }, [
-    isLoading,
-    authUser,
-    user,
-    adminData,
-    isSuperAdminEmail,
-    isAdminDocLoading,
-    router,
-    pathname,
-    searchParams,
-    firestore
-  ]);
+  }, [isLoading, user, isAdmin, pathname, searchParams, router]);
+
+  return <>{children}</>;
+}
+
+export default function AppLayout({ children }: { children: ReactNode }) {
+  const { user: authUser, isUserLoading: isAuthLoading } = useUser();
+  const firestore = useFirestore();
+  const pathname = usePathname();
+
+  const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+  const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
+
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
+  const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
+
+  const settingsRef = useMemoFirebase(() => authUser ? doc(firestore, `users/${authUser.uid}/settings/main`) : null, [firestore, authUser]);
+  const { data: settings } = useDoc<UserSettings>(settingsRef);
+
+  const isSuperAdminEmail = authUser?.email === 'kdef2012@gmail.com';
+  const isLoading = isAuthLoading || isUserDocLoading || isAdminDocLoading;
+  const isAdmin = !!adminData || isSuperAdminEmail;
+
+  useEffect(() => {
+    if (isLoading || !authUser) return;
+
+    if (isSuperAdminEmail && !adminData && !isAdminDocLoading) {
+      const newAdminDocRef = doc(firestore, 'admins', authUser.uid);
+      setDocumentNonBlocking(newAdminDocRef, {
+        id: authUser.uid,
+        email: authUser.email,
+        userName: 'SuperAdmin',
+        createdAt: Date.now(),
+      }, {});
+    }
+  }, [isLoading, authUser, adminData, isSuperAdminEmail, isAdminDocLoading, firestore]);
   
-  // Protect the entire (app) group
   if (!isAuthLoading && !authUser && !pathname.startsWith('/logout') && !pathname.startsWith('/login') && !pathname.startsWith('/legal')) {
     return redirect('/login');
   }
 
-  // Show a clean loading state while deciding
   if (isLoading && !pathname.startsWith('/admin') && !pathname.startsWith('/legal')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -154,7 +138,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       )}>
         <AnnouncementBanner />
         <AppHeader />
-        <main className="p-4 md:p-8 flex-1">{children}</main>
+        <Suspense fallback={<div className="p-8"><Skeleton className="h-96 w-full" /></div>}>
+          <NavigationGuard user={user} isAdmin={isAdmin} isLoading={isLoading}>
+            <main className="p-4 md:p-8 flex-1">{children}</main>
+          </NavigationGuard>
+        </Suspense>
         <Footer />
       </SidebarInset>
     </SidebarProvider>

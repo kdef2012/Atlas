@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense } from 'react';
@@ -16,8 +17,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { generateQuests } from '@/ai/flows/generate-quests';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-
-interface RewardPageProps {}
 
 function LootBox() {
     const [isOpen, setIsOpen] = useState(false);
@@ -112,14 +111,14 @@ function RewardPageContent() {
           };
           updateDocumentNonBlocking(userRef, updates);
           
-          const userData = userDoc.data();
+          const userData = userDoc.data() as User;
           const updatedUserData = { 
             ...userData, 
             level: 1, 
             xp: 50, 
             gems: 3, 
             streakFreezes: 1 
-          } as User;
+          };
 
           generateInitialQuests(updatedUserData);
         }

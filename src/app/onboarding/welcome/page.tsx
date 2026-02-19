@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
@@ -24,7 +25,6 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
         setQuest({ name: result.questName, description: result.questDescription });
       } catch (error) {
         console.error("Failed to generate first quest:", error);
-        // Fallback if AI fails
         setQuest({ 
           name: "The Elixir of Life", 
           description: "Your avatar is dehydrated. Consume 8oz of water to restore vitality." 
@@ -90,9 +90,8 @@ function FirstQuestCard({ archetype }: { archetype: Archetype }) {
   );
 }
 
-// ✅ FIX: Separate component that uses useSearchParams
 function WelcomePageContent() {
-  const searchParams = useSearchParams(); // ✅ Now inside Suspense boundary
+  const searchParams = useSearchParams();
   const archetype = searchParams.get('archetype') as Archetype | null;
 
   if (!archetype) {
@@ -134,7 +133,6 @@ function WelcomePageContent() {
   );
 }
 
-// ✅ FIX: Wrap in Suspense boundary
 export default function WelcomePage({}: WelcomePageProps) {
   return (
     <Suspense fallback={
