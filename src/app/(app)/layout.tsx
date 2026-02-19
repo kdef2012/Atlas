@@ -55,8 +55,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const isAdmin = !!adminData || isSuperAdminEmail;
     const isOnboardingPage = pathname.startsWith('/onboarding');
     
-    // Profile is complete if it has an avatar style OR an avatar URL
-    const isProfileComplete = !!(user?.avatarStyle || user?.avatarUrl);
+    // ✅ FIXED: Define onboarding stages
+    const hasArchetype = !!user?.archetype;
+    const hasAvatar = !!(user?.avatarUrl && user?.baseAvatarUrl);
+    const isProfileComplete = hasArchetype && hasAvatar;
 
     // If they are an admin, let them go anywhere
     if (isAdmin) return;
@@ -67,15 +69,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       if (!isOnboardingPage) {
         router.replace('/onboarding/archetype');
       }
-    } else if (!isProfileComplete) {
-      // Profile exists but haven't finished customization
-      // We check !isOnboardingPage to avoid interrupting the current onboarding steps
-      if (!isOnboardingPage) {
+    } else if (!hasArchetype) {
+      // User doc exists but no archetype chosen yet
+      if (pathname !== '/onboarding/archetype') {
         router.replace('/onboarding/archetype');
       }
-    } else if (isProfileComplete && pathname === '/onboarding/archetype') {
-      // Profile is done but user tried to go back to origin - send to dashboard
-      router.replace('/dashboard');
+    } else if (hasArchetype && !hasAvatar) {
+      // Has archetype but no avatar - send to customize
+      if (!pathname.startsWith('/onboarding/customize') && !pathname.startsWith('/onboarding/welcome') && !pathname.startsWith('/onboarding/reward')) {
+        router.replace(`/onboarding/customize?archetype=${user.archetype}`);
+      }
+    } else if (isProfileComplete) {
+      // Profile is done - don't let them go back to onboarding
+      if (pathname === '/onboarding/archetype') {
+        router.replace('/dashboard');
+      }
     }
   }, [
     isLoading,

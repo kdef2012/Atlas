@@ -11,6 +11,7 @@ import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'luci
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
+import { uploadBaseAvatar } from '@/lib/uploadAvatar';
 import { SKIN_TONES, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS } from '@/lib/avatar-options';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -21,7 +22,7 @@ export default function CustomizeAvatarPage() {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarDataUri, setAvatarDataUri] = useState<string | null>(null);
 
   // Form State
   const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>('Male');
@@ -49,7 +50,7 @@ export default function CustomizeAvatarPage() {
 
   const handleGenerate = async () => {
     setIsProcessing(true);
-    setAvatarUrl(null);
+    setAvatarDataUri(null);
     toast({
       title: 'Synthesizing DNA...',
       description: 'The ATLAS is rendering your base Twinskie. Please wait.',
@@ -71,7 +72,7 @@ export default function CustomizeAvatarPage() {
       });
       const removeResult = await removeBackground({ imageDataUri: genResult.imageDataUri });
 
-      setAvatarUrl(removeResult.transparentImageDataUri);
+      setAvatarDataUri(removeResult.transparentImageDataUri);
       toast({
         title: '✅ Calibration Complete!',
         description: 'Your base Twinskie is ready for deployment.',
@@ -93,30 +94,41 @@ export default function CustomizeAvatarPage() {
       toast({ variant: 'destructive', title: 'Authentication Error', description: 'User session not found.' });
       return;
     }
-    if (!avatarUrl) {
+    if (!avatarDataUri) {
       toast({ variant: 'destructive', title: 'System Incomplete', description: 'Please synthesize your form before proceeding.' });
       return;
     }
 
     setIsLoading(true);
     try {
+      // ✅ FIXED: Upload to Firebase Storage instead of saving base64 to Firestore
+      toast({
+        title: 'Uploading to ATLAS Core...',
+        description: 'Storing your avatar in the system.',
+      });
+
+      const avatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
+
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
-        avatarUrl: avatarUrl,
-        baseAvatarUrl: avatarUrl, // ✅ CRITICAL: Set both avatarUrl and baseAvatarUrl
+        avatarUrl: avatarUrl, // ✅ Now storing URL, not base64
+        baseAvatarUrl: avatarUrl, // ✅ Same URL for base avatar
         gender: gender === 'Non-Binary' ? undefined : gender 
       };
 
-      // ✅ FIXED: Use setDoc with merge:true instead of updateDoc
-      // This works even if the document doesn't fully exist yet
+      // Use setDoc with merge:true to handle partial documents
       await setDoc(userRef, updates, { merge: true });
 
       toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
     } catch (error) {
       console.error("Failed to save profile:", error);
-      toast({ variant: 'destructive', title: 'Save Failed', description: 'Could not sync your system profile.' });
+      toast({ 
+        variant: 'destructive', 
+        title: 'Save Failed', 
+        description: error instanceof Error ? error.message : 'Could not sync your system profile.' 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +263,7 @@ export default function CustomizeAvatarPage() {
                   <p className="text-sm text-muted-foreground">Review build parameters and generate your base interface.</p>
                 </div>
                 
-                {!avatarUrl && !isProcessing && (
+                {!avatarDataUri && !isProcessing && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4 max-w-sm mx-auto">
                       <div className="space-y-2">
@@ -296,16 +308,16 @@ export default function CustomizeAvatarPage() {
                   </div>
                 )}
 
-                {avatarUrl && (
+                {avatarDataUri && (
                   <div className="flex flex-col items-center gap-6 animate-in fade-in zoom-in-95 duration-700">
                     <div className="relative group">
                       <div className="absolute inset-0 bg-primary/20 blur-3xl rounded-full group-hover:bg-primary/30 transition-colors" />
                       <div className="relative w-56 h-56 rounded-3xl bg-secondary/30 border-2 border-primary/20 overflow-hidden shadow-2xl flex items-center justify-center">
-                        <img src={avatarUrl} alt="Preview" className="max-w-[90%] max-h-[90%] object-contain drop-shadow-2xl" />
+                        <img src={avatarDataUri} alt="Preview" className="max-w-[90%] max-h-[90%] object-contain drop-shadow-2xl" />
                       </div>
                     </div>
                     <div className="flex gap-3">
-                      <Button onClick={() => setAvatarUrl(null)} variant="outline" size="sm" className="font-bold border-2" disabled={isLoading}>
+                      <Button onClick={() => setAvatarDataUri(null)} variant="outline" size="sm" className="font-bold border-2" disabled={isLoading}>
                         Re-calibrate
                       </Button>
                       <Button onClick={handleProceed} size="sm" className="font-bold border-2 border-primary group px-8" disabled={isLoading}>
