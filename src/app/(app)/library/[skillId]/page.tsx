@@ -1,16 +1,17 @@
 
 'use client';
 
-import { useDoc, useMemoFirebase } from '@/firebase';
+import { useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { doc } from 'firebase/firestore';
-import type { Skill } from '@/lib/types';
+import type { Skill, User } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { CATEGORY_COLORS, CATEGORY_ICONS } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ChevronLeft, BookOpen, Share2, Sparkles } from 'lucide-react';
+import { ChevronLeft, BookOpen, Share2, Sparkles, ChevronRight, Badge } from 'lucide-react';
+import { AchievementShare } from '@/components/library/AchievementShare';
 
 function MarkdownRenderer({ content }: { content: string }) {
   const renderContent = () => {
@@ -28,9 +29,15 @@ function MarkdownRenderer({ content }: { content: string }) {
 export default function SkillGuidePage({ params }: { params: { skillId: string } }) {
     const { skillId } = params;
     const firestore = useFirestore();
+    const { user: authUser } = useUser();
 
     const skillRef = useMemoFirebase(() => doc(firestore, 'skills', skillId), [firestore, skillId]);
-    const { data: skill, isLoading } = useDoc<Skill>(skillRef);
+    const { data: skill, isLoading: isSkillLoading } = useDoc<Skill>(skillRef);
+
+    const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
+    const { data: user, isLoading: isUserLoading } = useDoc<User>(userRef);
+
+    const isLoading = isSkillLoading || isUserLoading;
 
     if (isLoading) {
         return (
@@ -55,6 +62,7 @@ export default function SkillGuidePage({ params }: { params: { skillId: string }
 
     const Icon = CATEGORY_ICONS[skill.category] || BookOpen;
     const color = CATEGORY_COLORS[skill.category];
+    const isPioneer = user && skill.pioneerUserId === user.id;
 
     return (
         <div className="max-w-4xl mx-auto space-y-6 pb-20">
@@ -85,7 +93,7 @@ export default function SkillGuidePage({ params }: { params: { skillId: string }
                     </div>
                     <div>
                         <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="secondary" className="uppercase tracking-widest text-[10px] font-black">{skill.category}</Badge>
+                            <span className="bg-primary/20 text-primary px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest">{skill.category}</span>
                             <span className="text-[10px] text-muted-foreground font-mono uppercase">ARCHIVE_ID: {skill.id}</span>
                         </div>
                         <CardTitle className="font-headline text-5xl">{skill.name}</CardTitle>
@@ -103,6 +111,11 @@ export default function SkillGuidePage({ params }: { params: { skillId: string }
                             <h3 className="font-bold">Guide Still Calibrating</h3>
                             <p className="text-sm text-muted-foreground mt-2">The Head Librarian is currently authoring the official Initiate's Guide for this skill. Check back in a few moments.</p>
                         </div>
+                    )}
+
+                    {/* Feature 3: Achievement Sharing for Pioneer */}
+                    {isPioneer && user && (
+                      <AchievementShare user={user} skill={skill} />
                     )}
                 </CardContent>
             </Card>
