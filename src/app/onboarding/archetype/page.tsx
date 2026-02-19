@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
@@ -63,6 +64,13 @@ export default function ArchetypeSelectionPage() {
     const userName = authUser.displayName || authUser.email?.split('@')[0] || 'Anonymous';
     
     const newUserRef = doc(firestore, 'users', authUser.uid);
+    
+    /**
+     * PRODUCTION MONETIZATION LOGIC:
+     * New users start with 'hasPaidAccess: false'.
+     * This triggers the Paywall redirect in the App Layout.
+     * The status is set to 'true' via the Stripe Webhook upon successful fulfillment.
+     */
     setDocumentNonBlocking(
       newUserRef,
       {
@@ -85,12 +93,9 @@ export default function ArchetypeSelectionPage() {
         gems: 0,
         streakFreezes: 0,
         traits: {},
-        // ==========================================
-        // MONETIZATION SWITCH: 
-        // Set to 'true' for Grandfathering (Free Access).
-        // Change to 'false' to enable the Activation Paywall for new users.
-        // ==========================================
-        hasPaidAccess: true, 
+        hasPaidAccess: false, 
+        referralCount: 0,
+        recruiterBonusClaimed: false,
       },
       { merge: true }
     );
