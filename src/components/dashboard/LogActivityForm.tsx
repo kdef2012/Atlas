@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -15,7 +16,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Paperclip, HeartPulse, Sparkles } from "lucide-react";
+import { Loader2, Paperclip, HeartPulse, Sparkles, ShieldAlert } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
@@ -90,14 +91,36 @@ export function LogActivityForm() {
         existingSkills: allSkills,
       });
       
-      let { skillId, isNewSkill, skillName, category, prerequisites, cost } = result;
+      let { skillId, isNewSkill, skillName, category, prerequisites, cost, isTrivial } = result;
       const hasProof = (values.proof && values.proof.length > 0);
       
+      // MANDATORY PROOF FOR PIONEERING
+      if (isNewSkill && !isTrivial && !hasProof) {
+          toast({
+              variant: "destructive",
+              title: "Signal Authentication Required",
+              description: "Pioneering a new skill in the Nebula requires a visual signal (photo/video) to prove its validity."
+          });
+          setIsLoading(false);
+          return;
+      }
+
+      // TRIVIALITY GATE: Map trivial new skills to generic ones
+      if (isNewSkill && isTrivial) {
+          const genericSkill = allSkills.find(s => s.name === "Daily Rituals" || s.name === "Basic Maintenance");
+          if (genericSkill) {
+              isNewSkill = false;
+              skillId = genericSkill.id;
+              skillName = genericSkill.name;
+          }
+      }
+
       const batch = writeBatch(firestore);
       const timestamp = Date.now();
 
-      // Base reward logic
-      let xpGained = isNewSkill ? 150 : 100;
+      // Base reward logic - Trivial activities give 50% less XP
+      let xpGained = isNewSkill ? 150 : (isTrivial ? 50 : 100);
+      
       if (isNewSkill && userData.traits?.pioneer) xpGained = Math.round(xpGained * 1.1);
       if (fireteamData?.streakActive) xpGained = Math.round(xpGained * 1.2);
       if (userData?.momentumFlameActive) xpGained = Math.round(xpGained * 1.5);
@@ -105,7 +128,7 @@ export function LogActivityForm() {
       let userStatUpdate: any = {
         lastLogTimestamp: timestamp,
         momentumFlameActive: true,
-        [`${category.toLowerCase()}Stat`]: increment(10),
+        [`${category.toLowerCase()}Stat`]: increment(isTrivial ? 2 : 10),
       };
 
       if (isNewSkill) {
@@ -114,13 +137,14 @@ export function LogActivityForm() {
         batch.set(newSkillDocRef, {
             id: skillId,
             name: skillName,
-            description: `A new skill discovered by ${userData.userName}.`,
+            description: `A new discipline discovered by ${userData.userName}.`,
             category: category,
             pioneerUserId: user.uid,
             xp: 0,
             prerequisites: prerequisites || [],
             cost: cost || { category: category, points: 20 },
             innovatorAwarded: false,
+            isApproved: false, // New skills require validation
         });
 
         const newGuildDocRef = doc(guildsCollectionRef);
@@ -184,15 +208,16 @@ export function LogActivityForm() {
       const iconColor = CATEGORY_COLORS[category as SkillCategory];
 
       toast({
-        title: isNewSkill ? "Pioneer Discovery!" : "Activity Logged!",
+        title: isNewSkill ? "Discovery Recorded" : "Activity Logged!",
         description: (
           <div className="flex items-center gap-2">
             <div style={{ color: iconColor }}>
               <Icon className="h-5 w-5" />
             </div>
             <span>
-              {isNewSkill ? `You've charted '${skillName}' in the Nebula!` : `Logged '${skillName}' in ${category}.`}
-              {!hasProof ? ` (+${xpGained} XP / +10 ${category} Energy)` : ` Awaiting verification.`}
+              {isNewSkill ? `You've proposed '${skillName}' to the Nebula!` : `Logged '${skillName}' in ${category}.`}
+              {isTrivial ? " (Maintenance task recorded)" : ""}
+              {!hasProof ? ` (+${xpGained} XP)` : ` Awaiting verification.`}
             </span>
           </div>
         )
@@ -246,6 +271,12 @@ export function LogActivityForm() {
                 {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HeartPulse className="mr-2 h-4 w-4 text-red-500" />}
                 Sync Device
             </Button>
+        </div>
+        <div className="p-3 bg-secondary/30 rounded-lg border border-primary/10 flex items-start gap-2">
+            <ShieldAlert className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-[10px] text-muted-foreground leading-tight">
+                Pioneering a new skill requires visual proof. Trivial daily tasks (e.g. drinking water) are recorded but do not grant discovery rewards.
+            </p>
         </div>
         <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}

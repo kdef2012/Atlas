@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -13,7 +14,6 @@
         "gender": { "type": "string", "enum": ["Male", "Female"], "description": "The user's selected gender identity." },
         "avatarStyle": { "type": "string", "description": "The user's selected avatar style." },
         "avatarUrl": { "type": "string", "description": "The URL for the user's selected avatar portrait." },
-        "baseAvatarUrl": { "type": "string", "description": "The URL for the user's base avatar (without cosmetics)." },
         "physicalStat": { "type": "number", "description": "The user's physical skill points" },
         "mentalStat": { "type": "number", "description": "The user's mental skill points." },
         "socialStat": { "type": "number", "description": "The user's social skill points." },
@@ -24,7 +24,6 @@
         "lastLogTimestamp": { "type": "number", "description": "The Unix timestamp of the user's last logged activity." },
         "userSkills": { "type": "object", "description": "A map of skills the user has interacted with.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "object", "properties": { "isUnlocked": { "type": "boolean" }, "xp": { "type": "number" } }, "required": ["isUnlocked", "xp"] } } },
         "avatarLayers": { "type": "object", "description": "A map of visual layers active on the user's avatar.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
-        "ownedCosmetics": { "type": "object", "description": "A map of cosmetics the user has purchased.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } },
         "momentumFlameActive": { "type": "boolean", "description": "Whether the user's daily activity streak (Momentum Flame) is active." },
         "gems": { "type": "number", "description": "The user's balance of premium currency." },
         "streakFreezes": { "type": "number", "description": "The number of streak-repair items the user owns." },
@@ -112,7 +111,19 @@
       "type": "object",
       "description": "Represents a skill in the Nebula skill tree.",
       "properties": {
-        "id": { "type": "string", "description": "Unique identifier for the Skill entity." }, "name": { "type": "string", "description": "The name of the skill (e.g., 'Coding', 'Running')." }, "description": { "type": "string", "description": "A brief description of the skill." }, "category": { "type": "string", "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)." }, "xp": { "type": "number", "description": "Total XP logged for this skill across all users." }, "pioneerUserId": { "type": "string", "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))" }, "prerequisites": { "type": "array", "items": { "type": "string" }, "description": "An array of skill IDs that must be unlocked before this skill can be acquired." }, "cost": { "type": "object", "description": "The cost to unlock this skill.", "properties": { "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"] }, "points": { "type": "number" } } }, "innovatorAwarded": { "type": "boolean", "description": "A flag to ensure the Innovator trait is only awarded once for this skill." } }, "required": ["id", "name", "category"] },
+        "id": { "type": "string", "description": "Unique identifier for the Skill entity." }, 
+        "name": { "type": "string", "description": "The name of the skill (e.g., 'Coding', 'Running')." }, 
+        "description": { "type": "string", "description": "A brief description of the skill." }, 
+        "category": { "type": "string", "description": "The category of the skill (Physical, Mental, Social, Practical, Creative)." }, 
+        "xp": { "type": "number", "description": "Total XP logged for this skill across all users." }, 
+        "pioneerUserId": { "type": "string", "description": "Reference to the User who first discovered/created this skill. (Relationship: User 1:N Skill (Pioneer))" }, 
+        "prerequisites": { "type": "array", "items": { "type": "string" }, "description": "An array of skill IDs that must be unlocked before this skill can be acquired." }, 
+        "cost": { "type": "object", "description": "The cost to unlock this skill.", "properties": { "category": { "type": "string", "enum": ["Physical", "Mental", "Social", "Practical", "Creative"] }, "points": { "type": "number" } } }, 
+        "innovatorAwarded": { "type": "boolean", "description": "A flag to ensure the Innovator trait is only awarded once for this skill." },
+        "isApproved": { "type": "boolean", "description": "Whether the skill has been verified by the community as a valid non-trivial discipline." }
+      }, 
+      "required": ["id", "name", "category", "isApproved"] 
+    },
     "Log": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Log", "type": "object", "description": "Represents a user's activity log entry.", "properties": { "id": { "type": "string", "description": "Unique identifier for the Log entity." }, "userId": { "type": "string", "description": "Reference to the User who performed the activity. (Relationship: User 1:N Log)" }, "skillId": { "type": "string", "description": "Reference to the Skill associated with this log entry. (Relationship: Skill 1:N Log)" }, "timestamp": { "type": "string", "description": "The timestamp of when the activity was performed.", "format": "date-time" }, "xp": { "type": "number", "description": "The amount of experience points gained from this activity." }, "verificationPhotoUrl": { "type": "string", "description": "URL of the photo/video used to verify the activity.", "format": "uri" }, "isVerified": { "type": "boolean", "description": "Whether the log entry has been verified by the community." } }, "required": ["id", "userId", "skillId", "timestamp", "isVerified"] },
     "Fireteam": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Fireteam", "type": "object", "description": "Represents a fireteam (a group of up to 5 users).", "properties": { "id": { "type": "string", "description": "Unique identifier for the Fireteam entity." }, "name": { "type": "string", "description": "The name of the fireteam." }, "region": { "type": "string", "description": "The region (city) where the fireteam is based." }, "state": { "type": "string", "description": "The state where the fireteam is based." }, "country": { "type": "string", "description": "The country where the fireteam is based." }, "ownerId": { "type": "string", "description": "The user ID of the fireteam's creator." }, "members": { "type": "object", "description": "A map of user IDs who are members of this fireteam. Keys are user IDs, values are true.", "patternProperties": { "^[a-zA-Z0-9_]+$": { "type": "boolean" } } }, "streakActive": { "type": "boolean", "description": "Whether the Fireteam's Soul Link is active." }, "streakStartDate": { "type": "number", "description": "The Unix timestamp when the current active streak began." } }, "required": ["id", "ownerId"] },
     "Message": { "$schema": "http://json-schema.org/draft-07/schema#", "title": "Message", "type": "object", "description": "Represents a chat message within a Fireteam or Guild.", "properties": { "id": { "type": "string" }, "text": { "type": "string" }, "timestamp": { "type": "number" }, "userId": { "type": "string" }, "userName": { "type": "string" }, "channel": { "type": "string", "description": "The specific chat channel (e.g., global, USA, NY, NYC)" } }, "required": ["id", "text", "timestamp", "userId", "userName", "channel"] },
