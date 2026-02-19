@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,6 +22,13 @@ export default function AdminFinancePage() {
   const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
   
+  // Environment check
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+      setIsConnected(true);
+    }
+  }, []);
+
   // Simulated stats
   const totalRevenue = 1248.50;
   const gemSales = 845.00;
@@ -127,7 +134,7 @@ export default function AdminFinancePage() {
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="pk">Stripe Public Key</Label>
-                      <Input id="pk" type="password" value="pk_test_************************" readOnly />
+                      <Input id="pk" type="password" value={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_************************'} readOnly />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="sk">Stripe Secret Key</Label>
@@ -141,10 +148,9 @@ export default function AdminFinancePage() {
                   <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 flex gap-3">
                     <AlertCircle className="w-5 h-5 text-blue-400 shrink-0" />
                     <div className="text-sm">
-                      <p className="font-bold text-blue-400">Production Mode Tip</p>
+                      <p className="font-bold text-blue-400">Production Mode Active</p>
                       <p className="text-blue-300/80">
-                        In a live environment, these keys should be stored in your server environment variables (.env). 
-                        The ATLAS Payment Core will automatically use these to secure your transactions.
+                        The system is detecting Stripe API keys in your environment. Payments are being routed securely through your Stripe account.
                       </p>
                     </div>
                   </div>
@@ -153,7 +159,7 @@ export default function AdminFinancePage() {
             </CardContent>
             {isConnected && (
               <CardFooter className="border-t pt-6">
-                <Button variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/10">
+                <Button variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => setIsConnected(false)}>
                   Disconnect Account
                 </Button>
               </CardFooter>

@@ -1,8 +1,10 @@
+
 'use client';
 import type { ReactNode } from "react";
 import { useEffect } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
+import { Footer } from "@/components/common/Footer";
 import {
   Sidebar,
   SidebarInset,
@@ -60,15 +62,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     const isAdmin = !!adminData || isSuperAdminEmail;
     const isPaywallPage = pathname === '/paywall';
     const isOnboardingPage = pathname.startsWith('/onboarding');
+    const isLegalPage = pathname.startsWith('/legal');
     
-    // If they are an admin, let them go anywhere
-    if (isAdmin) return;
+    // If they are an admin or on a legal page, let them go anywhere
+    if (isAdmin || isLegalPage) return;
 
     // ==========================================
     // MONETIZATION: Paywall Redirect Logic
     // ==========================================
-    // Only block if explicitly set to false. 
-    // If undefined (old user), they pass (Silent Grandfathering).
     if (user && user.hasPaidAccess === false) {
       if (!isPaywallPage) {
         router.replace('/paywall');
@@ -119,12 +120,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   ]);
   
   // Protect the entire (app) group
-  if (!isAuthLoading && !authUser && !pathname.startsWith('/logout') && !pathname.startsWith('/login')) {
+  if (!isAuthLoading && !authUser && !pathname.startsWith('/logout') && !pathname.startsWith('/login') && !pathname.startsWith('/legal')) {
     return redirect('/login');
   }
 
   // Show a clean loading state while deciding
-  if (isLoading && !pathname.startsWith('/admin')) {
+  if (isLoading && !pathname.startsWith('/admin') && !pathname.startsWith('/legal')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -142,11 +143,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </Sidebar>
       <SidebarInset className={cn(
           settings?.accessibility?.dyslexiaFont && "font-dyslexia",
-          settings?.accessibility?.highContrast && "high-contrast"
+          settings?.accessibility?.highContrast && "high-contrast",
+          "flex flex-col"
       )}>
         <AnnouncementBanner />
         <AppHeader />
         <main className="p-4 md:p-8 flex-1">{children}</main>
+        <Footer />
       </SidebarInset>
     </SidebarProvider>
   );

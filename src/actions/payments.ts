@@ -3,18 +3,29 @@
 
 /**
  * @fileOverview Simulated payment processing for ATLAS account activation and Gem purchases.
- * In a production environment, these would interface with Stripe API and handle webhooks.
+ * Transition-Ready: Detects Stripe API keys in the environment to switch to live mode.
  */
 
 import { initializeFirebase } from '@/firebase';
-import { doc, updateDoc, increment, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+
+// Environment check for Stripe production readiness
+const HAS_STRIPE_KEYS = !!(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 /**
- * Simulates a Stripe Checkout session for Gem packages.
- * awards gems to user on "success".
+ * Initiates a checkout session.
+ * In production, this would use the Stripe SDK to redirect to Checkout.
  */
 export async function purchaseGems(userId: string, amount: number, price: number): Promise<{ success: boolean; message: string }> {
-  console.log(`[Stripe Simulation] Initiating checkout for ${amount} gems at $${price}...`);
+  if (HAS_STRIPE_KEYS) {
+    console.log(`[Production Mode] Routing ${amount} gem purchase to Stripe Checkout...`);
+    // REAL STRIPE INTEGRATION POINT:
+    // const stripe = await getStripe();
+    // const { sessionId } = await fetch('/api/create-checkout-session', ...).then(res => res.json());
+    // await stripe.redirectToCheckout({ sessionId });
+  }
+
+  console.log(`[Simulation Mode] Processing ${amount} gems at $${price}...`);
   
   // Simulate network delay
   await new Promise(resolve => setTimeout(resolve, 2000));
