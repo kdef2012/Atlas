@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -32,6 +33,7 @@ import {
   BookUser,
   FileText,
   Sparkles,
+  CreditCard,
 } from "lucide-react";
 import { useUser, useDoc, useAuth, useMemoFirebase } from "@/firebase";
 import { useFirestore } from "@/firebase/provider";
@@ -74,6 +76,7 @@ const adminNavItems = [
     { href: "/admin", label: "Overview", icon: LayoutDashboard, exact: true },
     { href: "/admin/curation", label: "Curation", icon: Palette },
     { href: "/admin/events", label: "Events", icon: Megaphone },
+    { href: "/admin/finance", label: "Finance", icon: CreditCard },
 ]
 
 export function SideNav() {
@@ -218,7 +221,7 @@ export function SideNav() {
                     <AlertDialogHeader>
                     <AlertDialogTitle>Are you sure you want to sign out?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        Your journey is saved, but you will need to sign back in to continue.
+                        Your journey will be saved, but you will need to sign back in to continue.
                     </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
