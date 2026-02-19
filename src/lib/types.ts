@@ -201,6 +201,9 @@ export interface StoreItem {
   icon: keyof typeof STORE_ITEM_ICONS;
   layerKey: string;
   visualDescription: string;
+  // Prestige Gate Fields
+  minLevel?: number;
+  requiredTraitId?: string;
 }
 
 export interface PublicLog {

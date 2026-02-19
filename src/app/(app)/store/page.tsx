@@ -8,8 +8,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useDoc, useUser, useMemoFirebase, updateDocumentNonBlocking, useCollection } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
 import { collection, doc, increment } from 'firebase/firestore';
-import type { User, StoreItem } from '@/lib/types';
-import { Gem, Check, Loader2, Store, CreditCard, Sparkles, TrendingUp } from 'lucide-react';
+import type { User, StoreItem, Trait } from '@/lib/types';
+import { Gem, Check, Loader2, Store, CreditCard, Sparkles, TrendingUp, Lock, Shirt, Trophy } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { CATEGORY_ICONS, STORE_ITEM_ICONS } from '@/lib/types';
+import { CATEGORY_ICONS, STORE_ITEM_ICONS, TRAIT_ICONS } from '@/lib/types';
 import { purchaseGems } from '@/actions/payments';
 
 const GEM_PACKAGES = [
@@ -64,12 +64,30 @@ function GemPackageCard({ pkg, onPurchase, isProcessing }: { pkg: any, onPurchas
   );
 }
 
-function StoreItemCard({ item, userGems, userOwnedCosmetics, onPurchase }: { item: StoreItem, userGems: number, userOwnedCosmetics: Record<string, boolean>, onPurchase: (item: any) => void }) {
+function StoreItemCard({ 
+    item, 
+    user, 
+    allTraits,
+    onPurchase 
+}: { 
+    item: StoreItem, 
+    user: User, 
+    allTraits?: Trait[],
+    onPurchase: (item: any) => void 
+}) {
     const [isPurchasing, setIsPurchasing] = useState(false);
     const { toast } = useToast();
 
+    const userOwnedCosmetics = user.ownedCosmetics || {};
     const hasItem = userOwnedCosmetics[item.layerKey];
-    const canAfford = userGems >= item.price;
+    const canAfford = user.gems >= item.price;
+    
+    // Prestige Checks
+    const levelMet = !item.minLevel || user.level >= item.minLevel;
+    const traitMet = !item.requiredTraitId || !!user.traits?.[item.requiredTraitId];
+    const requirementsMet = levelMet && traitMet;
+
+    const requiredTrait = allTraits?.find(t => t.id === item.requiredTraitId);
     
     const ItemIcon = STORE_ITEM_ICONS[item.icon] || Store;
 
@@ -86,41 +104,80 @@ function StoreItemCard({ item, userGems, userOwnedCosmetics, onPurchase }: { ite
     }
     
     return (
-        <Card className={cn("flex flex-col", hasItem && "bg-secondary/50 border-accent/20")}>
+        <Card className={cn(
+            "flex flex-col relative overflow-hidden transition-all duration-500", 
+            hasItem && "bg-secondary/50 border-accent/20",
+            !requirementsMet && "grayscale opacity-80"
+        )}>
+            {!requirementsMet && (
+                <div className="absolute top-2 left-2 z-10">
+                    <Lock className="w-4 h-4 text-muted-foreground" />
+                </div>
+            )}
+            
             <CardHeader className="text-center">
                 <div className="mx-auto p-4 rounded-full bg-primary/10 text-primary w-fit mb-2">
                     <ItemIcon className="w-10 h-10" />
                 </div>
-                <CardTitle>{item.name}</CardTitle>
+                <CardTitle className="font-headline">{item.name}</CardTitle>
                 <CardDescription className="text-xs">{item.description}</CardDescription>
             </CardHeader>
-            <CardContent className="flex-grow flex items-center justify-center">
-                <div className="flex items-center gap-2 text-2xl font-bold font-headline">
+            
+            <CardContent className="flex-grow space-y-4">
+                <div className="flex items-center justify-center gap-2 text-2xl font-bold font-headline">
                     <Gem className="w-6 h-6 text-accent" />
                     <span>{item.price}</span>
                 </div>
+
+                {/* Requirement Badges */}
+                <div className="flex flex-wrap justify-center gap-2">
+                    {item.minLevel && (
+                        <div className={cn(
+                            "flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded border uppercase tracking-tighter",
+                            levelMet ? "border-green-500/20 text-green-500 bg-green-500/5" : "border-destructive/20 text-destructive bg-destructive/5"
+                        )}>
+                            <Trophy className="w-3 h-3" />
+                            Lvl {item.minLevel}
+                        </div>
+                    )}
+                    {requiredTrait && (
+                        <div className={cn(
+                            "flex items-center gap-1 text-[10px] font-black px-2 py-0.5 rounded border uppercase tracking-tighter",
+                            traitMet ? "border-accent/20 text-accent bg-accent/5" : "border-destructive/20 text-destructive bg-destructive/5"
+                        )}>
+                            <Sparkles className="w-3 h-3" />
+                            {requiredTrait.name}
+                        </div>
+                    )}
+                </div>
             </CardContent>
+
             <CardFooter>
                  {hasItem ? (
                     <Button disabled className="w-full" variant="outline"><Check className="mr-2"/> Owned</Button>
+                ) : !requirementsMet ? (
+                    <Button disabled variant="secondary" className="w-full font-bold">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Gated
+                    </Button>
                 ) : (
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                             <Button className="w-full" disabled={!canAfford || isPurchasing}>
-                                {isPurchasing ? <Loader2 className="mr-2 animate-spin"/> : 'Purchase'}
+                             <Button className="w-full font-bold" disabled={!canAfford || isPurchasing}>
+                                {isPurchasing ? <Loader2 className="mr-2 animate-spin"/> : 'Synthesize'}
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                             <AlertDialogHeader>
-                            <AlertDialogTitle>Confirm Purchase</AlertDialogTitle>
+                            <AlertDialogTitle>Confirm Synthesis</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Are you sure you want to spend {item.price} Gems to acquire the {item.name}? This action is irreversible.
+                                Are you sure you want to spend {item.price} Gems to synthesize the {item.name}? This process will integrate the item into your Twinskie signature.
                             </AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
                             <AlertDialogAction onClick={handlePurchase} className="bg-primary hover:bg-primary/90">
-                                Confirm Purchase
+                                Confirm Synthesis
                             </AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
@@ -143,6 +200,9 @@ export default function StorePage() {
 
     const storeItemsCollection = useMemoFirebase(() => collection(firestore, 'store-items'), [firestore]);
     const { data: storeItems, isLoading: areItemsLoading } = useCollection<StoreItem>(storeItemsCollection);
+
+    const traitsCollection = useMemoFirebase(() => collection(firestore, 'traits'), [firestore]);
+    const { data: allTraits } = useCollection<Trait>(traitsCollection);
 
     const isLoading = isAuthLoading || isUserDocLoading || areItemsLoading;
 
@@ -195,7 +255,7 @@ export default function StorePage() {
                            <StoreIcon className="w-8 h-8 text-primary"/>
                             ATLAS Exchange
                         </CardTitle>
-                        <CardDescription>Trade Gems for high-fidelity character modifications.</CardDescription>
+                        <CardDescription>Synthesize Gems into high-fidelity character modifications.</CardDescription>
                     </div>
                      <div className="flex flex-col items-end">
                         <div className="flex items-center gap-2 text-3xl font-black font-headline bg-card p-3 px-6 rounded-2xl border border-primary/20 shadow-xl">
@@ -234,8 +294,8 @@ export default function StorePage() {
                       <StoreItemCard 
                           key={item.id} 
                           item={item} 
-                          userGems={user.gems} 
-                          userOwnedCosmetics={user.ownedCosmetics || {}}
+                          user={user} 
+                          allTraits={allTraits || []}
                           onPurchase={handlePurchaseItem}
                       />
                   ))}
