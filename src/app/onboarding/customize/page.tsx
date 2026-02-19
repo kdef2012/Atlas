@@ -18,7 +18,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 
-// ✅ FIX: Separate component that uses useSearchParams
 function CustomizeAvatarContent() {
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,7 +27,7 @@ function CustomizeAvatarContent() {
   // Form State
   const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>('Male');
   const [complexion, setComplexion] = useState(SKIN_TONES[1]);
-  const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0]);
+  const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0].name);
   const [bodyType, setBodyType] = useState('Average');
   const [height, setHeight] = useState('Medium');
 
@@ -36,7 +35,7 @@ function CustomizeAvatarContent() {
   const { user } = useUser();
   const firestore = useFirestore();
   const router = useRouter();
-  const searchParams = useSearchParams(); // ✅ Now inside Suspense boundary
+  const searchParams = useSearchParams();
   const archetype = searchParams.get('archetype') as Archetype | null;
 
   const currentHairStyles = useMemo(() => {
@@ -45,7 +44,6 @@ function CustomizeAvatarContent() {
     return [...MALE_HAIR_STYLES, ...FEMALE_HAIR_STYLES].sort();
   }, [gender]);
 
-  // Handle step changes
   const nextStep = () => setStep(s => Math.min(4, s + 1));
   const prevStep = () => setStep(s => Math.max(1, s - 1));
 
@@ -63,8 +61,13 @@ function CustomizeAvatarContent() {
         complexionName: complexion.name,
         complexionHex: complexion.hex,
         hairStyle,
+        hairColor: 'Natural',
+        eyeColor: 'Standard',
         bodyType,
         height,
+        ageRange: 'Young Adult',
+        facialHair: 'Clean Shaven',
+        glasses: 'None'
       });
 
       toast({
@@ -102,7 +105,6 @@ function CustomizeAvatarContent() {
 
     setIsLoading(true);
     try {
-      // ✅ Upload to storage (Firebase Storage, Cloudinary, or Imgur)
       toast({
         title: 'Uploading to ATLAS Core...',
         description: 'Storing your avatar in the system.',
@@ -113,12 +115,11 @@ function CustomizeAvatarContent() {
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
-        avatarUrl: avatarUrl, // ✅ Now storing URL, not base64
-        baseAvatarUrl: avatarUrl, // ✅ Same URL for base avatar
+        avatarUrl: avatarUrl,
+        baseAvatarUrl: avatarUrl,
         gender: gender === 'Non-Binary' ? undefined : gender 
       };
 
-      // Use setDoc with merge:true to handle partial documents
       await setDoc(userRef, updates, { merge: true });
 
       toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
@@ -182,7 +183,7 @@ function CustomizeAvatarContent() {
                   value={gender} 
                   onValueChange={(v: any) => {
                     setGender(v);
-                    setHairStyle(v === 'Female' ? FEMALE_HAIR_STYLES[0] : MALE_HAIR_STYLES[0]);
+                    setHairStyle(v === 'Female' ? FEMALE_HAIR_STYLES[0].name : MALE_HAIR_STYLES[0].name);
                   }} 
                   className="grid grid-cols-1 sm:grid-cols-3 gap-4"
                 >
@@ -248,7 +249,7 @@ function CustomizeAvatarContent() {
                       </SelectTrigger>
                       <SelectContent>
                         {currentHairStyles.map(s => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                          <SelectItem key={s.name} value={s.name}>{s.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -354,7 +355,6 @@ function CustomizeAvatarContent() {
   );
 }
 
-// ✅ FIX: Wrap in Suspense boundary
 export default function CustomizeAvatarPage() {
   return (
     <Suspense fallback={
