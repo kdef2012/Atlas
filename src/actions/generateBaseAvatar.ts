@@ -14,6 +14,8 @@ export interface GenerateBaseAvatarInput {
   hairStyle: string;
   bodyType: string;
   height: string;
+  ageRange: string;
+  facialHair: string;
 }
 
 export interface GenerateBaseAvatarOutput {
@@ -36,9 +38,9 @@ export async function generateBaseAvatar(
   input: GenerateBaseAvatarInput
 ): Promise<GenerateBaseAvatarOutput> {
   // Construct detailed prompt for visual consistency
-  // Updated attire to a plain white t-shirt as requested
-  const prompt = `A professional 3D character portrait of a ${input.gender} with ${input.complexionName} skin (hex: ${input.complexionHex}). 
+  const prompt = `A professional 3D character portrait of a ${input.gender} portrayed as a ${input.ageRange} with ${input.complexionName} skin (hex: ${input.complexionHex}). 
 Hair style: ${input.hairStyle}. 
+Facial hair: ${input.facialHair}.
 Body type: ${input.bodyType}, height: ${input.height}. 
 Wearing a simple, plain white short-sleeved t-shirt with a clean fit. 
 Character is facing forward with a confident neutral expression, medium shot framing from waist up, centered in frame. 
@@ -68,25 +70,4 @@ Render quality: Sharp details, clean anti-aliased edges, professional game asset
       `Failed to generate base avatar: ${errorMessage}. Please try again or contact support if the issue persists.`
     );
   }
-}
-
-/**
- * Generate multiple avatar variations for user selection
- * Useful for onboarding flow where users can choose from several options
- */
-export async function generateAvatarVariations(
-  input: GenerateBaseAvatarInput,
-  count: number = 3
-): Promise<GenerateBaseAvatarOutput[]> {
-  const variations = await Promise.all(
-    Array.from({ length: count }, (_, i) => 
-      generateBaseAvatar({
-        ...input,
-        // Add slight variation to prompts for diversity
-        hairStyle: i === 0 ? input.hairStyle : `${input.hairStyle} (variation ${i + 1})`,
-      })
-    )
-  );
-  
-  return variations;
 }

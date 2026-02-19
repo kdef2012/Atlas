@@ -7,12 +7,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, setDoc } from 'firebase/firestore';
-import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2, AlertTriangle } from 'lucide-react';
+import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
 import { uploadBaseAvatar } from '@/lib/uploadAvatar';
-import { SKIN_TONES, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS } from '@/lib/avatar-options';
+import { SKIN_TONES, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS, AGE_RANGES, FACIAL_HAIR_STYLES } from '@/lib/avatar-options';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -30,6 +30,8 @@ export default function CustomizeAvatarPage() {
   const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0]);
   const [bodyType, setBodyType] = useState('Average');
   const [height, setHeight] = useState('Medium');
+  const [ageRange, setAgeRange] = useState('Young Adult');
+  const [facialHair, setFacialHair] = useState('Clean Shaven');
 
   const { toast } = useToast();
   const { user } = useUser();
@@ -63,6 +65,8 @@ export default function CustomizeAvatarPage() {
         hairStyle,
         bodyType,
         height,
+        ageRange,
+        facialHair: gender === 'Female' ? 'Clean Shaven' : facialHair,
       });
 
       toast({
@@ -105,22 +109,18 @@ export default function CustomizeAvatarPage() {
         description: 'Synchronizing biological data with cloud storage.',
       });
 
-      // 1. Upload to Storage (Blobs handle large data much better)
       const cloudAvatarUrl = await uploadBaseAvatar(avatarDataUri, user.uid);
 
-      // 2. ABSOLUTE VALIDATION: Never let a base64 string reach the user document
       if (!cloudAvatarUrl || !cloudAvatarUrl.startsWith('https://')) {
-        console.error("Storage returned invalid link:", cloudAvatarUrl?.substring(0, 50));
         throw new Error("The ATLAS Core rejected the data stream. Your image was too large or storage is unavailable. Please try again.");
       }
 
-      // 3. Save only the verified URL to Firestore
       const userRef = doc(firestore, 'users', user.uid);
       const updates = { 
         avatarStyle: 'guided_forge',
         avatarUrl: cloudAvatarUrl, 
         baseAvatarUrl: cloudAvatarUrl, 
-        gender: gender === 'Non-Binary' ? 'Male' : gender // Clean up gender for storage
+        gender: gender === 'Non-Binary' ? 'Male' : gender 
       };
 
       await setDoc(userRef, updates, { merge: true });
@@ -289,6 +289,26 @@ export default function CustomizeAvatarPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Age Range</Label>
+                        <Select value={ageRange} onValueChange={setAgeRange}>
+                          <SelectTrigger className="border-2"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {AGE_RANGES.map(a => <SelectItem key={a} value={a}>{a}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      {gender !== 'Female' && (
+                        <div className="space-y-2">
+                          <Label className="text-[10px] uppercase font-black tracking-widest text-muted-foreground">Facial Hair</Label>
+                          <Select value={facialHair} onValueChange={setFacialHair}>
+                            <SelectTrigger className="border-2"><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {FACIAL_HAIR_STYLES.map(f => <SelectItem key={f} value={f}>{f}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
                     </div>
                     <Button 
                       onClick={handleGenerate} 

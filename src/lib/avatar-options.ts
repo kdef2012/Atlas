@@ -56,5 +56,23 @@ export const FEMALE_HAIR_STYLES = [
   'Space Buns',
 ];
 
+export const FACIAL_HAIR_STYLES = [
+  'Clean Shaven',
+  'Stubble',
+  'Short Beard',
+  'Full Beard',
+  'Goatee',
+  'Mustache',
+  'Van Dyke',
+  'Mutton Chops',
+];
+
+export const AGE_RANGES = [
+  'Young Adult',
+  'Adult',
+  'Middle-Aged',
+  'Mature',
+];
+
 export const BODY_TYPES = ['Slender', 'Athletic', 'Average', 'Broad'];
 export const HEIGHTS = ['Short', 'Medium', 'Tall'];
