@@ -43,64 +43,52 @@
       "imageHint": "anime boy character"
     },
     {
-      "id": "twinskie-physical",
-      "description": "Twinskie avatar for dominant physical skill",
-      "imageUrl": "https://images.unsplash.com/photo-1677280953786-456bb8a71038?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtdXNjdWxhciUyMG1hbnxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "muscular man"
+      "id": "hair-buzz-cut",
+      "description": "Buzz Cut hairstyle preview",
+      "imageUrl": "https://images.unsplash.com/photo-1706381088587-4501cc2948dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxidXp6Y3V0JTIwaGFpcnN0eWxlfGVufDB8fHx8MTc3MTUxNTU3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "buzzcut hairstyle"
     },
     {
-      "id": "twinskie-practical",
-      "description": "Twinskie avatar for dominant practical skill",
-      "imageUrl": "https://images.unsplash.com/flagged/photo-1573603867003-89f5fd7a7576?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtYW4lMjBzdWl0fGVufDB8fHx8MTc2NDY1NzY0MHww&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "man suit"
+      "id": "hair-crew-cut",
+      "description": "Crew Cut hairstyle preview",
+      "imageUrl": "https://images.unsplash.com/photo-1706381088587-4501cc2948dc?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjcmV3Y3V0JTIwaGFpcnN0eWxlfGVufDB8fHx8MTc3MTUxNTU3MXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "crewcut hairstyle"
     },
     {
-      "id": "twinskie-creative",
-      "description": "Twinskie avatar for dominant creative skill",
-      "imageUrl": "https://images.unsplash.com/photo-1541753866388-0b3c701627d3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhcnRpc3QlMjBwYWludGluZ3xlbnwwfHx8fDE3NjQ2NzkyODF8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "artist painting"
+      "id": "hair-pixie-cut",
+      "description": "Pixie Cut hairstyle preview",
+      "imageUrl": "https://images.unsplash.com/photo-1605180427725-95e306fc0e9a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwaXhpZWN1dCUyMGhhaXJzdHlsZXxlbnwwfHx8fDE3NzE1MTU1NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "pixiecut hairstyle"
     },
     {
-      "id": "twinskie-mental",
-      "description": "Twinskie avatar for dominant mental skill",
-      "imageUrl": "https://images.unsplash.com/photo-1764336312138-14a5368a6cd3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxnbG93aW5nJTIwaGVhZHxlbnwwfHx8fDE3NjQ2MTg3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "glowing head"
+      "id": "hair-bob",
+      "description": "Bob hairstyle preview",
+      "imageUrl": "https://images.unsplash.com/photo-1679140603666-d21fc8d9f18d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxib2IlMjBoYWlyc3R5bGV8ZW58MHx8fHwxNzcxNTE1NTcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "bob hairstyle"
     },
     {
-      "id": "twinskie-social",
-      "description": "Twinskie avatar for dominant social skill",
-      "imageUrl": "https://images.unsplash.com/photo-1761058492039-bc7b2b7ad205?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8Y2hhcmlzbWF0aWMlMjBwZXJzb258ZW58MHx8fHwxNzY0NzAyODgzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "charismatic person"
+      "id": "beard-viking",
+      "description": "Viking Beard preview",
+      "imageUrl": "https://images.unsplash.com/photo-1630961274313-f2527f2a894b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8dmlraW5nJTIwYmVhcmR8ZW58MHx8fHwxNzcxNTE1NTcxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "viking beard"
     },
     {
-      "id": "twinskie-default",
-      "description": "Default Twinskie avatar",
-      "imageUrl": "https://images.unsplash.com/photo-1695825600829-6f968337f0f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8c2lsaG91ZXR0ZSUyMHBlcnNvbnxlbnwwfHx8fDE3NjQ3MDI4ODN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "silhouette person"
+      "id": "beard-mustache",
+      "description": "Mustache preview",
+      "imageUrl": "https://images.unsplash.com/photo-1638699941024-07f7b432f739?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtdXN0YWNoZXxlbnwwfHx8fDE3NzE1MTU1NzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mustache"
     },
     {
-      "id": "avatar-layer-newbie-sweatband",
-      "description": "A sweatband for new players",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fnewbie_sweatband.png?alt=media&token=818f99a9-3c6c-4860-af63-a6162391694f",
-      "imageHint": "sports sweatband"
+      "id": "glasses-aviator",
+      "description": "Aviator glasses preview",
+      "imageUrl": "https://images.unsplash.com/photo-1757594458709-7a4f4248b515?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhdmlhdG9yJTIwZ2xhc3Nlc3xlbnwwfHx8fDE3NzE0MzU4MDF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "aviator glasses"
     },
     {
-      "id": "avatar-layer-shadow-cloak",
-      "description": "A mysterious shadow cloak.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Fshadow_cloak.png?alt=media&token=7e750e3a-0e9e-4e42-921c-529a73841a0b",
-      "imageHint": "dark cloak"
-    },
-    {
-      "id": "avatar-layer-arcane-goggles",
-      "description": "Goggles for seeing the unseen.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Farcane_goggles.png?alt=media&token=e1c6999a-3f9c-48b4-8250-93217b189736",
-      "imageHint": "steampunk goggles"
-    },
-    {
-      "id": "avatar-layer-titans-pauldrons",
-      "description": "Shoulder armor for a Titan.",
-      "imageUrl": "https://firebasestorage.googleapis.com/v0/b/owl-about-that-9f67d.appspot.com/o/assets%2Ftitans_pauldrons.png?alt=media&token=f6c4c5b3-3a8a-48a5-9a84-0a4a9c3d4a6e",
-      "imageHint": "shoulder armor"
+      "id": "glasses-wayfarer",
+      "description": "Wayfarer glasses preview",
+      "imageUrl": "https://images.unsplash.com/photo-1730131835907-1e11ed842ad3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHx3YXlmYXJlciUyMGdsYXNzZXN8ZW58MHx8fHwxNzcxNDM1ODAxfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "wayfarer glasses"
     }
   ]
 }
