@@ -13,12 +13,14 @@ const stripe = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2025-01-27.acacia' }) 
   : null;
 
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+
 /**
  * Initiates a purchase for Gems.
  */
 export async function purchaseGems(userId: string, amount: number, price: number): Promise<{ success: boolean; message: string; url?: string }> {
   if (stripe) {
-    console.log(`[Stripe Production] Generating Checkout Session for ${amount} gems...`);
+    console.log(`[Stripe] Generating Checkout Session for ${amount} gems...`);
     
     try {
       const session = await stripe.checkout.sessions.create({
@@ -37,8 +39,8 @@ export async function purchaseGems(userId: string, amount: number, price: number
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?status=success&session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/store?status=cancelled`,
+        success_url: `${BASE_URL}/dashboard?status=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${BASE_URL}/store?status=cancelled`,
         metadata: {
           userId,
           type: 'gem_purchase',
@@ -62,8 +64,6 @@ export async function purchaseGems(userId: string, amount: number, price: number
   await new Promise(resolve => setTimeout(resolve, 2000));
 
   try {
-    // In simulation, we update the DB directly. In production, the Stripe Webhook handles this.
-    // Note: initializeFirebase() works on server side as well.
     const { firestore } = initializeFirebase();
     const userRef = doc(firestore, 'users', userId);
     
@@ -86,7 +86,7 @@ export async function purchaseGems(userId: string, amount: number, price: number
  */
 export async function activateAccount(userId: string): Promise<{ success: boolean; message: string; url?: string }> {
   if (stripe) {
-    console.log(`[Stripe Production] Generating Activation Checkout for ${userId}...`);
+    console.log(`[Stripe] Generating Activation Checkout for ${userId}...`);
     
     try {
       const session = await stripe.checkout.sessions.create({
@@ -105,8 +105,8 @@ export async function activateAccount(userId: string): Promise<{ success: boolea
           },
         ],
         mode: 'payment',
-        success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/dashboard?status=activated`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/paywall?status=cancelled`,
+        success_url: `${BASE_URL}/dashboard?status=activated`,
+        cancel_url: `${BASE_URL}/paywall?status=cancelled`,
         metadata: {
           userId,
           type: 'account_activation',

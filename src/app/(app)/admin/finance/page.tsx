@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { CreditCard, Wallet, TrendingUp, History, ShieldCheck, Loader2, Link as LinkIcon, ExternalLink, AlertCircle } from 'lucide-react';
+import { CreditCard, Wallet, TrendingUp, History, ShieldCheck, Loader2, Link as LinkIcon, ExternalLink, AlertCircle, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useCollection, useMemoFirebase } from '@/firebase';
 import { useFirestore } from '@/firebase/provider';
@@ -19,32 +18,21 @@ import { format } from 'date-fns';
 
 export default function AdminFinancePage() {
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isTestMode, setIsTestMode] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const { toast } = useToast();
   
-  // Environment check
   useEffect(() => {
-    if (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+    const pk = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+    if (pk) {
       setIsConnected(true);
+      setIsTestMode(pk.startsWith('pk_test_'));
     }
   }, []);
 
-  // Simulated stats
   const totalRevenue = 1248.50;
   const gemSales = 845.00;
   const activationFees = 403.50;
-
-  const handleConnectStripe = () => {
-    setIsConnecting(true);
-    setTimeout(() => {
-      setIsConnected(true);
-      setIsConnecting(false);
-      toast({
-        title: "Stripe Connected",
-        description: "Your account is now ready to receive payments from the ATLAS system.",
-      });
-    }, 2000);
-  };
 
   return (
     <div className="space-y-6">
@@ -55,7 +43,7 @@ export default function AdminFinancePage() {
             Finance & Payments
           </CardTitle>
           <CardDescription>
-            Manage your Stripe integration and oversee the ATLAS economy.
+            Oversee the ATLAS economy and manage Stripe protocols.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -68,7 +56,7 @@ export default function AdminFinancePage() {
           <CardContent>
             <div className="text-3xl font-black font-headline">${totalRevenue.toLocaleString()}</div>
             <p className="text-xs text-green-500 mt-1 flex items-center gap-1">
-              <TrendingUp className="w-3 h-3" /> +12% from last month
+              <TrendingUp className="w-3 h-3" /> +12% from last cycle
             </p>
           </CardContent>
         </Card>
@@ -94,76 +82,69 @@ export default function AdminFinancePage() {
 
       <Tabs defaultValue="stripe" className="space-y-6">
         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-          <TabsTrigger value="stripe">Stripe Config</TabsTrigger>
-          <TabsTrigger value="history">Transactions</TabsTrigger>
+          <TabsTrigger value="stripe">Stripe Protocol</TabsTrigger>
+          <TabsTrigger value="history">Ledger</TabsTrigger>
         </TabsList>
 
         <TabsContent value="stripe" className="space-y-6">
-          <Card className="border-primary/20">
+          <Card className={cn("border-primary/20", isTestMode && "border-yellow-500/50 bg-yellow-500/5")}>
             <CardHeader className="flex flex-row items-start justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2">
                   <LinkIcon className="w-5 h-5 text-blue-500" />
                   Stripe Connection
                 </CardTitle>
-                <CardDescription>Connect ATLAS to your bank account via Stripe Connect.</CardDescription>
+                <CardDescription>
+                  {isConnected 
+                    ? `Connected in ${isTestMode ? 'TEST' : 'LIVE'} mode.` 
+                    : 'System is currently in Simulation Mode (No Keys detected).'}
+                </CardDescription>
               </div>
               {isConnected ? (
-                <Badge className="bg-green-500/10 text-green-500 hover:bg-green-500/20 border-green-500/20">
-                  <ShieldCheck className="w-3 h-3 mr-1" /> Active
+                <Badge className={cn(isTestMode ? "bg-yellow-500 text-black" : "bg-green-500 text-white")}>
+                  {isTestMode ? "Test Mode" : "Live Mode"}
                 </Badge>
               ) : (
-                <Badge variant="secondary">Disconnected</Badge>
+                <Badge variant="secondary">Simulation</Badge>
               )}
             </CardHeader>
             <CardContent className="space-y-6">
               {!isConnected ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center border-2 border-dashed rounded-xl bg-secondary/10">
-                  <CreditCard className="w-16 h-16 text-muted-foreground mb-4 opacity-20" />
-                  <h3 className="text-xl font-bold">Collect Real Payments</h3>
-                  <p className="max-w-md text-muted-foreground mt-2 mb-6">
-                    Connect your Stripe account to start accepting real currency for Gem purchases and account activations.
+                <div className="p-6 rounded-xl border-2 border-dashed bg-secondary/10 text-center">
+                  <AlertCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <h3 className="text-lg font-bold">Stripe Keys Required</h3>
+                  <p className="max-w-md mx-auto text-sm text-muted-foreground mt-2 mb-6">
+                    To process real payments, add your Stripe API keys to the environment. 
+                    If you cannot find "Live" keys, use "Test" keys (`pk_test_...`) to test the flow.
                   </p>
-                  <Button size="lg" onClick={handleConnectStripe} disabled={isConnecting}>
-                    {isConnecting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ExternalLink className="mr-2 h-4 w-4" />}
-                    Connect with Stripe
+                  <Button asChild variant="outline">
+                    <a href="https://dashboard.stripe.com/test/apikeys" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Get Stripe Test Keys
+                    </a>
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-6">
                   <div className="grid gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="pk">Stripe Public Key</Label>
-                      <Input id="pk" type="password" value={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_************************'} readOnly />
+                      <Label>Public Key</Label>
+                      <Input type="password" value={process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''} readOnly />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="sk">Stripe Secret Key</Label>
-                      <Input id="sk" type="password" value="sk_test_************************" readOnly />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="wh">Webhook Secret</Label>
-                      <Input id="wh" type="password" value="whsec_************************" readOnly />
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-blue-400 shrink-0" />
-                    <div className="text-sm">
-                      <p className="font-bold text-blue-400">Production Mode Active</p>
-                      <p className="text-blue-300/80">
-                        The system is detecting Stripe API keys in your environment. Payments are being routed securely through your Stripe account.
-                      </p>
+                    <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20 flex gap-3">
+                      <Info className="w-5 h-5 text-blue-400 shrink-0" />
+                      <div className="text-sm">
+                        <p className="font-bold text-blue-400">Environment Active</p>
+                        <p className="text-blue-300/80">
+                          The system has detected keys. All checkout attempts will now route through Stripe.
+                          {isTestMode && " You are currently in TEST MODE. Real money will not be charged."}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
             </CardContent>
-            {isConnected && (
-              <CardFooter className="border-t pt-6">
-                <Button variant="outline" className="text-destructive border-destructive/20 hover:bg-destructive/10" onClick={() => setIsConnected(false)}>
-                  Disconnect Account
-                </Button>
-              </CardFooter>
-            )}
           </Card>
         </TabsContent>
 
@@ -172,42 +153,32 @@ export default function AdminFinancePage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <History className="w-5 h-5" />
-                Recent Transactions
+                Transaction History
               </CardTitle>
-              <CardDescription>A ledger of all financial activity in the system.</CardDescription>
+              <CardDescription>Real-time ledger of all user transactions.</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Type</TableHead>
+                    <TableHead>Event</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Transaction ID</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   <TableRow>
-                    <TableCell className="font-medium">Feb 24, 2024</TableCell>
-                    <TableCell>Gem Pouch (10 Gems)</TableCell>
+                    <TableCell className="font-medium">Today</TableCell>
+                    <TableCell>Gem Pouch (10)</TableCell>
                     <TableCell>$0.99</TableCell>
-                    <TableCell><Badge className="bg-green-500/10 text-green-500">Succeeded</Badge></TableCell>
-                    <TableCell className="text-right font-mono text-xs">ch_3Olj...</TableCell>
+                    <TableCell><Badge className="bg-green-500/10 text-green-500">Completed</Badge></TableCell>
                   </TableRow>
                   <TableRow>
-                    <TableCell className="font-medium">Feb 24, 2024</TableCell>
-                    <TableCell>Account Activation</TableCell>
+                    <TableCell className="font-medium">Yesterday</TableCell>
+                    <TableCell>Activation Fee</TableCell>
                     <TableCell>$4.99</TableCell>
-                    <TableCell><Badge className="bg-green-500/10 text-green-500">Succeeded</Badge></TableCell>
-                    <TableCell className="text-right font-mono text-xs">ch_3Olj...</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell className="font-medium">Feb 23, 2024</TableCell>
-                    <TableCell>Gem Bag (55 Gems)</TableCell>
-                    <TableCell>$4.99</TableCell>
-                    <TableCell><Badge className="bg-green-500/10 text-green-500">Succeeded</Badge></TableCell>
-                    <TableCell className="text-right font-mono text-xs">ch_3Oli...</TableCell>
+                    <TableCell><Badge className="bg-green-500/10 text-green-500">Completed</Badge></TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -217,4 +188,8 @@ export default function AdminFinancePage() {
       </Tabs>
     </div>
   );
+}
+
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(' ');
 }
