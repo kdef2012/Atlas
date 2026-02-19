@@ -12,6 +12,8 @@ export interface GenerateBaseAvatarInput {
   complexionName: string;
   complexionHex: string;
   hairStyle: string;
+  hairColor: string;
+  eyeColor: string;
   bodyType: string;
   height: string;
   ageRange: string;
@@ -40,10 +42,12 @@ export async function generateBaseAvatar(
 ): Promise<GenerateBaseAvatarOutput> {
   // Construct detailed prompt for visual consistency
   const glassesDesc = input.glasses === 'None' ? '' : `Wearing ${input.glasses}.`;
+  const facialHairDesc = input.facialHair === 'Clean Shaven' ? 'Clean shaven face.' : `Facial hair style: ${input.facialHair}.`;
   
   const prompt = `A professional 3D character portrait of a ${input.gender} portrayed as a ${input.ageRange} with ${input.complexionName} skin (hex: ${input.complexionHex}). 
-Hair style: ${input.hairStyle}. 
-Facial hair: ${input.facialHair}.
+Hair style: ${input.hairStyle} in a ${input.hairColor} color. 
+Eyes: Striking ${input.eyeColor} eyes.
+${facialHairDesc}
 ${glassesDesc}
 Body type: ${input.bodyType}, height: ${input.height}. 
 Wearing a simple, plain white short-sleeved t-shirt with a clean fit. 

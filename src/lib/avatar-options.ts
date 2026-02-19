@@ -20,6 +20,35 @@ export const SKIN_TONES = [
   { name: 'Dark Cocoa', hex: '#4B3232' },
 ];
 
+export const HAIR_COLORS = [
+  { name: 'Jet Black', hex: '#000000' },
+  { name: 'Dark Brown', hex: '#2B1608' },
+  { name: 'Chestnut Brown', hex: '#4B2C20' },
+  { name: 'Light Brown', hex: '#7B4B2A' },
+  { name: 'Dirty Blonde', hex: '#B58B4C' },
+  { name: 'Golden Blonde', hex: '#E5BE83' },
+  { name: 'Platinum Blonde', hex: '#F5E1C8' },
+  { name: 'Auburn', hex: '#7A3411' },
+  { name: 'Ginger', hex: '#B3541E' },
+  { name: 'Silver', hex: '#C0C0C0' },
+  { name: 'Salt and Pepper', hex: '#4A4A4A' },
+  { name: 'Electric Blue', hex: '#0047AB' },
+  { name: 'Neon Pink', hex: '#FF1493' },
+];
+
+export const EYE_COLORS = [
+  { name: 'Deep Brown', hex: '#3E2723' },
+  { name: 'Light Brown', hex: '#795548' },
+  { name: 'Amber', hex: '#BF360C' },
+  { name: 'Hazel', hex: '#556B2F' },
+  { name: 'Forest Green', hex: '#1B5E20' },
+  { name: 'Emerald Green', hex: '#00C853' },
+  { name: 'Sky Blue', hex: '#4FC3F7' },
+  { name: 'Deep Blue', hex: '#0D47A1' },
+  { name: 'Grey', hex: '#78909C' },
+  { name: 'Steel Grey', hex: '#455A64' },
+];
+
 export const MALE_HAIR_STYLES = [
   'Buzz Cut',
   'Crew Cut',
@@ -65,6 +94,14 @@ export const FACIAL_HAIR_STYLES = [
   'Mustache',
   'Van Dyke',
   'Mutton Chops',
+  'Anchor Beard',
+  'Imperial Mustache',
+  'Soul Patch',
+  'Bandholz',
+  'Viking Beard',
+  'Handlebar Mustache',
+  'Circular Beard',
+  'Sideburns',
 ];
 
 export const GLASSES_STYLES = [
