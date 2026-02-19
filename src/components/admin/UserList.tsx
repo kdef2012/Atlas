@@ -42,8 +42,10 @@ export function UserList() {
     const { data: admins, isLoading: isLoadingAdmins } = useCollection<Admin>(adminsCollection);
 
     const adminMap = useMemo(() => {
-        const map = new Record<string, boolean>();
-        admins?.forEach(a => map[a.id] = true);
+        const map: Record<string, boolean> = {};
+        admins?.forEach(a => {
+            map[a.id] = true;
+        });
         return map;
     }, [admins]);
 
