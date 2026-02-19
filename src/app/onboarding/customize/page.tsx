@@ -525,7 +525,7 @@ export default function CustomizeAvatarPage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => router.push('/dashboard')}
+                onClick={() => router.push('/')}
                 disabled={isProcessing || isLoading}
                 className="font-bold uppercase tracking-tighter border-muted-foreground/20"
               >
