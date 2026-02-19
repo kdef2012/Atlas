@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -30,8 +29,14 @@ export default function PaywallPage() {
     try {
       const result = await activateAccount(authUser.uid);
       if (result.success) {
-        toast({ title: 'System Activated', description: result.message });
-        router.push('/dashboard');
+        if (result.url) {
+          // REDIRECT TO STRIPE CHECKOUT
+          window.location.href = result.url;
+        } else {
+          // Simulation success
+          toast({ title: 'System Activated', description: result.message });
+          router.push('/dashboard');
+        }
       } else {
         throw new Error(result.message);
       }
@@ -120,7 +125,7 @@ export default function PaywallPage() {
               {isProcessing ? 'Processing Securely...' : 'Activate System'}
             </Button>
             <p className="text-[10px] text-center text-muted-foreground uppercase font-bold tracking-widest">
-              Secured by ATLAS Payment Core (Simulation Mode)
+              Secured by ATLAS Payment Core
             </p>
           </CardFooter>
         </Card>

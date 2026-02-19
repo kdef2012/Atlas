@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -224,8 +223,15 @@ export default function StorePage() {
       
       try {
         const result = await purchaseGems(authUser.uid, pkg.amount, pkg.price);
+        
         if (result.success) {
-          toast({ title: 'Payment Confirmed', description: result.message });
+          if (result.url) {
+            // REDIRECT TO STRIPE CHECKOUT
+            window.location.href = result.url;
+          } else {
+            // Simulation Mode success
+            toast({ title: 'Payment Confirmed', description: result.message });
+          }
         } else {
           throw new Error(result.message);
         }
