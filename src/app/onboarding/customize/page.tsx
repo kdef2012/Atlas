@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser } from '@/firebase';
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { Loader2, Sparkles, Check, ChevronRight, ChevronLeft, Wand2 } from 'lucide-react';
 import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
@@ -105,12 +104,13 @@ export default function CustomizeAvatarPage() {
       const updates = { 
         avatarStyle: 'guided_forge',
         avatarUrl: avatarUrl,
-        baseAvatarUrl: avatarUrl,
+        baseAvatarUrl: avatarUrl, // ✅ CRITICAL: Set both avatarUrl and baseAvatarUrl
         gender: gender === 'Non-Binary' ? undefined : gender 
       };
 
-      // Use blocking update here to ensure AppLayout sees the change before redirecting
-      await updateDoc(userRef, updates);
+      // ✅ FIXED: Use setDoc with merge:true instead of updateDoc
+      // This works even if the document doesn't fully exist yet
+      await setDoc(userRef, updates, { merge: true });
 
       toast({ title: '🎮 System Synchronized!', description: 'Your journey into ATLAS begins now.' });
       router.push(`/onboarding/welcome?archetype=${archetype}`);
