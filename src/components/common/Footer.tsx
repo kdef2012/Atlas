@@ -1,11 +1,16 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Atom } from 'lucide-react';
 
 export function Footer() {
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState<number | null>(null);
+
+  useEffect(() => {
+    setYear(new Date().getFullYear());
+  }, []);
 
   return (
     <footer className="w-full py-12 px-4 border-t bg-card/30 mt-auto">
@@ -44,7 +49,7 @@ export function Footer() {
             <span>Nebula Core Online</span>
           </div>
           <p className="text-[10px] text-muted-foreground mt-4 uppercase font-bold">
-            &copy; {currentYear} ATLAS INTERACTIVE. All Rights Reserved.
+            &copy; {year || '...'} ATLAS INTERACTIVE. All Rights Reserved.
           </p>
         </div>
       </div>
