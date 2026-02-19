@@ -13,15 +13,14 @@ import {
   FormField,
   FormItem,
   FormMessage,
-  FormLabel,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse, Sparkles } from "lucide-react";
-import type { Skill, SkillCategory, Territory, Fireteam, User, Guild, Trait } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
-import { collection, doc, increment, getDoc, writeBatch } from "firebase/firestore";
+import { collection, doc, increment, writeBatch } from "firebase/firestore";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -66,8 +65,6 @@ export function LogActivityForm() {
       skill: "",
     },
   });
-  
-  const fileRef = form.register("proof");
 
   const handleSyncDevice = () => {
     setIsSyncing(true);

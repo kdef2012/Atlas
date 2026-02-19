@@ -22,87 +22,83 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
+  // Primary user profile
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const { data: user, isLoading: isUserDocLoading } = useDoc<User>(userRef);
 
-  // Hardcoded super-admin check for bootstrap
-  const isAdminLogin = authUser?.email === 'kdef2012@gmail.com';
-
-  const adminRef = useMemoFirebase(() => {
-    if (authUser && isAdminLogin) {
-      return doc(firestore, 'admins', authUser.uid);
-    }
-    return null;
-  }, [firestore, authUser, isAdminLogin]);
-
+  // Admin profile
+  const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
 
-  const hasUserDocLoadingStarted = useRef(false);
-  const hasAdminDocLoadingStarted = useRef(false);
+  // Hardcoded super-admin bootstrap check
+  const isSuperAdminEmail = authUser?.email === 'kdef2012@gmail.com';
+
+  // Comprehensive loading state
+  const isLoading = isAuthLoading || isUserDocLoading || isAdminDocLoading;
 
   useEffect(() => {
-    if (isUserDocLoading) hasUserDocLoadingStarted.current = true;
-    if (isAdminDocLoading) hasAdminDocLoadingStarted.current = true;
-  }, [isUserDocLoading, isAdminDocLoading]);
-  
-  const isUserDocReady = authUser ? (hasUserDocLoadingStarted.current && !isUserDocLoading) : true;
-  const isAdminDocReady = !isAdminLogin || (hasAdminDocLoadingStarted.current && !isAdminDocLoading);
-  const isReadyToDecide = !isAuthLoading && isUserDocReady && isAdminDocReady;
+    // Only make routing decisions once all authentication and profile checks are definitive
+    if (isLoading || !authUser) return;
 
-  useEffect(() => {
-    if (!isReadyToDecide || !authUser) return;
+    // Handle SuperAdmin bootstrap
+    if (isSuperAdminEmail && !adminData && !isAdminDocLoading) {
+      const newAdminDocRef = doc(firestore, 'admins', authUser.uid);
+      setDocumentNonBlocking(newAdminDocRef, {
+        id: authUser.uid,
+        email: authUser.email,
+        userName: 'SuperAdmin',
+        createdAt: Date.now(),
+      }, {});
+      return; // Allow the document creation to trigger a re-render
+    }
 
-    if (isAdminLogin) {
-      if (!adminData && !isAdminDocLoading) {
-        const newAdminDocRef = doc(firestore, 'admins', authUser.uid);
-        setDocumentNonBlocking(newAdminDocRef, {
-          id: authUser.uid,
-          email: authUser.email,
-          userName: 'SuperAdmin',
-          createdAt: Date.now(),
-        }, {});
-      }
-    } else {
-      const isOnboarding = pathname.startsWith('/onboarding');
-      
-      // If profile is totally missing, go to start of onboarding
-      if (!user && !isOnboarding) {
-        router.replace('/onboarding/archetype');
-      } 
-      // If profile exists but is incomplete (no avatarStyle), go to onboarding
-      else if (user && !user.avatarStyle && !isOnboarding) {
+    const isAdmin = !!adminData || isSuperAdminEmail;
+    const isOnboardingPage = pathname.startsWith('/onboarding');
+    const isProfileComplete = !!user?.avatarStyle;
+
+    // If they are an admin, let them go anywhere
+    if (isAdmin) return;
+
+    // Redirection Logic for Standard Users
+    if (!user) {
+      // No profile doc at all - send to start of onboarding
+      if (!isOnboardingPage) {
         router.replace('/onboarding/archetype');
       }
-      // If profile is complete but user is trying to go back to the START of onboarding, push to dashboard
-      // We allow /welcome and /reward to finish normally.
-      else if (user && user.avatarStyle && pathname === '/onboarding/archetype') {
-        router.replace('/dashboard');
+    } else if (!isProfileComplete) {
+      // Profile exists but haven't finished customization
+      if (!isOnboardingPage) {
+        router.replace('/onboarding/archetype');
       }
+    } else if (isProfileComplete && pathname === '/onboarding/archetype') {
+      // Profile is done but user tried to go back to origin - send to dashboard
+      router.replace('/dashboard');
     }
   }, [
-    isReadyToDecide,
+    isLoading,
     authUser,
     user,
     adminData,
-    isAdminLogin,
+    isSuperAdminEmail,
     isAdminDocLoading,
     router,
     pathname,
     firestore
   ]);
   
+  // Protect the entire (app) group
   if (!isAuthLoading && !authUser && !pathname.startsWith('/logout') && !pathname.startsWith('/login')) {
     return redirect('/login');
   }
 
-  const isLoading = isAuthLoading || (authUser && !isReadyToDecide);
-  const isActuallyOnboarding = pathname.startsWith('/onboarding');
-
-  // While deciding or loading, show a skeleton unless we are already on an onboarding page
-  if (isLoading && !isActuallyOnboarding && !pathname.startsWith('/admin')) {
+  // Show a clean loading state while deciding
+  if (isLoading && !pathname.startsWith('/admin')) {
     return (
       <div className="flex h-screen w-screen items-center justify-center bg-background">
-        <Skeleton className="h-16 w-16 rounded-full" />
+        <div className="flex flex-col items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <p className="text-sm text-muted-foreground animate-pulse font-mono tracking-widest uppercase">Initializing ATLAS...</p>
+        </div>
       </div>
     );
   }
