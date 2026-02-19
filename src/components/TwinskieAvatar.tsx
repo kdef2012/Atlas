@@ -20,6 +20,7 @@ const SIZE_MAP = {
 /**
  * Standard TwinskieAvatar component.
  * Displays the high-fidelity AI-generated render.
+ * Includes "Slump" logic for inactive users.
  */
 export function TwinskieAvatar({ user, size = 'md', className, showInactiveLabel = true }: TwinskieAvatarProps) {
   const dimensions = SIZE_MAP[size];
@@ -50,16 +51,22 @@ export function TwinskieAvatar({ user, size = 'md', className, showInactiveLabel
         alt={`${user.userName}'s Twinskie`}
         className={cn(
           "relative z-10 w-[90%] h-[90%] object-contain drop-shadow-2xl transition-all duration-700",
-          isInactive && "grayscale-[0.5] opacity-80"
+          isInactive ? "grayscale-[0.8] opacity-60 scale-90 translate-y-4 rotate-3" : "scale-100"
         )}
+        style={{
+            // "Slumping" effect for inactive users
+            filter: isInactive ? 'grayscale(0.8) contrast(0.8)' : 'none',
+        }}
       />
       
       {/* Dynamic glow based on archetype */}
       <div className={cn(
         "absolute inset-0 opacity-30 blur-3xl transition-colors duration-1000",
-        user.archetype === 'Titan' && "bg-red-500",
-        user.archetype === 'Sage' && "bg-blue-500",
-        user.archetype === 'Maverick' && "bg-yellow-500"
+        isInactive ? "bg-slate-500" : (
+            user.archetype === 'Titan' ? "bg-red-500" :
+            user.archetype === 'Sage' ? "bg-blue-500" :
+            "bg-yellow-500"
+        )
       )} />
 
       {isInactive && showInactiveLabel && (

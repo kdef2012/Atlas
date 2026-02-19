@@ -1,14 +1,14 @@
-
 'use client';
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useFirestore, useUser } from "@/firebase";
 import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import type { User } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy } from "lucide-react";
+import { Trophy, ChevronRight } from "lucide-react";
 import { TwinskieAvatarCompact } from "@/components/TwinskiAvatarCompact";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -35,6 +35,7 @@ function LeaderboardTable({ users, isLoading }: { users: User[] | null, isLoadin
                     <TableHead>User</TableHead>
                     <TableHead className="text-center">Level</TableHead>
                     <TableHead className="text-right">Total XP</TableHead>
+                    <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -46,16 +47,21 @@ function LeaderboardTable({ users, isLoading }: { users: User[] | null, isLoadin
                     if (rank === 3) rankDisplay = <Trophy className="w-5 h-5 text-orange-400" />;
                     
                     return (
-                        <TableRow key={user.id}>
+                        <TableRow key={user.id} className="group">
                             <TableCell className="font-bold text-lg text-center">{rankDisplay}</TableCell>
                             <TableCell>
-                                <div className="flex items-center gap-3">
+                                <Link href={`/users/${user.id}`} className="flex items-center gap-3 hover:underline">
                                     <TwinskieAvatarCompact user={user} size={40} />
                                     <span className="font-medium">{user.userName}</span>
-                                </div>
+                                </Link>
                             </TableCell>
                             <TableCell className="text-center font-mono font-bold">{user.level}</TableCell>
                             <TableCell className="text-right font-mono">{user.xp.toLocaleString()}</TableCell>
+                            <TableCell>
+                                <Link href={`/users/${user.id}`}>
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </Link>
+                            </TableCell>
                         </TableRow>
                     )
                 })}

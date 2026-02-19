@@ -2,6 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: 'OpenDyslexic';
+  src: url('https://cdn.jsdelivr.net/npm/opendyslexic@1.0.3/OpenDyslexic-Regular.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   font-family: 'Inter', sans-serif;
 }
@@ -106,5 +113,17 @@ body {
   }
   [data-sidebar] .bg-border {
     background-color: hsl(var(--sidebar-accent));
+  }
+
+  .font-dyslexia * {
+    font-family: 'OpenDyslexic', sans-serif !important;
+  }
+
+  .high-contrast {
+    --foreground: 0 0% 0%;
+    --background: 0 0% 100%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --border: 0 0% 0%;
   }
 }

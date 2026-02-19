@@ -13,8 +13,9 @@ import { redirect, useRouter, usePathname } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useFirestore } from "@/firebase/provider";
 import { doc } from "firebase/firestore";
-import type { User } from "@/lib/types";
+import type { User, UserSettings } from "@/lib/types";
 import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
+import { cn } from "@/lib/utils";
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -29,6 +30,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Admin profile
   const adminRef = useMemoFirebase(() => authUser ? doc(firestore, 'admins', authUser.uid) : null, [firestore, authUser]);
   const { data: adminData, isLoading: isAdminDocLoading } = useDoc(adminRef);
+
+  // User settings for global accessibility
+  const settingsRef = useMemoFirebase(() => authUser ? doc(firestore, `users/${authUser.uid}/settings/main`) : null, [firestore, authUser]);
+  const { data: settings } = useDoc<UserSettings>(settingsRef);
 
   // Hardcoded super-admin bootstrap check
   const isSuperAdminEmail = authUser?.email === 'kdef2012@gmail.com';
@@ -49,15 +54,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         userName: 'SuperAdmin',
         createdAt: Date.now(),
       }, {});
-      return; // Allow the document creation to trigger a re-render
+      return; 
     }
 
     const isAdmin = !!adminData || isSuperAdminEmail;
     const isOnboardingPage = pathname.startsWith('/onboarding');
     
-    // ✅ FIXED: Define onboarding stages
+    // Define onboarding stages
     const hasArchetype = !!user?.archetype;
-    const hasAvatar = !!(user?.avatarUrl && user?.baseAvatarUrl);
+    const hasAvatar = !!(user?.avatarUrl || user?.avatarStyle);
     const isProfileComplete = hasArchetype && hasAvatar;
 
     // If they are an admin, let them go anywhere
@@ -65,22 +70,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
     // Redirection Logic for Standard Users
     if (!user) {
-      // No profile doc at all - send to start of onboarding
       if (!isOnboardingPage) {
         router.replace('/onboarding/archetype');
       }
     } else if (!hasArchetype) {
-      // User doc exists but no archetype chosen yet
       if (pathname !== '/onboarding/archetype') {
         router.replace('/onboarding/archetype');
       }
     } else if (hasArchetype && !hasAvatar) {
-      // Has archetype but no avatar - send to customize
-      if (!pathname.startsWith('/onboarding/customize') && !pathname.startsWith('/onboarding/welcome') && !pathname.startsWith('/onboarding/reward')) {
+      if (!isOnboardingPage) {
         router.replace(`/onboarding/customize?archetype=${user.archetype}`);
       }
     } else if (isProfileComplete) {
-      // Profile is done - don't let them go back to onboarding
       if (pathname === '/onboarding/archetype') {
         router.replace('/dashboard');
       }
@@ -119,7 +120,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <Sidebar>
         <SideNav />
       </Sidebar>
-      <SidebarInset>
+      <SidebarInset className={cn(
+          settings?.accessibility?.dyslexiaFont && "font-dyslexia",
+          settings?.accessibility?.highContrast && "high-contrast"
+      )}>
         <AnnouncementBanner />
         <AppHeader />
         <main className="p-4 md:p-8 flex-1">{children}</main>
