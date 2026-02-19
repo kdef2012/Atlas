@@ -67,6 +67,19 @@ export const FACIAL_HAIR_STYLES = [
   'Mutton Chops',
 ];
 
+export const GLASSES_STYLES = [
+  'None',
+  'Round Glasses',
+  'Square Glasses',
+  'Aviator Glasses',
+  'Rectangle Glasses',
+  'Cat-Eye Glasses',
+  'Wayfarer Glasses',
+  'Rimless Glasses',
+  'Sporty Sunglasses',
+  'Circular Wire-rims',
+];
+
 export const AGE_RANGES = [
   'Young Adult',
   'Adult',

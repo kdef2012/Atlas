@@ -12,7 +12,7 @@ import type { Archetype } from '@/lib/types';
 import { removeBackground } from '@/actions/removeBackground';
 import { generateBaseAvatar } from '@/actions/generateBaseAvatar';
 import { uploadBaseAvatar } from '@/lib/uploadAvatar';
-import { SKIN_TONES, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS, AGE_RANGES, FACIAL_HAIR_STYLES } from '@/lib/avatar-options';
+import { SKIN_TONES, MALE_HAIR_STYLES, FEMALE_HAIR_STYLES, BODY_TYPES, HEIGHTS, AGE_RANGES, FACIAL_HAIR_STYLES, GLASSES_STYLES } from '@/lib/avatar-options';
 import { cn } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
@@ -25,13 +25,14 @@ export default function CustomizeAvatarPage() {
   const [avatarDataUri, setAvatarDataUri] = useState<string | null>(null);
 
   // Form State
-  const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>( 'Male');
+  const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>('Male');
   const [complexion, setComplexion] = useState(SKIN_TONES[1]);
   const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0]);
   const [bodyType, setBodyType] = useState('Average');
   const [height, setHeight] = useState('Medium');
   const [ageRange, setAgeRange] = useState('Young Adult');
   const [facialHair, setFacialHair] = useState('Clean Shaven');
+  const [glasses, setGlasses] = useState('None');
 
   const { toast } = useToast();
   const { user } = useUser();
@@ -46,7 +47,7 @@ export default function CustomizeAvatarPage() {
     return [...MALE_HAIR_STYLES, ...FEMALE_HAIR_STYLES].sort();
   }, [gender]);
 
-  const nextStep = () => setStep(s => Math.min(4, s + 1));
+  const nextStep = () => setStep(s => Math.min(5, s + 1));
   const prevStep = () => setStep(s => Math.max(1, s - 1));
 
   const handleGenerate = async () => {
@@ -67,6 +68,7 @@ export default function CustomizeAvatarPage() {
         height,
         ageRange,
         facialHair: gender === 'Female' ? 'Clean Shaven' : facialHair,
+        glasses,
       });
 
       toast({
@@ -164,13 +166,13 @@ export default function CustomizeAvatarPage() {
         <Card className="border-primary/20 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
           <CardHeader className="bg-secondary/30 border-b">
             <div className="flex justify-between items-center text-xs font-bold text-muted-foreground uppercase tracking-widest">
-              <span>Step {step} of 4</span>
-              <span>{Math.round((step / 4) * 100)}% Complete</span>
+              <span>Step {step} of 5</span>
+              <span>{Math.round((step / 5) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-secondary h-1.5 mt-2 rounded-full overflow-hidden">
               <div 
                 className="bg-primary h-full transition-all duration-500 ease-in-out" 
-                style={{ width: `${(step / 4) * 100}%` }}
+                style={{ width: `${(step / 5) * 100}%` }}
               />
             </div>
           </CardHeader>
@@ -262,6 +264,30 @@ export default function CustomizeAvatarPage() {
             )}
 
             {step === 4 && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold font-headline mb-2">Optical Gear</h3>
+                  <p className="text-sm text-muted-foreground">Enhance your visual interface with specific eyewear.</p>
+                </div>
+                <div className="max-w-sm mx-auto space-y-4">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">Glasses Style</Label>
+                    <Select value={glasses} onValueChange={setGlasses}>
+                      <SelectTrigger className="h-14 text-lg font-medium border-2 focus:ring-primary">
+                        <SelectValue placeholder="Select Eyewear" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {GLASSES_STYLES.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {step === 5 && (
               <div className="space-y-8 animate-in fade-in zoom-in-95 duration-500">
                 <div className="text-center">
                   <h3 className="text-2xl font-bold font-headline mb-2">Final Synthesis</h3>
@@ -366,7 +392,7 @@ export default function CustomizeAvatarPage() {
               <ChevronLeft className="mr-2 h-4 w-4" /> Back
             </Button>
             
-            {step < 4 && (
+            {step < 5 && (
               <Button onClick={nextStep} className="font-bold uppercase tracking-tighter px-10">
                 Proceed <ChevronRight className="ml-2 h-4 w-4" />
               </Button>
