@@ -1,11 +1,9 @@
-
 /**
  * @fileOverview Defines the options for the custom AI avatar generation flow.
  */
 
 export interface VisualOption {
   name: string;
-  imageUrl: string;
 }
 
 export const SKIN_TONES = [
@@ -56,71 +54,71 @@ export const EYE_COLORS = [
 ];
 
 export const MALE_HAIR_STYLES: VisualOption[] = [
-  { name: 'Buzz Cut', imageUrl: 'https://picsum.photos/seed/buzz/100/100' },
-  { name: 'Crew Cut', imageUrl: 'https://picsum.photos/seed/crew/100/100' },
-  { name: 'Pompadour', imageUrl: 'https://picsum.photos/seed/pomp/100/100' },
-  { name: 'Undercut', imageUrl: 'https://picsum.photos/seed/under/100/100' },
-  { name: 'Side Part', imageUrl: 'https://picsum.photos/seed/side/100/100' },
-  { name: 'Slicked Back', imageUrl: 'https://picsum.photos/seed/slick/100/100' },
-  { name: 'Top Knot', imageUrl: 'https://picsum.photos/seed/top/100/100' },
-  { name: 'Man Bun', imageUrl: 'https://picsum.photos/seed/bun/100/100' },
-  { name: 'Dreadlocks (Short)', imageUrl: 'https://picsum.photos/seed/dreadshort/100/100' },
-  { name: 'Dreadlocks (Long)', imageUrl: 'https://picsum.photos/seed/dreadlong/100/100' },
-  { name: 'Afro (Short)', imageUrl: 'https://picsum.photos/seed/afroshort/100/100' },
-  { name: 'Afro (Large)', imageUrl: 'https://picsum.photos/seed/afrolarge/100/100' },
-  { name: 'Braids', imageUrl: 'https://picsum.photos/seed/braids/100/100' },
-  { name: 'Curly Fade', imageUrl: 'https://picsum.photos/seed/curly/100/100' },
-  { name: 'Bald', imageUrl: 'https://picsum.photos/seed/bald/100/100' },
+  { name: 'Buzz Cut' },
+  { name: 'Crew Cut' },
+  { name: 'Pompadour' },
+  { name: 'Undercut' },
+  { name: 'Side Part' },
+  { name: 'Slicked Back' },
+  { name: 'Top Knot' },
+  { name: 'Man Bun' },
+  { name: 'Dreadlocks (Short)' },
+  { name: 'Dreadlocks (Long)' },
+  { name: 'Afro (Short)' },
+  { name: 'Afro (Large)' },
+  { name: 'Braids' },
+  { name: 'Curly Fade' },
+  { name: 'Bald' },
 ];
 
 export const FEMALE_HAIR_STYLES: VisualOption[] = [
-  { name: 'Pixie Cut', imageUrl: 'https://picsum.photos/seed/pixie/100/100' },
-  { name: 'Bob (Chin Length)', imageUrl: 'https://picsum.photos/seed/bob/100/100' },
-  { name: 'Shoulder Length Straight', imageUrl: 'https://picsum.photos/seed/shoulders/100/100' },
-  { name: 'Long Straight', imageUrl: 'https://picsum.photos/seed/straight/100/100' },
-  { name: 'Long Wavy', imageUrl: 'https://picsum.photos/seed/wavy/100/100' },
-  { name: 'Tight Curls', imageUrl: 'https://picsum.photos/seed/tightcurls/100/100' },
-  { name: 'Afro', imageUrl: 'https://picsum.photos/seed/afro/100/100' },
-  { name: 'High Bun', imageUrl: 'https://picsum.photos/seed/highbun/100/100' },
-  { name: 'Ponytail', imageUrl: 'https://picsum.photos/seed/pony/100/100' },
-  { name: 'French Braids', imageUrl: 'https://picsum.photos/seed/french/100/100' },
-  { name: 'Dreadlocks', imageUrl: 'https://picsum.photos/seed/dreads/100/100' },
-  { name: 'Side-swept Bangs', imageUrl: 'https://picsum.photos/seed/bangs/100/100' },
-  { name: 'Wolf Cut', imageUrl: 'https://picsum.photos/seed/wolf/100/100' },
-  { name: 'Box Braids', imageUrl: 'https://picsum.photos/seed/box/100/100' },
-  { name: 'Space Buns', imageUrl: 'https://picsum.photos/seed/space/100/100' },
+  { name: 'Pixie Cut' },
+  { name: 'Bob (Chin Length)' },
+  { name: 'Shoulder Length Straight' },
+  { name: 'Long Straight' },
+  { name: 'Long Wavy' },
+  { name: 'Tight Curls' },
+  { name: 'Afro' },
+  { name: 'High Bun' },
+  { name: 'Ponytail' },
+  { name: 'French Braids' },
+  { name: 'Dreadlocks' },
+  { name: 'Side-swept Bangs' },
+  { name: 'Wolf Cut' },
+  { name: 'Box Braids' },
+  { name: 'Space Buns' },
 ];
 
 export const FACIAL_HAIR_STYLES: VisualOption[] = [
-  { name: 'Clean Shaven', imageUrl: 'https://picsum.photos/seed/shaven/100/100' },
-  { name: 'Stubble', imageUrl: 'https://picsum.photos/seed/stubble/100/100' },
-  { name: 'Short Beard', imageUrl: 'https://picsum.photos/seed/shortb/100/100' },
-  { name: 'Full Beard', imageUrl: 'https://picsum.photos/seed/fullb/100/100' },
-  { name: 'Goatee', imageUrl: 'https://picsum.photos/seed/goatee/100/100' },
-  { name: 'Mustache', imageUrl: 'https://picsum.photos/seed/mustache/100/100' },
-  { name: 'Van Dyke', imageUrl: 'https://picsum.photos/seed/vandyke/100/100' },
-  { name: 'Mutton Chops', imageUrl: 'https://picsum.photos/seed/mutton/100/100' },
-  { name: 'Anchor Beard', imageUrl: 'https://picsum.photos/seed/anchor/100/100' },
-  { name: 'Imperial Mustache', imageUrl: 'https://picsum.photos/seed/imperial/100/100' },
-  { name: 'Soul Patch', imageUrl: 'https://picsum.photos/seed/soul/100/100' },
-  { name: 'Bandholz', imageUrl: 'https://picsum.photos/seed/bandholz/100/100' },
-  { name: 'Viking Beard', imageUrl: 'https://picsum.photos/seed/viking/100/100' },
-  { name: 'Handlebar Mustache', imageUrl: 'https://picsum.photos/seed/handlebar/100/100' },
-  { name: 'Circular Beard', imageUrl: 'https://picsum.photos/seed/circular/100/100' },
-  { name: 'Sideburns', imageUrl: 'https://picsum.photos/seed/sideburns/100/100' },
+  { name: 'Clean Shaven' },
+  { name: 'Stubble' },
+  { name: 'Short Beard' },
+  { name: 'Full Beard' },
+  { name: 'Goatee' },
+  { name: 'Mustache' },
+  { name: 'Van Dyke' },
+  { name: 'Mutton Chops' },
+  { name: 'Anchor Beard' },
+  { name: 'Imperial Mustache' },
+  { name: 'Soul Patch' },
+  { name: 'Bandholz' },
+  { name: 'Viking Beard' },
+  { name: 'Handlebar Mustache' },
+  { name: 'Circular Beard' },
+  { name: 'Sideburns' },
 ];
 
 export const GLASSES_STYLES: VisualOption[] = [
-  { name: 'None', imageUrl: 'https://picsum.photos/seed/noglasses/100/100' },
-  { name: 'Round Glasses', imageUrl: 'https://picsum.photos/seed/roundg/100/100' },
-  { name: 'Square Glasses', imageUrl: 'https://picsum.photos/seed/squareg/100/100' },
-  { name: 'Aviator Glasses', imageUrl: 'https://picsum.photos/seed/aviatorg/100/100' },
-  { name: 'Rectangle Glasses', imageUrl: 'https://picsum.photos/seed/rectg/100/100' },
-  { name: 'Cat-Eye Glasses', imageUrl: 'https://picsum.photos/seed/cateye/100/100' },
-  { name: 'Wayfarer Glasses', imageUrl: 'https://picsum.photos/seed/wayfarer/100/100' },
-  { name: 'Rimless Glasses', imageUrl: 'https://picsum.photos/seed/rimless/100/100' },
-  { name: 'Sporty Sunglasses', imageUrl: 'https://picsum.photos/seed/sporty/100/100' },
-  { name: 'Circular Wire-rims', imageUrl: 'https://picsum.photos/seed/wire/100/100' },
+  { name: 'None' },
+  { name: 'Round Glasses' },
+  { name: 'Square Glasses' },
+  { name: 'Aviator Glasses' },
+  { name: 'Rectangle Glasses' },
+  { name: 'Cat-Eye Glasses' },
+  { name: 'Wayfarer Glasses' },
+  { name: 'Rimless Glasses' },
+  { name: 'Sporty Sunglasses' },
+  { name: 'Circular Wire-rims' },
 ];
 
 export const AGE_RANGES = [

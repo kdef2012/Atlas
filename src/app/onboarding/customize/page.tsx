@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo } from 'react';
@@ -40,13 +39,11 @@ import {
   HEIGHTS, 
   AGE_RANGES, 
   FACIAL_HAIR_STYLES, 
-  GLASSES_STYLES,
-  type VisualOption
+  GLASSES_STYLES
 } from '@/lib/avatar-options';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import Image from 'next/image';
 
 export default function CustomizeAvatarPage() {
   const [step, setStep] = useState(1);
@@ -340,24 +337,16 @@ export default function CustomizeAvatarPage() {
                             key={s.name}
                             onClick={() => setHairStyle(s.name)}
                             className={cn(
-                              "relative group flex flex-col items-center p-2 rounded-lg border-2 transition-all overflow-hidden",
+                              "relative group flex flex-col items-center p-4 rounded-lg border-2 transition-all",
                               hairStyle === s.name 
                                 ? "border-primary bg-primary/10 shadow-md" 
                                 : "border-transparent bg-card/50 hover:border-primary/30"
                             )}
                           >
-                            <div className="w-full aspect-square relative mb-2 rounded-md overflow-hidden bg-secondary/50">
-                                <img 
-                                    src={s.imageUrl} 
-                                    alt={s.name} 
-                                    className="w-full h-full object-cover transition-transform group-hover:scale-110" 
-                                    data-ai-hint={`${s.name} hairstyle`}
-                                />
-                            </div>
-                            <span className={cn("text-[10px] font-bold uppercase tracking-tight text-center truncate w-full", hairStyle === s.name ? "text-primary" : "text-muted-foreground")}>
+                            <span className={cn("text-xs font-bold uppercase tracking-tight text-center", hairStyle === s.name ? "text-primary" : "text-muted-foreground")}>
                                 {s.name}
                             </span>
-                            {hairStyle === s.name && <Check className="absolute top-1 right-1 w-3 h-3 text-primary" />}
+                            {hairStyle === s.name && <Check className="absolute top-2 right-2 w-3 h-3 text-primary" />}
                           </button>
                         ))}
                       </div>
@@ -376,24 +365,16 @@ export default function CustomizeAvatarPage() {
                               key={s.name}
                               onClick={() => setFacialHair(s.name)}
                               className={cn(
-                                "relative group flex flex-col items-center p-2 rounded-lg border-2 transition-all overflow-hidden",
+                                "relative group flex flex-col items-center p-4 rounded-lg border-2 transition-all",
                                 facialHair === s.name 
                                   ? "border-primary bg-primary/10 shadow-md" 
                                   : "border-transparent bg-card/50 hover:border-primary/30"
                               )}
                             >
-                                <div className="w-full aspect-square relative mb-2 rounded-md overflow-hidden bg-secondary/50">
-                                    <img 
-                                        src={s.imageUrl} 
-                                        alt={s.name} 
-                                        className="w-full h-full object-cover transition-transform group-hover:scale-110" 
-                                        data-ai-hint={`${s.name} facial hair`}
-                                    />
-                                </div>
-                                <span className={cn("text-[10px] font-bold uppercase tracking-tight text-center truncate w-full", facialHair === s.name ? "text-primary" : "text-muted-foreground")}>
+                                <span className={cn("text-xs font-bold uppercase tracking-tight text-center", facialHair === s.name ? "text-primary" : "text-muted-foreground")}>
                                     {s.name}
                                 </span>
-                                {facialHair === s.name && <Check className="absolute top-1 right-1 w-3 h-3 text-primary" />}
+                                {facialHair === s.name && <Check className="absolute top-2 right-2 w-3 h-3 text-primary" />}
                             </button>
                           ))}
                         </div>
@@ -429,21 +410,13 @@ export default function CustomizeAvatarPage() {
                         key={s.name}
                         onClick={() => setGlasses(s.name)}
                         className={cn(
-                          "relative group flex flex-col items-center p-4 rounded-xl border-2 transition-all",
+                          "relative group flex flex-col items-center p-6 rounded-xl border-2 transition-all",
                           glasses === s.name 
                             ? "border-primary bg-primary/10 shadow-xl" 
                             : "border-transparent bg-popover/50 hover:bg-accent hover:border-primary/30"
                         )}
                       >
-                        <div className="w-full aspect-video relative mb-3 rounded-lg overflow-hidden bg-secondary/30 flex items-center justify-center">
-                            <img 
-                                src={s.imageUrl} 
-                                alt={s.name} 
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform" 
-                                data-ai-hint={`${s.name} optical gear`}
-                            />
-                        </div>
-                        <span className={cn("text-[10px] font-black text-center uppercase tracking-tighter leading-none px-1", glasses === s.name ? "text-primary" : "text-muted-foreground")}>
+                        <span className={cn("text-xs font-black text-center uppercase tracking-tighter leading-none", glasses === s.name ? "text-primary" : "text-muted-foreground")}>
                             {s.name}
                         </span>
                         {glasses === s.name && <CheckCircle2 className="absolute top-2 right-2 w-4 h-4 text-primary" />}
