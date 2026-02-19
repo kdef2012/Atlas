@@ -1,18 +1,20 @@
 'use client';
 
+import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowRight, Box, ShieldAlert, Sparkles, Gem, Shirt } from 'lucide-react';
+import { ArrowRight, Box, ShieldAlert, Sparkles, Gem } from 'lucide-react';
 import type { Archetype, Quest, User } from '@/lib/types';
 import { useUser, useFirestore, addDocumentNonBlocking } from '@/firebase';
 import { collection, doc, getDoc } from 'firebase/firestore';
 import { updateDocumentNonBlocking } from '@/firebase/non-blocking-updates';
-import { useEffect, useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { generateQuests } from '@/ai/flows/generate-quests';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface RewardPageProps {}
 
@@ -50,8 +52,9 @@ function LootBox() {
     )
 }
 
-export default function RewardPage({}: RewardPageProps) {
-  const searchParams = useSearchParams();
+// ✅ FIX: Separate component that uses useSearchParams
+function RewardPageContent() {
+  const searchParams = useSearchParams(); // ✅ Now inside Suspense boundary
   const archetype = searchParams.get('archetype') as Archetype | null;
   const { user } = useUser();
   const firestore = useFirestore();
@@ -104,14 +107,22 @@ export default function RewardPage({}: RewardPageProps) {
             xp: 50,
             gems: 3,
             streakFreezes: 1,
-            // ✅ GRANT COSMETICS - These will now work with Ready Player Me!
+            // ✅ GRANT COSMETICS
             'avatarLayers.newbie_glow': true,
             'avatarLayers.newbie_border': true,
           };
           // This part is fast and happens immediately
           updateDocumentNonBlocking(userRef, updates);
           
-          const updatedUserData = { ...userDoc.data(), ...updates } as User;
+          // ✅ FIXED: Construced updatedUserData without spreading nested string keys into typed object
+          const updatedUserData = { 
+            ...userDoc.data(), 
+            level: 1, 
+            xp: 50, 
+            gems: 3, 
+            streakFreezes: 1 
+          } as User;
+
           // This part (AI call) is slow and now happens after the UI updates
           generateInitialQuests(updatedUserData);
         }
@@ -205,5 +216,18 @@ export default function RewardPage({}: RewardPageProps) {
         )}
       </div>
     </main>
+  );
+}
+
+// ✅ FIX: Wrap in Suspense boundary
+export default function RewardPage({}: RewardPageProps) {
+  return (
+    <Suspense fallback={
+      <div className="flex h-screen w-screen items-center justify-center bg-black">
+        <Loader2 className="h-16 w-16 animate-spin text-yellow-400" />
+      </div>
+    }>
+      <RewardPageContent />
+    </Suspense>
   );
 }
