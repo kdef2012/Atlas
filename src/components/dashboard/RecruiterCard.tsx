@@ -27,8 +27,9 @@ export function RecruiterCard() {
   const handleShare = () => {
     if (typeof window === 'undefined') return;
     
-    // Dynamically use the current origin to ensure the link is reachable
-    const inviteLink = `${window.location.origin}/login?ref=${authUser?.uid}`;
+    // REDIRECT TO ARCHETYPE PAGE: Better UX than jumping straight to login
+    // The referral ID is passed so the signup logic can attribute the credit.
+    const inviteLink = `${window.location.origin}/onboarding/archetype?ref=${authUser?.uid}`;
     
     navigator.clipboard.writeText(inviteLink);
     toast({

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useCollection, useMemoFirebase } from '@/firebase';
@@ -16,8 +15,8 @@ export function UserCounter() {
   const [displayCount, setDisplayCount] = useState(0);
 
   useEffect(() => {
-    if (users) {
-      // Animate the count up
+    // HARDENED: Ensure users exists and is not empty before attempting calculation
+    if (users && users.length > 0) {
       let start = 0;
       const end = users.length;
       if (end === start) return;

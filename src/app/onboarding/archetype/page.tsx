@@ -1,12 +1,12 @@
-
 'use client';
 
+import { Suspense } from 'react';
 import { ArchetypeCard } from '@/components/onboarding/ArchetypeCard';
 import type { Archetype, User } from '@/lib/types';
 import { Bot, Mountain, Zap, Loader2 } from 'lucide-react';
 import { useFirestore, useUser, setDocumentNonBlocking, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -37,11 +37,14 @@ const archetypes: {
   },
 ];
 
-export default function ArchetypeSelectionPage() {
+function ArchetypeSelectionContent() {
   const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   const { user: authUser, isUserLoading: isAuthLoading } = useUser();
+
+  const referralId = searchParams.get('ref');
 
   // Check if a user document already exists
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
@@ -52,11 +55,11 @@ export default function ArchetypeSelectionPage() {
   const handleSelectArchetype = async (archetype: Archetype) => {
     if (!authUser) {
         toast({
-            variant: 'destructive',
-            title: 'Authentication Required',
-            description: 'Please log in or sign up to select an archetype.',
+            title: 'Origin Selection Recorded',
+            description: 'Please create your signature to continue your journey.',
         });
-        router.push('/login');
+        // Pass the referral ID to the login page so the credit is maintained
+        router.push(`/login?ref=${referralId || ''}`);
         return;
     }
       
@@ -65,12 +68,6 @@ export default function ArchetypeSelectionPage() {
     
     const newUserRef = doc(firestore, 'users', authUser.uid);
     
-    /**
-     * PRODUCTION MONETIZATION LOGIC:
-     * New users start with 'hasPaidAccess: false'.
-     * This triggers the Paywall redirect in the App Layout.
-     * The status is set to 'true' via the Stripe Webhook upon successful fulfillment.
-     */
     setDocumentNonBlocking(
       newUserRef,
       {
@@ -114,7 +111,7 @@ export default function ArchetypeSelectionPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-8 bg-background">
        <div className="absolute top-4 right-4 z-20">
         <Button asChild variant="link">
-          <Link href="/login">
+          <Link href={`/login?ref=${referralId || ''}`}>
             Already have an account? Log In
           </Link>
         </Button>
@@ -147,4 +144,12 @@ export default function ArchetypeSelectionPage() {
       `}</style>
     </main>
   );
+}
+
+export default function ArchetypeSelectionPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center"><Loader2 className="h-16 w-16 animate-spin text-primary" /></div>}>
+      <ArchetypeSelectionContent />
+    </Suspense>
+  )
 }

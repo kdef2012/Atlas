@@ -38,6 +38,7 @@ function NavigationGuard({ children, user, isAdmin, isLoading }: { children: Rea
     if (isAdmin || isLegalPage) return;
 
     const isReturningFromCheckout = searchParams.get('status') === 'success' || searchParams.get('status') === 'activated';
+    const referralId = searchParams.get('ref');
 
     if (user && user.hasPaidAccess === false) {
       if (!isPaywallPage && !isReturningFromCheckout) {
@@ -53,7 +54,9 @@ function NavigationGuard({ children, user, isAdmin, isLoading }: { children: Rea
 
     if (!user) {
       if (!isOnboardingPage && !isPaywallPage) {
-        router.replace('/onboarding/archetype');
+        // PRESERVE REFS: Ensure the referral ID isn't lost during redirects
+        const target = `/onboarding/archetype${referralId ? `?ref=${referralId}` : ''}`;
+        router.replace(target);
       }
     } else {
       const hasArchetype = !!user?.archetype;
@@ -62,7 +65,8 @@ function NavigationGuard({ children, user, isAdmin, isLoading }: { children: Rea
 
       if (!hasArchetype && !isPaywallPage) {
         if (pathname !== '/onboarding/archetype') {
-          router.replace('/onboarding/archetype');
+          const target = `/onboarding/archetype${referralId ? `?ref=${referralId}` : ''}`;
+          router.replace(target);
         }
       } else if (hasArchetype && !hasAvatar && !isPaywallPage) {
         if (!isOnboardingPage) {
