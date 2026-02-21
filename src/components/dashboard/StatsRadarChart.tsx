@@ -42,14 +42,13 @@ const chartConfig = {
 
 /**
  * Custom Tick component for the Radar Chart.
- * Refactored to handle React instantiation gracefully and prevent Error #130.
+ * Hardened with defensive checks to prevent Error #130 during rendering.
  */
 function CustomTick(props: any) {
   const { x, y, payload } = props;
-  const category = payload?.value as SkillCategory;
-  
   if (!x || !y || !payload) return null;
 
+  const category = payload.value as SkillCategory;
   const Icon = (category && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : Sparkles;
   const color = (category && CATEGORY_COLORS[category]) ? CATEGORY_COLORS[category] : 'hsl(var(--primary))';
 
@@ -57,7 +56,7 @@ function CustomTick(props: any) {
     <g transform={`translate(${x},${y})`}>
       <foreignObject x={-12} y={-35} width={24} height={24}>
         <div style={{ color }} className="flex items-center justify-center">
-          <Icon className="h-5 w-5" />
+          {Icon && <Icon className="h-5 w-5" />}
         </div>
       </foreignObject>
       <text
@@ -103,7 +102,6 @@ export function StatsRadarChart() {
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        {/* tick component passed by reference to let Recharts handle props injection */}
         <PolarAngleAxis dataKey="category" tick={CustomTick} />
         <PolarGrid gridType="polygon" />
         <Radar

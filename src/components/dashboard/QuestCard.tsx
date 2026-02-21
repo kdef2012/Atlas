@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
+import { CATEGORY_COLORS, CATEGORY_ICONS, type SkillCategory } from "@/lib/types";
 import type { Quest } from "@/lib/quest";
 import { Sparkles } from "lucide-react";
 import { haptics } from "@/lib/haptics";
@@ -10,8 +10,14 @@ interface QuestCardProps {
 }
 
 export function QuestCard({ quest }: QuestCardProps) {
-  const Icon = quest.category !== 'Intro' ? CATEGORY_ICONS[quest.category] : Sparkles;
-  const color = quest.category !== 'Intro' ? CATEGORY_COLORS[quest.category] : 'hsl(var(--primary))';
+  // Defensive check for icon rendering to prevent Error #130
+  const Icon = (quest.category !== 'Intro' && CATEGORY_ICONS[quest.category as SkillCategory]) 
+    ? CATEGORY_ICONS[quest.category as SkillCategory] 
+    : Sparkles;
+    
+  const color = (quest.category !== 'Intro' && CATEGORY_COLORS[quest.category as SkillCategory]) 
+    ? CATEGORY_COLORS[quest.category as SkillCategory] 
+    : 'hsl(var(--primary))';
 
   const handleInteraction = () => {
     if (!quest.isCompleted) {
@@ -29,7 +35,7 @@ export function QuestCard({ quest }: QuestCardProps) {
           className="p-2 rounded-lg"
           style={{ backgroundColor: `${color.replace(')', ' / 0.1)')}`, color: color }}
         >
-          <Icon className="h-6 w-6" />
+          {Icon && <Icon className="h-6 w-6" />}
         </div>
         <div className="flex-1">
           <div className="flex justify-between items-start">

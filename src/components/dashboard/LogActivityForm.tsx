@@ -7,22 +7,19 @@ import { z } from "zod";
 import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse, Sparkles, ShieldAlert } from "lucide-react";
-import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
+import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { collection, doc, increment, writeBatch } from "firebase/firestore";
 import { haptics } from "@/lib/haptics";
 import { 
-  Form as FormWrapper, 
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
 } from "@/components/ui/form";
 
 const formSchema = z.object({
@@ -209,8 +206,8 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       
       await batch.commit();
 
-      const Icon = CATEGORY_ICONS[category as SkillCategory] || Sparkles;
-      const iconColor = CATEGORY_COLORS[category as SkillCategory];
+      const Icon = (category && CATEGORY_ICONS[category as SkillCategory]) ? CATEGORY_ICONS[category as SkillCategory] : Sparkles;
+      const iconColor = CATEGORY_COLORS[category as SkillCategory] || 'hsl(var(--primary))';
 
       haptics.success();
       toast({
@@ -240,7 +237,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   }
 
   return (
-    <FormWrapper {...form}>
+    <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
@@ -295,6 +292,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
           Log Achievement
         </Button>
       </form>
-    </FormWrapper>
+    </Form>
   );
 }
