@@ -65,7 +65,8 @@ const generateRadioScriptPrompt = ai.definePrompt({
   input: { schema: GenerateRadioBroadcastInputSchema },
   output: { schema: z.object({ script: z.string() }) },
   // Powered by Gemini 1.5 Pro for higher creative reasoning
-  model: 'googleai/gemini-1.5-pro',
+  // ✅ FIXED: Updated to use '-latest' suffix to resolve 404
+  model: 'googleai/gemini-1.5-pro-latest',
   prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
 
 Your task is to generate a short (2-3 minute) radio script based on the following data. 
@@ -147,8 +148,10 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     const script = scriptOutput.script;
 
     // Step 2: Generate audio from the script
+    // Powered by Gemini 1.5 Pro
+    // ✅ FIXED: Updated to use '-latest' suffix to resolve 404
     const { media } = await ai.generate({
-        model: 'googleai/gemini-1.5-pro',
+        model: 'googleai/gemini-1.5-pro-latest',
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
