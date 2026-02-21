@@ -17,6 +17,7 @@
 
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="android:background">@drawable/splash</item>
+        <!-- Use a system color instead of a missing drawable to prevent build errors -->
+        <item name="android:background">@android:color/black</item>
     </style>
 </resources>
