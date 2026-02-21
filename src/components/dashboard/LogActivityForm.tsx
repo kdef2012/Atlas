@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -91,6 +90,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !allSkills || !userRef || !userData || !allGuilds || !publicLogsCollection) return;
 
+    haptics.light();
     setIsLoading(true);
     try {
       const result = await findOrCreateSkill({ 

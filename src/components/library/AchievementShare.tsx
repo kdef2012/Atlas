@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -9,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generateAchievementCard } from '@/actions/generateAchievementCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { User, Skill } from '@/lib/types';
+import { haptics } from '@/lib/haptics';
 
 interface AchievementShareProps {
   user: User;
@@ -22,6 +22,7 @@ export function AchievementShare({ user, skill }: AchievementShareProps) {
   const { toast } = useToast();
 
   const handleForgeCard = async () => {
+    haptics.light();
     setIsGenerating(true);
     try {
       const result = await generateAchievementCard({
@@ -32,11 +33,13 @@ export function AchievementShare({ user, skill }: AchievementShareProps) {
       });
       setCardUrl(result.cardDataUri);
       setShowModal(true);
+      haptics.success();
       toast({
         title: 'Achievement Forged!',
         description: 'Your Discovery Card is ready for the world to see.',
       });
     } catch (error) {
+      haptics.error();
       toast({
         variant: 'destructive',
         title: 'Forge Failed',
@@ -47,7 +50,31 @@ export function AchievementShare({ user, skill }: AchievementShareProps) {
     }
   };
 
+  const handleShare = async () => {
+    haptics.light();
+    if (navigator.share && cardUrl) {
+      try {
+        // Fetch the data URI and convert to a file for sharing
+        const blob = await (await fetch(cardUrl)).blob();
+        const file = new File([blob], `ATLAS_Pioneer_${skill.name}.png`, { type: blob.type });
+        
+        await navigator.share({
+          title: `Pioneer Discovery: ${skill.name}`,
+          text: `I just pioneered the skill "${skill.name}" in the ATLAS Nebula!`,
+          files: [file],
+        });
+      } catch (err) {
+        console.error('Sharing failed', err);
+      }
+    } else {
+      // Fallback to clipboard
+      navigator.clipboard.writeText(`I just pioneered the skill "${skill.name}" in the ATLAS Nebula! #ATLAS #Pioneer`);
+      toast({ description: 'Invite signal copied to clipboard!' });
+    }
+  };
+
   const handleDownload = () => {
+    haptics.light();
     if (!cardUrl) return;
     const link = document.createElement('a');
     link.href = cardUrl;
@@ -112,16 +139,13 @@ export function AchievementShare({ user, skill }: AchievementShareProps) {
                 </CardContent>
                 <CardFooter className="p-4 bg-card flex gap-4">
                   <Button onClick={handleDownload} className="flex-1 font-bold">
-                    <Download className="mr-2 h-4 w-4" /> Download Card
+                    <Download className="mr-2 h-4 w-4" /> Download
                   </Button>
                   <Button 
                     variant="outline" 
-                    onClick={() => {
-                        navigator.clipboard.writeText(`I just Pioneered the skill "${skill.name}" in the ATLAS Nebula! #ATLAS #Pioneer`);
-                        toast({ description: 'Text copied to clipboard!' });
-                    }}
+                    onClick={handleShare}
                   >
-                    <Share2 className="h-4 w-4" />
+                    <Share2 className="h-4 w-4" /> Share Native
                   </Button>
                 </CardFooter>
               </Card>

@@ -1,10 +1,9 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import type { Quest } from "@/lib/quest";
 import { Sparkles } from "lucide-react";
-
+import { haptics } from "@/lib/haptics";
 
 interface QuestCardProps {
   quest: Quest;
@@ -14,8 +13,17 @@ export function QuestCard({ quest }: QuestCardProps) {
   const Icon = quest.category !== 'Intro' ? CATEGORY_ICONS[quest.category] : Sparkles;
   const color = quest.category !== 'Intro' ? CATEGORY_COLORS[quest.category] : 'hsl(var(--primary))';
 
+  const handleInteraction = () => {
+    if (!quest.isCompleted) {
+      haptics.light();
+    }
+  };
+
   return (
-    <Card className="bg-card/50 hover:bg-card transition-colors">
+    <Card 
+      onClick={handleInteraction}
+      className="bg-card/50 hover:bg-card transition-colors cursor-pointer"
+    >
       <CardContent className="p-4 flex items-start space-x-4">
         <div 
           className="p-2 rounded-lg"
