@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/firebase';
+import { useAuth, useFirestore, updateDocumentNonBlocking } from '@/firebase';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, increment } from 'firebase/firestore';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
@@ -24,13 +25,16 @@ enum AuthMode {
   SignUp = 'Sign Up',
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>(AuthMode.SignIn);
   const [showPassword, setShowPassword] = useState(false);
   const { toast } = useToast();
   const auth = useAuth();
+  const firestore = useFirestore();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralId = searchParams.get('ref');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,7 +48,16 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       if (authMode === AuthMode.SignUp) {
-        await createUserWithEmailAndPassword(auth, values.email, values.password);
+        const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+        
+        // Handle Recruitment Reward Logic
+        if (referralId && firestore) {
+          const recruiterRef = doc(firestore, 'users', referralId);
+          updateDocumentNonBlocking(recruiterRef, { 
+            referralCount: increment(1) 
+          });
+        }
+
         toast({
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
@@ -147,21 +160,35 @@ export default function LoginPage() {
             {authMode === AuthMode.SignIn ? (
               <>
                 Don't have an account?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={() => setAuthMode(AuthMode.SignUp)}>
+                <button 
+                  className="p-0 h-auto text-primary underline-offset-4 hover:underline" 
+                  onClick={() => setAuthMode(AuthMode.SignUp)}
+                >
                   Sign Up
-                </Button>
+                </button>
               </>
             ) : (
               <>
                 Already have an account?{' '}
-                <Button variant="link" className="p-0 h-auto" onClick={() => setAuthMode(AuthMode.SignIn)}>
+                <button 
+                  className="p-0 h-auto text-primary underline-offset-4 hover:underline" 
+                  onClick={() => setAuthMode(AuthMode.SignIn)}
+                >
                   Sign In
-                </Button>
+                </button>
               </>
             )}
           </div>
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-screen items-center justify-center"><Loader2 className="animate-spin text-primary h-12 w-12" /></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

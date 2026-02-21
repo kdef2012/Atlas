@@ -42,15 +42,16 @@ const chartConfig = {
 
 /**
  * Custom Tick component for the Radar Chart.
- * Prevents React Error #130 by using a safe, standard rendering pattern.
+ * Refactored to handle React instantiation gracefully and prevent Error #130.
  */
 function CustomTick(props: any) {
   const { x, y, payload } = props;
   const category = payload?.value as SkillCategory;
-  const Icon = CATEGORY_ICONS[category] || Sparkles;
-  const color = CATEGORY_COLORS[category] || 'hsl(var(--primary))';
+  
+  if (!x || !y || !payload) return null;
 
-  if (!x || !y) return null;
+  const Icon = (category && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : Sparkles;
+  const color = (category && CATEGORY_COLORS[category]) ? CATEGORY_COLORS[category] : 'hsl(var(--primary))';
 
   return (
     <g transform={`translate(${x},${y})`}>
@@ -65,9 +66,10 @@ function CustomTick(props: any) {
         dy={14}
         textAnchor="middle"
         fill="currentColor"
-        className="text-[10px] font-bold uppercase tracking-tighter fill-muted-foreground"
+        style={{ fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase' }}
+        className="fill-muted-foreground tracking-tighter"
       >
-        {payload?.value}
+        {payload.value}
       </text>
     </g>
   );
@@ -84,11 +86,11 @@ export function StatsRadarChart() {
   }
 
   const chartData = [
-    { category: "Physical", value: userData.physicalStat, fill: CATEGORY_COLORS.Physical },
-    { category: "Mental", value: userData.mentalStat, fill: CATEGORY_COLORS.Mental },
-    { category: "Social", value: userData.socialStat, fill: CATEGORY_COLORS.Social },
-    { category: "Practical", value: userData.practicalStat, fill: CATEGORY_COLORS.Practical },
-    { category: "Creative", value: userData.creativeStat, fill: CATEGORY_COLORS.Creative },
+    { category: "Physical", value: userData.physicalStat || 5, fill: CATEGORY_COLORS.Physical },
+    { category: "Mental", value: userData.mentalStat || 5, fill: CATEGORY_COLORS.Mental },
+    { category: "Social", value: userData.socialStat || 5, fill: CATEGORY_COLORS.Social },
+    { category: "Practical", value: userData.practicalStat || 5, fill: CATEGORY_COLORS.Practical },
+    { category: "Creative", value: userData.creativeStat || 5, fill: CATEGORY_COLORS.Creative },
   ];
 
   return (
@@ -101,7 +103,8 @@ export function StatsRadarChart() {
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        <PolarAngleAxis dataKey="category" tick={<CustomTick />} />
+        {/* tick component passed by reference to let Recharts handle props injection */}
+        <PolarAngleAxis dataKey="category" tick={CustomTick} />
         <PolarGrid gridType="polygon" />
         <Radar
           dataKey="value"

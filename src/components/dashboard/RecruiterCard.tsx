@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -26,7 +25,11 @@ export function RecruiterCard() {
   const { data: user, isLoading } = useDoc<User>(userRef);
 
   const handleShare = () => {
-    const inviteLink = `https://playatlas.nebula/join?ref=${authUser?.uid}`;
+    if (typeof window === 'undefined') return;
+    
+    // Dynamically use the current origin to ensure the link is reachable
+    const inviteLink = `${window.location.origin}/login?ref=${authUser?.uid}`;
+    
     navigator.clipboard.writeText(inviteLink);
     toast({
       title: 'Invite Signal Broadcast!',
@@ -51,7 +54,7 @@ export function RecruiterCard() {
         title: 'Bounty Synchronized!',
         description: (
           <div className="flex flex-col gap-1">
-            <p className="font-bold text-accent">+5,000 XP Granted</p>
+            <p className="font-bold text-accent">+{BOUNTY_XP.toLocaleString()} XP Granted</p>
             <p className="text-xs">Trait Unlocked: The Recruiter</p>
           </div>
         ),

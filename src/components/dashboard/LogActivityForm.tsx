@@ -13,7 +13,7 @@ import {
   FormField,
   FormItem,
   FormMessage,
-} from "@/components/ui/form";
+} from "react-hook-form";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Paperclip, HeartPulse, Sparkles, ShieldAlert } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
@@ -21,6 +21,9 @@ import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { collection, doc, increment, writeBatch } from "firebase/firestore";
 import { haptics } from "@/lib/haptics";
+import { 
+  Form as FormWrapper, 
+} from "@/components/ui/form";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -56,7 +59,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   
   const skillsCollectionRef = useMemoFirebase(() => collection(firestore, 'skills'), [firestore]);
   const territoriesCollectionRef = useMemoFirebase(() => collection(firestore, 'territories'), [firestore]);
-  const guildsCollectionRef = useMemoFirebase(() => collection(firestore, 'guilds'), [firestore]);
   const publicLogsCollection = useMemoFirebase(() => collection(firestore, `public-logs`), [firestore]);
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
@@ -238,7 +240,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   }
 
   return (
-    <Form {...form}>
+    <FormWrapper {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <FormField
           control={form.control}
@@ -264,10 +266,12 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                     <Input 
                       type="file" 
                       className="pl-10 text-xs" 
+                      name={fieldProps.name}
+                      onBlur={fieldProps.onBlur}
+                      ref={fieldProps.ref}
                       onChange={(e) => {
                         onChange(e.target.files);
                       }} 
-                      {...fieldProps}
                     />
                     </div>
                 </FormControl>
@@ -291,6 +295,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
           Log Achievement
         </Button>
       </form>
-    </Form>
+    </FormWrapper>
   );
 }
