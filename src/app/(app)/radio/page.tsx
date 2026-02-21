@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Radio, Loader2, Play, Pause, Rewind } from 'lucide-react';
+import { Radio, Loader2, Play, Pause, Rewind, Info, Zap, Trophy, Mic2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useFirestore, useUser, useCollection, useMemoFirebase } from '@/firebase';
 import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
@@ -79,12 +79,15 @@ function RecentBroadcasts({ onSelectBroadcast }: { onSelectBroadcast: (b: AtlasR
 
     return (
         <div className="space-y-2">
-            <h3 className="text-lg font-semibold">Recent Broadcasts</h3>
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Mic2 className="w-4 h-4 text-primary" />
+                Recent Broadcasts
+            </h3>
             {broadcasts && broadcasts.length > 0 ? broadcasts.map(b => (
                 <button
                     key={b.id}
                     onClick={() => onSelectBroadcast(b)}
-                    className="w-full text-left p-3 rounded-md hover:bg-secondary transition-colors"
+                    className="w-full text-left p-3 rounded-md hover:bg-secondary transition-colors border border-transparent hover:border-primary/20"
                 >
                     <p className="font-medium">ATLAS Radio - {format(new Date(b.timestamp), 'PP')}</p>
                     <p className="text-xs text-muted-foreground truncate">{b.script.substring(0, 100)}...</p>
@@ -149,8 +152,8 @@ export default function RadioPage() {
     }
     
     return (
-         <div className="space-y-6">
-            <Card>
+         <div className="space-y-6 max-w-5xl mx-auto">
+            <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
                 <CardHeader>
                     <CardTitle className="font-headline text-3xl flex items-center gap-2">
                         <Radio className="w-8 h-8 text-primary" />
@@ -161,19 +164,19 @@ export default function RadioPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <div className="flex flex-col items-center justify-center space-y-4">
-                        <p className="text-muted-foreground text-center">
-                            Generate a new broadcast to hear the latest from DJ Nova.
+                    <div className="flex flex-col items-center justify-center space-y-4 py-6">
+                        <p className="text-muted-foreground text-center max-w-md">
+                            Generate a new broadcast to hear DJ Nova summarize the latest shifts in the Nebula.
                         </p>
-                        <Button onClick={handleGenerate} disabled={isGenerating}>
+                        <Button onClick={handleGenerate} disabled={isGenerating} size="lg" className="px-12 font-bold shadow-lg shadow-primary/20">
                             {isGenerating ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    Generating...
+                                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                    Synchronizing Signal...
                                 </>
                             ) : (
                                 <>
-                                    <Radio className="mr-2 h-4 w-4" />
+                                    <Radio className="mr-2 h-5 w-5" />
                                     Go Live
                                 </>
                             )}
@@ -182,22 +185,55 @@ export default function RadioPage() {
                 </CardContent>
             </Card>
 
-            {currentBroadcast && (
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Now Playing</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <BroadcastPlayer broadcast={currentBroadcast} />
-                    </CardContent>
-                </Card>
-            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    {currentBroadcast && (
+                        <Card className="border-accent/20">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Zap className="w-5 h-5 text-accent" />
+                                    Now Playing
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <BroadcastPlayer broadcast={currentBroadcast} />
+                            </CardContent>
+                        </Card>
+                    )}
 
-            <Card>
-                <CardContent className="pt-6">
-                    <RecentBroadcasts onSelectBroadcast={setCurrentBroadcast}/>
-                </CardContent>
-            </Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Info className="w-5 h-5 text-primary" />
+                                Frequency Intel
+                            </CardTitle>
+                            <CardDescription>What is the purpose of this signal?</CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4 text-sm leading-relaxed text-muted-foreground">
+                            <div className="flex gap-3">
+                                <Trophy className="w-5 h-5 text-yellow-400 shrink-0" />
+                                <p><span className="font-bold text-foreground">Peer Recognition:</span> The radio celebrates Pioneers and Faction victors, turning database logs into global prestige.</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Zap className="w-5 h-5 text-accent shrink-0" />
+                                <p><span className="font-bold text-foreground">Live Intelligence:</span> Tracking trending skills allows you to identify which disciplines are gaining momentum in the real world.</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Mic2 className="w-5 h-5 text-primary shrink-0" />
+                                <p><span className="font-bold text-foreground">World Narrative:</span> DJ Nova bridges the gap between your physical efforts and your digital signature, making the Nebula feel alive.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="lg:col-span-1">
+                    <Card className="h-full">
+                        <CardContent className="pt-6">
+                            <RecentBroadcasts onSelectBroadcast={setCurrentBroadcast}/>
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
         </div>
     )
 }
