@@ -50,7 +50,6 @@ export default function LoginPage() {
           title: 'Account Created',
           description: 'Welcome to ATLAS! You can now proceed with onboarding.',
         });
-        // For new users, always go to onboarding
         router.push('/onboarding/archetype');
       } else {
         await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -58,7 +57,6 @@ export default function LoginPage() {
           title: 'Welcome Back!',
           description: 'You have successfully signed in.',
         });
-        // On sign-in, always redirect to dashboard. AppLayout will handle routing from there.
         router.push('/dashboard');
       }
 
@@ -98,7 +96,12 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" {...field} />
+                      <Input 
+                        type="email" 
+                        placeholder="you@example.com" 
+                        autoComplete="email"
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -115,6 +118,7 @@ export default function LoginPage() {
                         <Input
                           type={showPassword ? 'text' : 'password'}
                           placeholder="••••••••"
+                          autoComplete={authMode === AuthMode.SignIn ? 'current-password' : 'new-password'}
                           {...field}
                         />
                         <button

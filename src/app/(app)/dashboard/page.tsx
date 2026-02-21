@@ -25,7 +25,7 @@ import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
 import { RecruiterCard } from '@/components/dashboard/RecruiterCard';
 import { useToast } from '@/hooks/use-toast';
 import { verifySession } from '@/actions/payments';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { haptics } from '@/lib/haptics';
 import { InstallGuide } from '@/components/dashboard/InstallGuide';
 

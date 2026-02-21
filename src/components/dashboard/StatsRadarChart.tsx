@@ -1,3 +1,4 @@
+
 "use client";
 
 import { PolarAngleAxis, PolarGrid, Radar, RadarChart } from "recharts";
@@ -12,6 +13,7 @@ import { Skeleton } from "../ui/skeleton";
 import { useDoc, useUser, useMemoFirebase } from "@/firebase";
 import { doc } from "firebase/firestore";
 import { useFirestore } from "@/firebase/provider";
+import { Sparkles } from "lucide-react";
 
 const chartConfig = {
   value: {
@@ -75,8 +77,8 @@ export function StatsRadarChart() {
         <PolarAngleAxis dataKey="category" tick={(props) => {
             const { x, y, payload } = props;
             const category = payload.value as SkillCategory;
-            const Icon = CATEGORY_ICONS[category];
-            const color = CATEGORY_COLORS[category];
+            const Icon = CATEGORY_ICONS[category] || Sparkles;
+            const color = CATEGORY_COLORS[category] || 'hsl(var(--primary))';
 
             return (
                 <g transform={`translate(${x},${y})`}>

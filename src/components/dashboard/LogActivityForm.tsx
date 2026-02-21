@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -25,7 +26,7 @@ import { haptics } from "@/lib/haptics";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
-  proof: z.instanceof(FileList).optional(),
+  proof: z.any().optional(),
 });
 
 const fitnessActivities = [
@@ -258,7 +259,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
             <FormField
             control={form.control}
             name="proof"
-            render={({ field: { value, onChange, ...field } }) => (
+            render={({ field: { value, onChange, ...fieldProps } }) => (
                 <FormItem>
                 <FormControl>
                     <div className="relative">
@@ -267,7 +268,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                       type="file" 
                       className="pl-10 text-xs" 
                       onChange={(e) => onChange(e.target.files)} 
-                      {...field}
+                      {...fieldProps}
                     />
                     </div>
                 </FormControl>
