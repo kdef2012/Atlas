@@ -1,18 +1,20 @@
 /**
  * @fileOverview Utility for haptic feedback.
- * Uses the Web Vibration API as a fallback, ready for @capacitor/haptics.
+ * Uses @capacitor/haptics for native mobile and Web Vibration API as fallback.
  */
+
+import { Haptics, ImpactStyle, NotificationType } from '@capacitor/haptics';
 
 export const haptics = {
   /**
    * Triggers a light vibration for standard interactions.
    */
-  light: () => {
-    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-      try {
+  light: async () => {
+    try {
+      await Haptics.impact({ style: ImpactStyle.Light });
+    } catch (e) {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate(10);
-      } catch (e) {
-        // Silently fail if not supported or blocked
       }
     }
   },
@@ -20,12 +22,12 @@ export const haptics = {
   /**
    * Triggers a success vibration pattern.
    */
-  success: () => {
-    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-      try {
+  success: async () => {
+    try {
+      await Haptics.notification({ type: NotificationType.Success });
+    } catch (e) {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate([10, 30, 10]);
-      } catch (e) {
-        // Silently fail
       }
     }
   },
@@ -33,12 +35,12 @@ export const haptics = {
   /**
    * Triggers an error/warning vibration pattern.
    */
-  error: () => {
-    if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
-      try {
+  error: async () => {
+    try {
+      await Haptics.notification({ type: NotificationType.Error });
+    } catch (e) {
+      if (typeof window !== 'undefined' && window.navigator && window.navigator.vibrate) {
         window.navigator.vibrate([50, 100, 50]);
-      } catch (e) {
-        // Silently fail
       }
     }
   }
