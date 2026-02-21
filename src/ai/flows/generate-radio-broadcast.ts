@@ -1,10 +1,11 @@
+
 'use server';
 
 /**
  * @fileOverview Defines a Genkit flow to generate a script for an ATLAS Radio broadcast.
  *
  * - DJ Nova Scripting: Powered by Gemini 3.1 Pro for advanced narrative weaving.
- * - Broadcast Synthesis: Powered by Gemini 2.5 Pro TTS Preview for podcast-quality audio.
+ * - Broadcast Synthesis: Powered by Gemini 2.5 Pro TTS for podcast-quality audio.
  */
 
 import { ai } from '@/ai/genkit';
@@ -12,6 +13,9 @@ import { z } from 'genkit';
 import wav from 'wav';
 import { collection, addDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase/index';
+
+// Next.js config for long-running AI tasks
+export const maxDuration = 120;
 
 const FactionChallengeWinnerSchema = z.object({
   faction: z.string().describe('The winning faction/category, e.g., Physical.'),
@@ -56,7 +60,7 @@ const generateRadioScriptPrompt = ai.definePrompt({
   input: { schema: GenerateRadioBroadcastInputSchema },
   output: { schema: z.object({ script: z.string() }) },
   // High-intelligence reasoning for world-building
-  model: 'googleai/gemini-3.1-pro-preview',
+  model: 'googleai/gemini-3.1-pro',
   prompt: `You are "DJ Nova", the host of ATLAS Radio. You are a highly charismatic, futuristic AI personality with "vibe coding" sensibilities. 
 
 Your task is to generate a short, high-energy radio script (2-3 minutes) based on current Nebula data.
@@ -127,7 +131,7 @@ const generateRadioBroadcastFlow = ai.defineFlow(
 
     // 2. Generate high-fidelity audio using the TTS Pro model
     const { media } = await ai.generate({
-        model: 'googleai/gemini-2.5-pro-preview-tts',
+        model: 'googleai/gemini-2.5-pro-tts',
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
