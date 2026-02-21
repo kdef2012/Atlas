@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -267,7 +266,9 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                     <Input 
                       type="file" 
                       className="pl-10 text-xs" 
-                      onChange={(e) => onChange(e.target.files)} 
+                      onChange={(e) => {
+                        onChange(e.target.files);
+                      }} 
                       {...fieldProps}
                     />
                     </div>
