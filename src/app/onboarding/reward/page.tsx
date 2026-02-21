@@ -100,6 +100,7 @@ function RewardPageContent() {
         const userDoc = await getDoc(userRef);
         
         if (userDoc.exists() && userDoc.data().level === 0) {
+          // Perform the atomic updates in Firestore
           const updates = { 
             level: 1, 
             xp: 50,
@@ -112,7 +113,7 @@ function RewardPageContent() {
           
           const userData = userDoc.data() as User;
           
-          // Provide a clean local user object for the next logic step
+          // Construct a correctly typed User object for the AI flow spread
           const updatedUserDataForAI: User = { 
             ...userData, 
             level: 1, 
