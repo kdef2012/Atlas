@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useMemo, Suspense } from 'react';
@@ -28,7 +27,8 @@ function CustomizeAvatarContent() {
   // Form State
   const [gender, setGender] = useState<'Male' | 'Female' | 'Non-Binary'>('Male');
   const [complexion, setComplexion] = useState(SKIN_TONES[1]);
-  const [hairStyle, setHairStyle] = useState(MALE_HAIR_STYLES[0].name);
+  // We use standard strings for selection to ensure type compatibility with Radix Select
+  const [hairStyle, setHairStyle] = useState<string>(MALE_HAIR_STYLES[0].name);
   const [bodyType, setBodyType] = useState('Average');
   const [height, setHeight] = useState('Medium');
 
@@ -221,7 +221,7 @@ function CustomizeAvatarContent() {
                 <div className="max-w-sm mx-auto space-y-4">
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-tighter text-muted-foreground">Available Styles</Label>
-                    <Select value={hairStyle} onValueChange={setHairStyle}>
+                    <Select value={hairStyle} onValueChange={(v) => setHairStyle(v)}>
                       <SelectTrigger className="h-14 text-lg font-medium border-2 focus:ring-primary">
                         <SelectValue placeholder="Choose a style" />
                       </SelectTrigger>

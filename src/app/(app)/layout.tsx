@@ -1,4 +1,3 @@
-
 'use client';
 import type { ReactNode } from "react";
 import { useEffect, Suspense } from "react";
@@ -21,7 +20,8 @@ import { AnnouncementBanner } from "@/components/common/AnnouncementBanner";
 import { cn } from "@/lib/utils";
 
 /**
- * Handles payment and onboarding redirect logic that requires useSearchParams.
+ * Isolated logic for navigation and payment signals.
+ * Wrapped in Suspense to prevent build-time hydration bailouts.
  */
 function NavigationGuard({ children, user, isAdmin, isLoading }: { children: ReactNode, user: User | null, isAdmin: boolean, isLoading: boolean }) {
   const router = useRouter();

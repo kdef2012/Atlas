@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Suspense } from 'react';
@@ -112,7 +111,9 @@ function RewardPageContent() {
           updateDocumentNonBlocking(userRef, updates);
           
           const userData = userDoc.data() as User;
-          const updatedUserData = { 
+          
+          // Provide a clean local user object for the next logic step
+          const updatedUserDataForAI: User = { 
             ...userData, 
             level: 1, 
             xp: 50, 
@@ -120,7 +121,7 @@ function RewardPageContent() {
             streakFreezes: 1 
           };
 
-          generateInitialQuests(updatedUserData);
+          generateInitialQuests(updatedUserDataForAI);
         }
       }
     }, [user, archetype, firestore, generateInitialQuests]);
