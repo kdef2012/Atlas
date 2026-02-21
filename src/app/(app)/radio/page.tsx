@@ -116,18 +116,11 @@ export default function RadioPage() {
             const usersSnapshot = await getDocs(usersQuery);
             const topUsers = usersSnapshot.docs.map(doc => doc.data() as User);
 
-            // In a real app, you'd fetch actual winners. For now, we'll just mock it if no data exists.
-            const dummyWinner = topUsers.length > 0 && topUsers[0].fireteamId ? {
-                faction: topUsers[0].archetype,
-                winningFireteamName: 'Top Team',
-                winningRegion: topUsers[0].region || 'Global',
-                challengeDescription: 'Dominating the leaderboards'
-            } : undefined;
-
+            // Mock some "Global Lore" if no data exists to keep the AI focused
             const input = {
                 trendingSkills: trendingSkills.map(s => ({ name: s.name, category: s.category })),
                 newlyPioneeredSkills: [],
-                factionChallengeWinners: dummyWinner ? [dummyWinner] : [],
+                factionChallengeWinners: [],
             };
 
             const newBroadcast = await generateRadioBroadcast(input);
@@ -144,7 +137,7 @@ export default function RadioPage() {
             toast({
                 variant: 'destructive',
                 title: "Broadcast Failed",
-                description: "Could not generate the radio broadcast. The AI might be taking a break."
+                description: "Could not synchronize the signal. The AI might need more citizen data."
             });
         } finally {
             setIsGenerating(false);

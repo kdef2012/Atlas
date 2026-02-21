@@ -64,11 +64,11 @@ const generateRadioScriptPrompt = ai.definePrompt({
   name: 'generateRadioScriptPrompt',
   input: { schema: GenerateRadioBroadcastInputSchema },
   output: { schema: z.object({ script: z.string() }) },
-  // ✅ UPDATED: Switched to Gemini 1.5 Pro
+  // Powered by Gemini 1.5 Pro for higher creative reasoning
   model: 'googleai/gemini-1.5-pro',
   prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
 
-Your task is to generate a short (2-3 minute) radio script based on the following data. You must weave these data points into a coherent and entertaining broadcast.
+Your task is to generate a short (2-3 minute) radio script based on the following data. 
 
 **Broadcast Data:**
 {{#if factionChallengeWinners}}
@@ -93,12 +93,11 @@ Your task is to generate a short (2-3 minute) radio script based on the followin
 {{/if}}
 
 **Instructions:**
-1.  Start with a catchy intro, like "What's up, ATLAS! This is DJ Nova coming at you live from the heart of the Nebula!"
-2.  Announce the Faction Challenge winners with hype and congratulations.
-3.  Talk about the trending skills. Why do you think they're popular? Give a shout-out to the communities practicing them.
-4.  Celebrate the pioneers of new skills. Emphasize how they are expanding the world for everyone.
-5.  End with a positive and motivational sign-off.
-6.  The final output should be a single JSON object containing the entire script in the 'script' field.
+1.  **Empty Data (Radio Silence):** If no specific winners, trending skills, or pioneers are listed above, do NOT report an error. Instead, generate a "System Warm-up" script. Talk about the "growing energy in the Nebula", the "arrival of new signatures", and encourage citizens to log their first feats to break the silence.
+2.  Start with a catchy intro, like "What's up, ATLAS! This is DJ Nova coming at you live from the heart of the Nebula!"
+3.  Announce any data points with hype and congratulations.
+4.  End with a positive and motivational sign-off.
+5.  The final output must be a single JSON object containing the entire script in the 'script' field.
 
 Now, generate the broadcast script!`,
 });
@@ -148,7 +147,6 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     const script = scriptOutput.script;
 
     // Step 2: Generate audio from the script
-    // ✅ UPDATED: Switched to Gemini 1.5 Pro for multimodal capability
     const { media } = await ai.generate({
         model: 'googleai/gemini-1.5-pro',
         config: {
