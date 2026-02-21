@@ -4,10 +4,12 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import 'dotenv/config';
 import { FirebaseClientProvider } from '@/firebase';
+import { ServiceWorkerRegister } from '@/components/common/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'ATLAS: Your Life, Reborn',
   description: 'A revolutionary application that gamifies human existence.',
+  manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -41,6 +43,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background min-h-screen">
         <FirebaseClientProvider>
+          <ServiceWorkerRegister />
           {children}
           <Toaster />
         </FirebaseClientProvider>
