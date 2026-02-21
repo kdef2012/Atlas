@@ -3,8 +3,8 @@
 /**
  * @fileOverview Defines a Genkit flow to generate a script for an ATLAS Radio broadcast.
  *
- * This flow acts as an AI DJ, creating an engaging radio show script based on
- * recent events and data from within the ATLAS world, and then converts that script to audio.
+ * - DJ Nova Scripting: Powered by Gemini 3.1 Pro for advanced narrative weaving.
+ * - Broadcast Synthesis: Powered by Gemini 2.5 Pro TTS Preview for podcast-quality audio.
  */
 
 import { ai } from '@/ai/genkit';
@@ -13,7 +13,6 @@ import wav from 'wav';
 import { collection, addDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase/index';
 
-// Define the input data schemas for the different types of news
 const FactionChallengeWinnerSchema = z.object({
   faction: z.string().describe('The winning faction/category, e.g., Physical.'),
   winningFireteamName: z.string().describe('The name of the top-scoring fireteam.'),
@@ -31,78 +30,65 @@ const NewPioneerSkillSchema = z.object({
     pioneerUserName: z.string().describe("The username of the user who discovered it."),
 });
 
-
-// Define the main input schema for the flow
 const GenerateRadioBroadcastInputSchema = z.object({
-  factionChallengeWinners: z.array(FactionChallengeWinnerSchema).optional().describe('A list of recent Faction Challenge winners.'),
-  trendingSkills: z.array(TrendingSkillSchema).optional().describe('A list of skills that are currently popular.'),
-  newlyPioneeredSkills: z.array(NewPioneerSkillSchema).optional().describe('A list of brand new skills discovered by users.'),
+  factionChallengeWinners: z.array(FactionChallengeWinnerSchema).optional(),
+  trendingSkills: z.array(TrendingSkillSchema).optional(),
+  newlyPioneeredSkills: z.array(NewPioneerSkillSchema).optional(),
 });
 export type GenerateRadioBroadcastInput = z.infer<typeof GenerateRadioBroadcastInputSchema>;
 
-
-// Define the output schema for the flow
 const GenerateRadioBroadcastOutputSchema = z.object({
   id: z.string(),
-  script: z.string().describe('The complete, formatted script for the radio broadcast.'),
-  audioUrl: z.string().describe('A base64 encoded data URI of the generated WAV audio.'),
+  script: z.string(),
+  audioUrl: z.string(),
   timestamp: z.number(),
 });
 export type GenerateRadioBroadcastOutput = z.infer<typeof GenerateRadioBroadcastOutputSchema>;
 
-
-// Exported function that other parts of the application can call
 export async function generateRadioBroadcast(
   input: GenerateRadioBroadcastInput
 ): Promise<GenerateRadioBroadcastOutput> {
   return generateRadioBroadcastFlow(input);
 }
 
-
-// Define the prompt for the AI model
 const generateRadioScriptPrompt = ai.definePrompt({
   name: 'generateRadioScriptPrompt',
   input: { schema: GenerateRadioBroadcastInputSchema },
   output: { schema: z.object({ script: z.string() }) },
-  // Powered by Gemini 1.5 Pro for higher creative reasoning
-  // ✅ FIXED: Updated to use '-latest' suffix to resolve 404
-  model: 'googleai/gemini-1.5-pro-latest',
-  prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
+  // High-intelligence reasoning for world-building
+  model: 'googleai/gemini-3.1-pro-preview',
+  prompt: `You are "DJ Nova", the host of ATLAS Radio. You are a highly charismatic, futuristic AI personality with "vibe coding" sensibilities. 
 
-Your task is to generate a short (2-3 minute) radio script based on the following data. 
+Your task is to generate a short, high-energy radio script (2-3 minutes) based on current Nebula data.
 
-**Broadcast Data:**
+**Current Nebula Intel:**
 {{#if factionChallengeWinners}}
-- **Faction Challenge Winners:**
+- **Faction Victories:**
   {{#each factionChallengeWinners}}
-  - The {{faction}} challenge ("{{challengeDescription}}") was won by **{{winningFireteamName}}** from {{winningRegion}}!
+  - {{winningFireteamName}} ({{winningRegion}}) secured the {{faction}} Sector!
   {{/each}}
 {{/if}}
 
 {{#if trendingSkills}}
-- **Trending Skills:**
+- **Trending Signals:**
   {{#each trendingSkills}}
   - {{name}} ({{category}})
   {{/each}}
 {{/if}}
 
 {{#if newlyPioneeredSkills}}
-- **New Discoveries:**
+- **New Frontiers:**
   {{#each newlyPioneeredSkills}}
-  - A new skill '{{name}}' was pioneered by **{{pioneerUserName}}**!
+  - {{pioneerUserName}} pioneered the '{{name}}' discipline!
   {{/each}}
 {{/if}}
 
 **Instructions:**
-1.  **Empty Data (Radio Silence):** If no specific winners, trending skills, or pioneers are listed above, do NOT report an error. Instead, generate a "System Warm-up" script. Talk about the "growing energy in the Nebula", the "arrival of new signatures", and encourage citizens to log their first feats to break the silence.
-2.  Start with a catchy intro, like "What's up, ATLAS! This is DJ Nova coming at you live from the heart of the Nebula!"
-3.  Announce any data points with hype and congratulations.
-4.  End with a positive and motivational sign-off.
-5.  The final output must be a single JSON object containing the entire script in the 'script' field.
-
-Now, generate the broadcast script!`,
+1. **Handle Silence:** If the data above is sparse or empty, DJ Nova should talk about the "calm before the cosmic storm" and the "static of potential," urging citizens to log their first feats.
+2. **Persona:** Use terms like "Signal," "Frequency," "Calibration," and "The Great Expansion." 
+3. **Structure:** Start with a high-energy intro, hit the news points with excitement, and close with an inspiring "Nova Sign-off."
+4. **Output:** Provide ONLY a single JSON object with the script in the 'script' field.`,
 });
-
 
 async function toWav(
   pcmData: Buffer,
@@ -119,20 +105,14 @@ async function toWav(
 
     let bufs: any[] = [];
     writer.on('error', reject);
-    writer.on('data', function (d) {
-      bufs.push(d);
-    });
-    writer.on('end', function () {
-      resolve(Buffer.concat(bufs).toString('base64'));
-    });
+    writer.on('data', (d) => bufs.push(d));
+    writer.on('end', () => resolve(Buffer.concat(bufs).toString('base64')));
 
     writer.write(pcmData);
     writer.end();
   });
 }
 
-
-// Define the Genkit flow
 const generateRadioBroadcastFlow = ai.defineFlow(
   {
     name: 'generateRadioBroadcastFlow',
@@ -140,53 +120,44 @@ const generateRadioBroadcastFlow = ai.defineFlow(
     outputSchema: GenerateRadioBroadcastOutputSchema,
   },
   async (input) => {
-    // Step 1: Generate the script
+    // 1. Generate the script using the high-intelligence model
     const { output: scriptOutput } = await generateRadioScriptPrompt(input);
-    if (!scriptOutput) {
-        throw new Error('Failed to generate radio script.');
-    }
+    if (!scriptOutput) throw new Error('DJ Nova failed to author the script.');
     const script = scriptOutput.script;
 
-    // Step 2: Generate audio from the script
-    // Powered by Gemini 1.5 Pro
-    // ✅ FIXED: Updated to use '-latest' suffix to resolve 404
+    // 2. Generate high-fidelity audio using the TTS Pro model
     const { media } = await ai.generate({
-        model: 'googleai/gemini-1.5-pro-latest',
+        model: 'googleai/gemini-2.5-pro-preview-tts',
         config: {
             responseModalities: ['AUDIO'],
             speechConfig: {
                 voiceConfig: {
-                    prebuiltVoiceConfig: { voiceName: 'Algenib' }, // An energetic, clear voice
+                    prebuiltVoiceConfig: { voiceName: 'Algenib' }, 
                 },
             },
         },
         prompt: script,
     });
     
-    if (!media) {
-        throw new Error('TTS model did not return any audio media.');
-    }
+    if (!media) throw new Error('The Audio Forge failed to synthesize the signal.');
     
-    // Step 3: Convert raw PCM audio to WAV format
+    // 3. Process PCM to WAV
     const audioBuffer = Buffer.from(
       media.url.substring(media.url.indexOf(',') + 1),
       'base64'
     );
-
     const wavBase64 = await toWav(audioBuffer);
     const audioUrl = `data:audio/wav;base64,${wavBase64}`;
 
-    // Step 4: Save the broadcast to Firestore
+    // 4. Archive the broadcast
     const { firestore } = initializeFirebase();
-    const broadcastsCollection = collection(firestore, 'radio-broadcasts');
     const newBroadcastData = {
       timestamp: Date.now(),
       script,
       audioUrl,
     };
-    const docRef = await addDoc(broadcastsCollection, newBroadcastData);
+    const docRef = await addDoc(collection(firestore, 'radio-broadcasts'), newBroadcastData);
 
-    // Step 5: Return both script and audio URL along with the new document ID
     return {
       id: docRef.id,
       ...newBroadcastData,
