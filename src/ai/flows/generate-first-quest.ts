@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -31,7 +30,6 @@ export async function generateFirstQuest(input: GenerateFirstQuestInput): Promis
 
 const firstQuestPrompt = ai.definePrompt({
   name: 'firstQuestPrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateFirstQuestInputSchema},
   output: {schema: GenerateFirstQuestOutputSchema},
   prompt: `You are an expert in user onboarding and gamification. Your goal is to suggest an initial quest for a new user of the ATLAS app, an RPG that gamifies real life.

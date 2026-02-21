@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -55,7 +54,6 @@ export async function findOrCreateSkill(
 
 const findOrCreateSkillPrompt = ai.definePrompt({
   name: 'findOrCreateSkillPrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: FindOrCreateSkillInputSchema},
   output: {schema: FindOrCreateSkillOutputSchema},
   prompt: `You are an expert at categorizing and normalizing human activities into skills for a real-life RPG. Your goal is to determine if a user's logged activity corresponds to an existing skill, a new "Pioneer" skill, or if it's a trivial daily maintenance task.

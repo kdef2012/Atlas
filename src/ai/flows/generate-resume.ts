@@ -42,7 +42,6 @@ export async function generateResume(
 
 const generateResumePrompt = ai.definePrompt({
   name: 'generateResumePrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateResumeInputSchema},
   output: {schema: GenerateResumeOutputSchema},
   prompt: `You are an expert resume writer and career coach AI. Your task is to create a professional, skills-based resume for a user of the ATLAS app, which gamifies real-life activities. You must translate their in-app data into compelling, professional language.

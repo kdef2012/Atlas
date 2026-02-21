@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -53,7 +52,6 @@ export async function generateQuests(input: GenerateQuestsInput): Promise<Genera
 // Define the prompt for the AI model
 const generateQuestsPrompt = ai.definePrompt({
   name: 'generateQuestsPrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: GenerateQuestsInputSchema},
   output: {schema: GenerateQuestsOutputSchema},
   prompt: `You are a creative Dungeon Master for a real-life RPG called ATLAS. Your job is to generate a list of three engaging and challenging quests for a user.

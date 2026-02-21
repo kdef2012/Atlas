@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -48,7 +47,6 @@ export async function generateFactionChallenges(): Promise<GenerateFactionChalle
 // Define the prompt for the AI model
 const generateChallengesPrompt = ai.definePrompt({
   name: 'generateChallengesPrompt',
-  model: 'googleai/gemini-1.5-flash',
   output: {schema: GenerateFactionChallengesOutputSchema},
   prompt: `You are the Game Master for a real-life RPG called ATLAS. Your task is to create a new set of 5 weekly "Faction Challenges".
 

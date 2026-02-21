@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -36,7 +35,6 @@ export async function categorizeUserSkill(
 
 const categorizeUserSkillPrompt = ai.definePrompt({
   name: 'categorizeUserSkillPrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: {schema: CategorizeUserSkillInputSchema},
   output: {schema: CategorizeUserSkillOutputSchema},
   prompt: `Categorize the following user-defined skill into one of the following categories: Physical, Mental, Social, Practical, or Creative.\n\nSkill: {{{skill}}}\nCategory:`,

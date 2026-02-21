@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -29,7 +28,6 @@ export async function generateSkillGuide(
 
 const skillGuidePrompt = ai.definePrompt({
   name: 'skillGuidePrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: { schema: GenerateSkillGuideInputSchema },
   output: { schema: GenerateSkillGuideOutputSchema },
   prompt: `You are the "Head Librarian of the ATLAS Nebula." A new discipline has been pioneered by a citizen: "{{{skillName}}}" (Category: {{{category}}}).

@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -64,7 +63,6 @@ export async function generateRadioBroadcast(
 // Define the prompt for the AI model
 const generateRadioScriptPrompt = ai.definePrompt({
   name: 'generateRadioScriptPrompt',
-  model: 'googleai/gemini-1.5-flash',
   input: { schema: GenerateRadioBroadcastInputSchema },
   output: { schema: z.object({ script: z.string() }) },
   prompt: `You are "DJ Nova", the host of ATLAS Radio, the official broadcast for the ATLAS universe. Your tone is energetic, futuristic, and encouraging. You celebrate player achievements and make the world feel alive.
