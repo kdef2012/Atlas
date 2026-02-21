@@ -19,7 +19,6 @@ import { Loader2, Paperclip, HeartPulse, Sparkles, ShieldAlert } from "lucide-re
 import type { Skill, SkillCategory, Territory, Fireteam, User, Guild } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
-import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, increment, writeBatch } from "firebase/firestore";
 import { haptics } from "@/lib/haptics";
 
@@ -62,7 +61,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
 
   const { data: allSkills } = useCollection<Skill>(skillsCollectionRef);
   const { data: allTerritories } = useCollection<Territory>(territoriesCollectionRef);
-  const { data: allGuilds } = useCollection<Guild>(guildsCollectionRef);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -88,7 +86,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!user || !allSkills || !userRef || !userData || !allGuilds || !publicLogsCollection) return;
+    if (!user || !allSkills || !userRef || !userData || !publicLogsCollection) return;
 
     haptics.light();
     setIsLoading(true);
@@ -152,7 +150,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
             isApproved: false,
         });
 
-        const newGuildDocRef = doc(guildsCollectionRef);
+        const newGuildDocRef = doc(collection(firestore, 'guilds'));
         batch.set(newGuildDocRef, {
             name: `Guild of ${skillName}`,
             skillId: skillId,

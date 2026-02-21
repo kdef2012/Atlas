@@ -21,29 +21,57 @@ const chartConfig = {
   Physical: {
     label: "Physical",
     color: CATEGORY_COLORS.Physical,
-    icon: CATEGORY_ICONS.Physical,
   },
   Mental: {
     label: "Mental",
     color: CATEGORY_COLORS.Mental,
-    icon: CATEGORY_ICONS.Mental,
   },
   Social: {
     label: "Social",
     color: CATEGORY_COLORS.Social,
-    icon: CATEGORY_ICONS.Social  
   },
   Practical: {
     label: "Practical",
     color: CATEGORY_COLORS.Practical,
-    icon: CATEGORY_ICONS.Practical,
   },
   Creative: {
     label: "Creative",
     color: CATEGORY_COLORS.Creative,
-    icon: CATEGORY_ICONS.Creative,
   },
 } satisfies ChartConfig;
+
+/**
+ * Custom Tick component for the Radar Chart.
+ * Prevents React Error #130 by using a safe, standard rendering pattern.
+ */
+function CustomTick(props: any) {
+  const { x, y, payload } = props;
+  const category = payload?.value as SkillCategory;
+  const Icon = CATEGORY_ICONS[category] || Sparkles;
+  const color = CATEGORY_COLORS[category] || 'hsl(var(--primary))';
+
+  if (!x || !y) return null;
+
+  return (
+    <g transform={`translate(${x},${y})`}>
+      <foreignObject x={-12} y={-35} width={24} height={24}>
+        <div style={{ color }} className="flex items-center justify-center">
+          <Icon className="h-5 w-5" />
+        </div>
+      </foreignObject>
+      <text
+        x={0}
+        y={0}
+        dy={14}
+        textAnchor="middle"
+        fill="currentColor"
+        className="text-[10px] font-bold uppercase tracking-tighter fill-muted-foreground"
+      >
+        {payload?.value}
+      </text>
+    </g>
+  );
+}
 
 export function StatsRadarChart() {
   const firestore = useFirestore();
@@ -73,34 +101,7 @@ export function StatsRadarChart() {
           cursor={false}
           content={<ChartTooltipContent indicator="dot" />}
         />
-        <PolarAngleAxis dataKey="category" tick={(props) => {
-            const { x, y, payload } = props;
-            const category = payload?.value as SkillCategory;
-            const Icon = (category && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : Sparkles;
-            const color = (category && CATEGORY_COLORS[category]) ? CATEGORY_COLORS[category] : 'hsl(var(--primary))';
-
-            if (!x || !y) return null;
-
-            return (
-                <g transform={`translate(${x},${y})`}>
-                    <foreignObject x={-12} y={-30} width={24} height={24}>
-                        <div style={{ color }}>
-                            <Icon className="h-6 w-6" />
-                        </div>
-                    </foreignObject>
-                    <text
-                        x={0}
-                        y={0}
-                        dy={16}
-                        textAnchor="middle"
-                        fill="hsl(var(--foreground))"
-                        className="text-sm font-medium"
-                    >
-                        {payload?.value}
-                    </text>
-                </g>
-            );
-        }}/>
+        <PolarAngleAxis dataKey="category" tick={<CustomTick />} />
         <PolarGrid gridType="polygon" />
         <Radar
           dataKey="value"

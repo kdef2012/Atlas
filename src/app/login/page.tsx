@@ -80,7 +80,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="max-w-md w-full">
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl">Welcome to ATLAS</CardTitle>
+          <CardTitle className="font-headline text-3xl text-primary">Welcome to ATLAS</CardTitle>
           <CardDescription>
             {authMode === AuthMode.SignIn ? 'Sign in to continue your journey.' : 'Create an account to begin your journey.'}
           </CardDescription>
