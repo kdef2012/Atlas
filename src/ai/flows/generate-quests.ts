@@ -38,7 +38,7 @@ const GenerateQuestsInputSchema = z.object({
 export type GenerateQuestsInput = z.infer<typeof GenerateQuestsInputSchema>;
 
 // Define the output schema for the flow
-// Accepts a range to prevent validation errors if the AI deviates slightly from the requested count
+// Accepts a range to handle AI variance gracefully
 const GenerateQuestsOutputSchema = z.object({
   quests: z.array(QuestSchema).min(1).max(5).describe('An array of generated quests (usually 3).'),
 });
@@ -79,7 +79,7 @@ The quests should be personalized based on the user's profile. They should encou
 6.  The 'description' should be a clear, single-sentence call to action.
 7.  The 'category' must be one of the five valid skill categories.
 
-Now, generate a new set of three quests for the provided user profile.`,
+Now, generate a new set of three quests for the provided user profile. Respond with ONLY the JSON object.`,
 });
 
 // Define the Genkit flow
@@ -90,7 +90,7 @@ const generateQuestsFlow = ai.defineFlow(
     outputSchema: GenerateQuestsOutputSchema,
   },
   async input => {
-    // Uses the model configured in ai/genkit.ts (gemini-1.5-flash-latest)
+    // Uses the validated global AI configuration
     const {output} = await generateQuestsPrompt(input);
     if (!output) throw new Error('The Oracle failed to reveal your destiny.');
     return output;

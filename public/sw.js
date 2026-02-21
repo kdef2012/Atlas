@@ -1,6 +1,13 @@
+/**
+ * ATLAS PWA Service Worker
+ * 
+ * This file is required for Android browsers to trigger the "Install App" prompt.
+ * It also handles offline caching and environment-specific request filtering.
+ */
+
 const CACHE_NAME = 'atlas-v1';
 
-// Mandatory for PWA installation on Android
+// We don't pre-cache everything to keep the app lightweight and avoid workstation auth issues
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
@@ -10,19 +17,22 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // WORKSTATION COMPATIBILITY: Skip interception for workstation auth redirects and manifest
-  // This prevents the CORS and net::ERR_FAILED errors in your specific environment
+  const url = new URL(event.request.url);
+
+  // CRITICAL: Skip intercepting workstation internal authentication or socket requests.
+  // These often involve redirects to different origins which cause CORS/network failures in fetch listeners.
   if (
-    event.request.url.includes('_workstation') || 
-    event.request.url.includes('forwardAuthCookie') ||
-    event.request.url.endsWith('manifest.webmanifest')
+    url.pathname.includes('_workstation') || 
+    url.pathname.includes('forwardAuthCookie') ||
+    url.origin !== self.location.origin
   ) {
     return;
   }
 
-  // Standard fetch-first strategy for dynamic content
+  // Standard fetch behavior for app resources
   event.respondWith(
     fetch(event.request).catch(() => {
+      // If network fails, try cache (or just fail gracefully for now)
       return caches.match(event.request);
     })
   );
