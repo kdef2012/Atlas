@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -8,7 +9,7 @@ import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Paperclip, HeartPulse, Sparkles, ShieldAlert } from "lucide-react";
+import { Loader2, Paperclip, HeartPulse, ShieldAlert } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
@@ -21,6 +22,7 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -44,9 +46,28 @@ interface LogActivityFormProps {
 export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const getCameraPermission = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        setHasCameraPermission(true);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (error) {
+        console.warn('Camera access declined or unavailable:', error);
+        setHasCameraPermission(false);
+      }
+    };
+
+    getCameraPermission();
+  }, []);
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
   const { data: userData } = useDoc<User>(userRef);
@@ -77,7 +98,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         form.setValue('skill', randomActivity);
         toast({
             title: "Device Synced!",
-            description: `Synced activity: "${randomActivity}"`
+            description: `Detected physical activity: "${randomActivity}"`
         });
         haptics.success();
         setIsSyncing(false);
@@ -101,8 +122,8 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       if (isNewSkill && !isTrivial && !hasProof) {
           toast({
               variant: "destructive",
-              title: "Signal Authentication Required",
-              description: "Pioneering a new skill in the Nebula requires a visual signal (photo/video) to prove its validity."
+              title: "Discovery Protocol Interrupted",
+              description: "Pioneering a new discipline in the Nebula requires a visual signal (photo/video) to prove its validity."
           });
           haptics.error();
           setIsLoading(false);
@@ -206,7 +227,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       
       await batch.commit();
 
-      const Icon = (category && CATEGORY_ICONS[category as SkillCategory]) ? CATEGORY_ICONS[category as SkillCategory] : Sparkles;
+      const Icon = (category && CATEGORY_ICONS[category as SkillCategory]) ? CATEGORY_ICONS[category as SkillCategory] : ShieldAlert;
       const iconColor = CATEGORY_COLORS[category as SkillCategory] || 'hsl(var(--primary))';
 
       haptics.success();
@@ -219,7 +240,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
             </div>
             <span>
               {isNewSkill ? `You've proposed '${skillName}' to the Nebula!` : `Logged '${skillName}' in ${category}.`}
-              {isTrivial ? " (Maintenance task recorded)" : ""}
+              {isTrivial ? " (Maintenance task)" : ""}
               {!hasProof ? ` (+${xpGained} XP)` : ` Awaiting verification.`}
             </span>
           </div>
@@ -230,7 +251,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     } catch (error) {
       console.error(error);
       haptics.error();
-      toast({ variant: "destructive", title: "Logging Failed", description: "The Nebula was unable to record your feat." });
+      toast({ variant: "destructive", title: "Logging Failed", description: "The Nebula was unable to record your feat. Check your connectivity." });
     } finally {
       setIsLoading(false);
     }
@@ -281,15 +302,28 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                 Sync Device
             </Button>
         </div>
+
+        <div className="space-y-4">
+            <video ref={videoRef} className="w-full aspect-video rounded-md bg-black/20 border-2 border-dashed border-primary/10" autoPlay muted playsInline />
+            {hasCameraPermission === false && (
+                <Alert variant="destructive">
+                    <AlertTitle>Sensor Signal Blocked</AlertTitle>
+                    <AlertDescription>
+                        Camera access is required for real-time verification. Enable permissions in your settings.
+                    </AlertDescription>
+                </Alert>
+            )}
+        </div>
+
         <div className="p-3 bg-secondary/30 rounded-lg border border-primary/10 flex items-start gap-2">
             <ShieldAlert className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-tight">
-                Pioneering a new skill requires visual proof. Trivial daily tasks (e.g. drinking water) are recorded but do not grant discovery rewards.
+                Pioneering a new skill requires visual proof. Trivial daily tasks are recorded but do not grant discovery rewards.
             </p>
         </div>
-        <Button type="submit" disabled={isLoading || !user} className="w-full font-bold">
+        <Button type="submit" disabled={isLoading || !user} className="w-full h-12 font-bold shadow-lg shadow-primary/20">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Log Achievement
+          Transmit Achievement
         </Button>
       </form>
     </Form>

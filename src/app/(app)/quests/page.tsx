@@ -5,15 +5,14 @@ import { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QuestCard } from "@/components/dashboard/QuestCard";
-import { useUser, useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking } from "@/firebase";
+import { useUser, useCollection, useFirestore, useMemoFirebase, addDocumentNonBlocking, useDoc } from "@/firebase";
 import { collection, doc } from "firebase/firestore";
 import type { Quest } from "@/lib/quest";
 import { Button } from "@/components/ui/button";
-import { Loader2, Wand2, Mountain, Bot, Zap } from "lucide-react";
+import { Loader2, Mountain, Bot, Zap } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { generateQuests } from '@/ai/flows/generate-quests';
 import type { User, Archetype } from '@/lib/types';
-import { useDoc } from '@/firebase/firestore/use-doc';
 
 function QuestList() {
     const { user: authUser, isUserLoading: isAuthLoading } = useUser();
@@ -55,7 +54,7 @@ function QuestList() {
                 const newQuest: Omit<Quest, 'id'> = {
                     ...quest,
                     isCompleted: false,
-                    userId: user.id, // Ensure userId is set
+                    userId: user.id,
                 };
                 addDocumentNonBlocking(questsCollectionRef, newQuest);
             });
@@ -70,7 +69,7 @@ function QuestList() {
             toast({
                 variant: 'destructive',
                 title: "The Oracle is Silent",
-                description: "Could not generate new quests at this time. Please try again later.",
+                description: "The Nebula was unable to manifest your quests. Please check your signal and try again.",
             })
         } finally {
             setIsGenerating(null);
@@ -108,7 +107,7 @@ function QuestList() {
     if (!quests || quests.length === 0) {
         return (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                <p className="mb-4">Your quest log is empty.</p>
+                <p className="mb-4 font-headline uppercase tracking-widest opacity-50">Signal Missing: Quest Log Empty</p>
                 <div className="flex justify-center">
                     {questGenerationButtons}
                 </div>
@@ -116,7 +115,6 @@ function QuestList() {
         )
     }
 
-    // Separate active and completed quests
     const activeQuests = quests.filter(q => !q.isCompleted);
     const completedQuests = quests.filter(q => q.isCompleted);
 
@@ -135,17 +133,17 @@ function QuestList() {
                     {activeQuests.length > 0 ? (
                         activeQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
                     ) : (
-                        <p className="text-muted-foreground text-center">No active quests at the moment. Generate some more!</p>
+                        <p className="text-muted-foreground text-center italic py-8 border rounded-lg bg-secondary/10">No active quests in current frequency. Synchronize new objectives above.</p>
                     )}
                 </div>
             </div>
              <div>
-                <h2 className="font-headline text-2xl mb-2">Completed Quests</h2>
-                <div className="space-y-4">
+                <h2 className="font-headline text-2xl mb-2 opacity-50">Completed Chronology</h2>
+                <div className="space-y-4 opacity-60">
                     {completedQuests.length > 0 ? (
                         completedQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
                     ) : (
-                        <p className="text-muted-foreground">You haven't completed any quests yet.</p>
+                        <p className="text-muted-foreground text-sm italic">You have not yet chronicled any completed quests.</p>
                     )}
                 </div>
             </div>
@@ -156,10 +154,10 @@ function QuestList() {
 
 export default function QuestsPage() {
     return (
-        <Card>
+        <Card className="border-primary/20 bg-card/50 backdrop-blur-md">
             <CardHeader>
                 <CardTitle className="font-headline text-3xl">Quest Log</CardTitle>
-                <CardDescription>Your objectives and adventures. Complete them to earn XP and rewards.</CardDescription>
+                <CardDescription>Your personal roadmap to mastery. Complete objectives to earn XP and expand your potential.</CardDescription>
             </CardHeader>
             <CardContent>
                 <QuestList />

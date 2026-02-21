@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -37,9 +38,10 @@ const GenerateQuestsInputSchema = z.object({
 });
 export type GenerateQuestsInput = z.infer<typeof GenerateQuestsInputSchema>;
 
-// Define the output schema for the flow, which is an array of quests
+// Define the output schema for the flow
+// ✅ RESILIENCE: Accepting a range instead of a fixed length to prevent validation crashes
 const GenerateQuestsOutputSchema = z.object({
-  quests: z.array(QuestSchema).length(3).describe('An array of exactly 3 generated quests.'),
+  quests: z.array(QuestSchema).min(1).max(5).describe('An array of generated quests (usually 3).'),
 });
 export type GenerateQuestsOutput = z.infer<typeof GenerateQuestsOutputSchema>;
 
@@ -89,6 +91,7 @@ const generateQuestsFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await generateQuestsPrompt(input);
-    return output!;
+    if (!output) throw new Error('The Oracle failed to reveal your destiny.');
+    return output;
   }
 );

@@ -1,24 +1,21 @@
 
 /**
- * ATLAS Service Worker
- * Mandatory for PWA installation on Android/Samsung devices.
- * Ensures the app can be installed to the home screen.
+ * ATLAS PWA Service Worker
+ * Mandatory fetch listener to enable "Install App" prompt on Android browsers.
  */
 
-const CACHE_NAME = 'atlas-core-v1';
+const CACHE_NAME = 'atlas-nebula-v1';
 
 self.addEventListener('install', (event) => {
-  // Force the waiting service worker to become the active service worker.
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  // Take control of all pages immediately.
   event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-  // Standard fetch pass-through.
-  // Required by Chrome/Samsung Internet to qualify for "Install" prompt.
+  // Standard pass-through fetch listener
+  // Required by Chrome/Samsung Internet for PWA eligibility
   event.respondWith(fetch(event.request));
 });
