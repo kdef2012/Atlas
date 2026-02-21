@@ -1,21 +1,21 @@
+
 /**
- * ATLAS Service Worker
- * Required for PWA installation on Android/Chrome.
+ * ATLAS Core Service Worker
+ * Required for PWA installation on Android/Samsung devices.
  */
 
-const CACHE_NAME = 'atlas-cache-v1';
-
-// We don't necessarily need to cache everything for the install prompt to work,
-// but we MUST have a fetch handler.
 self.addEventListener('install', (event) => {
+  // Force the waiting service worker to become the active service worker.
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
+  // Allow the service worker to take control of the page immediately.
   event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-  // Basic pass-through fetch handler satisfies the PWA requirement
+  // Standard fetch listener to satisfy PWA installation criteria.
+  // This allows the app to be installed even if we aren't using advanced caching yet.
   event.respondWith(fetch(event.request));
 });

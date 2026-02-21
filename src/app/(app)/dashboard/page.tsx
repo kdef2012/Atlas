@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { verifySession } from '@/actions/payments';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/alert-dialog';
 import { haptics } from '@/lib/haptics';
+import { InstallGuide } from '@/components/dashboard/InstallGuide';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -128,6 +129,7 @@ function DashboardPageContent() {
       </div>
 
       <div className="lg:col-span-2 space-y-6">
+        <InstallGuide />
         <SpotlightCard />
         <Card>
           <CardHeader>
