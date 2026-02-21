@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -13,9 +12,6 @@ import { z } from 'genkit';
 import wav from 'wav';
 import { collection, addDoc } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase/index';
-
-// Next.js config for long-running AI tasks
-export const maxDuration = 120;
 
 const FactionChallengeWinnerSchema = z.object({
   faction: z.string().describe('The winning faction/category, e.g., Physical.'),
