@@ -75,9 +75,11 @@ export function StatsRadarChart() {
         />
         <PolarAngleAxis dataKey="category" tick={(props) => {
             const { x, y, payload } = props;
-            const category = payload.value as SkillCategory;
-            const Icon = CATEGORY_ICONS[category] || Sparkles;
-            const color = CATEGORY_COLORS[category] || 'hsl(var(--primary))';
+            const category = payload?.value as SkillCategory;
+            const Icon = (category && CATEGORY_ICONS[category]) ? CATEGORY_ICONS[category] : Sparkles;
+            const color = (category && CATEGORY_COLORS[category]) ? CATEGORY_COLORS[category] : 'hsl(var(--primary))';
+
+            if (!x || !y) return null;
 
             return (
                 <g transform={`translate(${x},${y})`}>
@@ -94,7 +96,7 @@ export function StatsRadarChart() {
                         fill="hsl(var(--foreground))"
                         className="text-sm font-medium"
                     >
-                        {payload.value}
+                        {payload?.value}
                     </text>
                 </g>
             );
