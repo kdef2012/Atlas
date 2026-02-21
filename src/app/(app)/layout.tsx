@@ -5,6 +5,7 @@ import { useEffect, Suspense } from "react";
 import { AppHeader } from "@/components/common/AppHeader";
 import { SideNav } from "@/components/common/SideNav";
 import { Footer } from "@/components/common/Footer";
+import { MobileNav } from "@/components/common/MobileNav";
 import {
   Sidebar,
   SidebarInset,
@@ -21,7 +22,6 @@ import { cn } from "@/lib/utils";
 
 /**
  * Handles payment and onboarding redirect logic that requires useSearchParams.
- * Wrapped in Suspense to avoid build errors.
  */
 function NavigationGuard({ children, user, isAdmin, isLoading }: { children: ReactNode, user: User | null, isAdmin: boolean, isLoading: boolean }) {
   const router = useRouter();
@@ -128,13 +128,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   
   return (
     <SidebarProvider>
-      <Sidebar>
+      <Sidebar className="hidden md:flex">
         <SideNav />
       </Sidebar>
       <SidebarInset className={cn(
           settings?.accessibility?.dyslexiaFont && "font-dyslexia",
           settings?.accessibility?.highContrast && "high-contrast",
-          "flex flex-col"
+          "flex flex-col min-h-svh pb-16 md:pb-0"
       )}>
         <AnnouncementBanner />
         <AppHeader />
@@ -144,6 +144,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </NavigationGuard>
         </Suspense>
         <Footer />
+        <MobileNav />
       </SidebarInset>
     </SidebarProvider>
   );

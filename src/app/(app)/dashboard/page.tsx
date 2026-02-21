@@ -18,13 +18,15 @@ import { useFirestore } from '@/firebase/provider';
 import type { User } from '@/lib/types';
 import type { Quest } from '@/lib/quest';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowRight, FileText, Loader2, ShieldCheck } from 'lucide-react';
+import { ArrowRight, FileText, Loader2, Plus } from 'lucide-react';
 import { MomentumFlame } from '@/components/dashboard/MomentumFlame';
 import { TraitBadges } from '@/components/dashboard/TraitBadges';
 import { SpotlightCard } from '@/components/dashboard/SpotlightCard';
 import { RecruiterCard } from '@/components/dashboard/RecruiterCard';
 import { useToast } from '@/hooks/use-toast';
 import { verifySession } from '@/actions/payments';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/alert-dialog';
+import { haptics } from '@/lib/haptics';
 
 function DashboardPageContent() {
   const firestore = useFirestore();
@@ -102,7 +104,7 @@ function DashboardPageContent() {
   const activeQuests = quests?.filter(q => !q.isCompleted).slice(0, 2) || [];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
       <div className="lg:col-span-1 space-y-6">
         {isVerifying && (
           <Card className="bg-primary/5 border-primary/20 border-dashed animate-pulse">
@@ -140,7 +142,7 @@ function DashboardPageContent() {
         </Card>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
+            <Card className="hidden md:block">
                 <CardHeader>
                     <CardTitle className="font-headline">Log Activity</CardTitle>
                     <CardDescription>What have you accomplished?</CardDescription>
@@ -183,6 +185,28 @@ function DashboardPageContent() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Mobile Floating Action Button (FAB) */}
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button 
+            size="icon" 
+            className="fixed bottom-20 right-4 w-14 h-14 rounded-full shadow-2xl shadow-primary/40 border-2 border-primary/20 md:hidden z-40 bg-primary"
+            onClick={() => haptics.light()}
+          >
+            <Plus className="w-8 h-8" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-[90vw] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Log Activity</DialogTitle>
+            <DialogDescription>Add a new achievement to the Nebula.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <LogActivityForm onSuccess={() => haptics.success()} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

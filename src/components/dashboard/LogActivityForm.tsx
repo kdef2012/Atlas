@@ -22,6 +22,7 @@ import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
 import { updateDocumentNonBlocking } from "@/firebase/non-blocking-updates";
 import { collection, doc, increment, writeBatch } from "firebase/firestore";
+import { haptics } from "@/lib/haptics";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -38,7 +39,11 @@ const fitnessActivities = [
     "Did a 20-minute yoga session"
 ];
 
-export function LogActivityForm() {
+interface LogActivityFormProps {
+  onSuccess?: () => void;
+}
+
+export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const { toast } = useToast();
@@ -69,6 +74,7 @@ export function LogActivityForm() {
 
   const handleSyncDevice = () => {
     setIsSyncing(true);
+    haptics.light();
     const randomActivity = fitnessActivities[Math.floor(Math.random() * fitnessActivities.length)];
     
     setTimeout(() => {
@@ -77,6 +83,7 @@ export function LogActivityForm() {
             title: "Device Synced!",
             description: `Synced activity: "${randomActivity}"`
         });
+        haptics.success();
         setIsSyncing(false);
     }, 1500);
   };
@@ -94,18 +101,17 @@ export function LogActivityForm() {
       let { skillId, isNewSkill, skillName, category, prerequisites, cost, isTrivial } = result;
       const hasProof = (values.proof && values.proof.length > 0);
       
-      // MANDATORY PROOF FOR PIONEERING
       if (isNewSkill && !isTrivial && !hasProof) {
           toast({
               variant: "destructive",
               title: "Signal Authentication Required",
               description: "Pioneering a new skill in the Nebula requires a visual signal (photo/video) to prove its validity."
           });
+          haptics.error();
           setIsLoading(false);
           return;
       }
 
-      // TRIVIALITY GATE: Map trivial new skills to generic ones
       if (isNewSkill && isTrivial) {
           const genericSkill = allSkills.find(s => s.name === "Daily Rituals" || s.name === "Basic Maintenance");
           if (genericSkill) {
@@ -118,7 +124,6 @@ export function LogActivityForm() {
       const batch = writeBatch(firestore);
       const timestamp = Date.now();
 
-      // Base reward logic - Trivial activities give 50% less XP
       let xpGained = isNewSkill ? 150 : (isTrivial ? 50 : 100);
       
       if (isNewSkill && userData.traits?.pioneer) xpGained = Math.round(xpGained * 1.1);
@@ -144,7 +149,7 @@ export function LogActivityForm() {
             prerequisites: prerequisites || [],
             cost: cost || { category: category, points: 20 },
             innovatorAwarded: false,
-            isApproved: false, // New skills require validation
+            isApproved: false,
         });
 
         const newGuildDocRef = doc(guildsCollectionRef);
@@ -207,6 +212,7 @@ export function LogActivityForm() {
       const Icon = CATEGORY_ICONS[category as SkillCategory] || Sparkles;
       const iconColor = CATEGORY_COLORS[category as SkillCategory];
 
+      haptics.success();
       toast({
         title: isNewSkill ? "Discovery Recorded" : "Activity Logged!",
         description: (
@@ -223,8 +229,10 @@ export function LogActivityForm() {
         )
       });
       form.reset();
+      onSuccess?.();
     } catch (error) {
       console.error(error);
+      haptics.error();
       toast({ variant: "destructive", title: "Logging Failed", description: "The Nebula was unable to record your feat." });
     } finally {
       setIsLoading(false);

@@ -106,6 +106,10 @@ body {
 }
 
 @layer components {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  
   .neon-text {
     text-shadow:
       0 0 5px hsl(var(--accent)),
