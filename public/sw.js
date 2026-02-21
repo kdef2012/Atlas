@@ -1,60 +1,29 @@
-/**
- * ATLAS Service Worker
- * Handles offline caching and enables PWA installation on Android/Samsung devices.
- */
+const CACHE_NAME = 'atlas-v1';
 
-const CACHE_NAME = 'atlas-cache-v1';
-const OFFLINE_URL = '/offline.html';
-
-const ASSETS_TO_CACHE = [
-  '/',
-  '/manifest.webmanifest',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap'
-];
-
+// Mandatory for PWA installation on Android
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
-    })
-  );
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
-    })
-  );
-  self.clients.claim();
+  event.waitUntil(clients.claim());
 });
 
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests and workstation internal auth redirects
-  if (!event.request.url.startsWith(self.location.origin) || 
-      event.request.url.includes('_workstation') ||
-      event.request.url.includes('forwardAuthCookie')) {
+  // WORKSTATION COMPATIBILITY: Skip interception for workstation auth redirects and manifest
+  // This prevents the CORS and net::ERR_FAILED errors in your specific environment
+  if (
+    event.request.url.includes('_workstation') || 
+    event.request.url.includes('forwardAuthCookie') ||
+    event.request.url.endsWith('manifest.webmanifest')
+  ) {
     return;
   }
 
+  // Standard fetch-first strategy for dynamic content
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      if (response) {
-        return response;
-      }
-      return fetch(event.request).catch(() => {
-        // Fallback for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match(OFFLINE_URL);
-        }
-      });
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
     })
   );
 });
