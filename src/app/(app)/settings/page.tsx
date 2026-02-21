@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -14,40 +14,13 @@ import { useAuth, useDoc, useFirestore, useUser, useMemoFirebase, updateDocument
 import { doc, deleteDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Bell, Eye, Palette, Clock, Settings2, ShieldQuestion, Trash2, LogOut, Download, Save } from 'lucide-react';
+import { Loader2, Bell, Eye, Palette, Clock, Settings2, ShieldQuestion, Trash2, Smartphone, RefreshCw, Save, Download } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-
-// Define the shape of the settings object
-interface UserSettings {
-    notifications: {
-        fireteam: boolean;
-        quests: boolean;
-        traits: boolean;
-        challenges: boolean;
-        momentum: boolean;
-    };
-    privacy: {
-        profileVisibility: 'Public' | 'Team Only' | 'Private';
-    };
-    appearance: {
-        theme: 'dark' | 'light';
-    };
-    accessibility: {
-        highContrast: boolean;
-        dyslexiaFont: boolean;
-    };
-    quietHours: {
-        enabled: boolean;
-        start: string;
-        end: string;
-    };
-}
-
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 
 const settingsSchema = z.object({
   notifications: z.object({
@@ -74,7 +47,6 @@ const settingsSchema = z.object({
   }),
 });
 
-// New schema for the username form
 const usernameSchema = z.object({
   userName: z.string().min(3, 'Username must be at least 3 characters.').max(30, 'Username is too long.'),
 });
@@ -117,11 +89,10 @@ function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
                                 <Input placeholder="New username" {...field} />
                             </FormControl>
                             <Button type="button" onClick={form.handleSubmit(onSubmit)} disabled={isSaving}>
-                                {isSaving ? <Loader2 className="animate-spin" /> : <Save />}
+                                {isSaving ? <Loader2 className="animate-spin" /> : <Save className="w-4 h-4" />}
                                 <span className="ml-2 hidden sm:inline">Save</span>
                             </Button>
                         </div>
-                       
                         <FormMessage />
                         </FormItem>
                     )}
@@ -131,21 +102,25 @@ function UsernameForm({ user, userRef }: { user: User, userRef: any }) {
     )
 }
 
-
 export default function SettingsPage() {
   const { user: authUser } = useUser();
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const [lastSync, setLastSync] = useState<string>('');
+
+  useEffect(() => {
+    setLastSync(new Date().toLocaleTimeString());
+  }, []);
 
   const userRef = useMemoFirebase(() => authUser ? doc(firestore, 'users', authUser.uid) : null, [firestore, authUser]);
   const settingsRef = useMemoFirebase(() => authUser ? doc(firestore, `users/${authUser.uid}/settings/main`) : null, [firestore, authUser]);
   
-  const { data: settingsData, isLoading: isSettingsLoading } = useDoc<UserSettings>(settingsRef);
+  const { data: settingsData, isLoading: isSettingsLoading } = useDoc<any>(settingsRef);
   const { data: userData, isLoading: isUserLoading } = useDoc<User>(userRef);
 
-  const { control, handleSubmit, reset } = useForm<z.infer<typeof settingsSchema>>({
+  const { control, handleSubmit } = useForm<z.infer<typeof settingsSchema>>({
     resolver: zodResolver(settingsSchema),
     values: {
       notifications: settingsData?.notifications ?? { fireteam: true, quests: true, traits: true, challenges: true, momentum: true },
@@ -158,124 +133,123 @@ export default function SettingsPage() {
 
   const onSubmit = (data: z.infer<typeof settingsSchema>) => {
     if (!settingsRef) return;
-    
     setDocumentNonBlocking(settingsRef, data, { merge: true });
+    toast({ title: "Settings Saved", description: "Your preferences have been updated." });
+  };
 
-    toast({
-      title: "Settings Saved",
-      description: "Your preferences have been updated.",
-    });
+  const handleManualReload = () => {
+    toast({ title: "Syncing Nebula...", description: "Pulling latest application state from the core." });
+    setTimeout(() => {
+      window.location.reload();
+    }, 1000);
   };
 
   const handlePasswordReset = async () => {
     if (auth.currentUser?.email) {
       try {
         await sendPasswordResetEmail(auth, auth.currentUser.email);
-        toast({
-          title: 'Password Reset Email Sent',
-          description: 'Check your inbox for instructions to reset your password.',
-        });
+        toast({ title: 'Password Reset Email Sent', description: 'Check your inbox.' });
       } catch (error) {
-        console.error(error);
-        toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Could not send password reset email.',
-        });
+        toast({ variant: 'destructive', title: 'Error', description: 'Could not send reset email.' });
       }
     }
   };
 
   const handleResetOnboarding = async () => {
       if (!authUser) return;
-      
       try {
           const userDocRef = doc(firestore, 'users', authUser.uid);
-          await deleteDoc(userDocRef); // This will delete the user's data
-          
-          toast({
-              title: "Onboarding Reset",
-              description: "Your journey will begin anew.",
-          });
-
-          // After deletion, the AppLayout logic will redirect to onboarding
+          await deleteDoc(userDocRef);
+          toast({ title: "Onboarding Reset", description: "Your journey will begin anew." });
           router.push('/onboarding/archetype');
-
       } catch (error) {
-          console.error("Failed to reset onboarding:", error);
           toast({ variant: "destructive", title: "Error", description: "Could not reset your account." });
       }
   }
 
   if (isSettingsLoading || isUserLoading) {
-      return (
-          <div className="space-y-6">
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-64 w-full" />
-              <Skeleton className="h-48 w-full" />
-          </div>
-      )
+      return <div className="space-y-6"><Skeleton className="h-24 w-full" /><Skeleton className="h-64 w-full" /></div>
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-4xl mx-auto">
       <Card>
         <CardHeader>
           <CardTitle className="font-headline text-3xl flex items-center gap-2">
             <Settings2 className="w-8 h-8 text-primary"/>
             Settings
           </CardTitle>
-          <CardDescription>Customize your ATLAS experience.</CardDescription>
+          <CardDescription>Customize your ATLAS experience and manage your mobile signal.</CardDescription>
         </CardHeader>
+      </Card>
+
+      {/* Mobile App Management */}
+      <Card className="border-accent/20 bg-accent/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-accent">
+            <Smartphone className="w-5 h-5" />
+            Mobile App & Sync
+          </CardTitle>
+          <CardDescription>How to update your ATLAS experience.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="p-4 rounded-lg bg-card border">
+              <h4 className="font-bold text-sm mb-1">PWA Update Strategy</h4>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                To update the app on your phone, simply <strong>close and reopen it</strong>. 
+                The system automatically checks for new code on every launch.
+              </p>
+            </div>
+            <div className="p-4 rounded-lg bg-card border">
+              <h4 className="font-bold text-sm mb-1">Signal Status</h4>
+              <p className="text-xs text-muted-foreground mb-2">Last synchronization with Nebula Core:</p>
+              <Badge variant="outline" className="font-mono text-[10px]">{lastSync}</Badge>
+            </div>
+          </div>
+          <Button onClick={handleManualReload} variant="outline" className="w-full border-accent/20 hover:bg-accent/10">
+            <RefreshCw className="mr-2 h-4 w-4" />
+            Force Signal Refresh
+          </Button>
+        </CardContent>
       </Card>
       
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Notifications Card */}
           <Card>
               <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><Bell /> Notifications</CardTitle>
+                  <CardTitle className="flex items-center gap-2 text-lg"><Bell className="w-5 h-5" /> Notifications</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-fireteam">Fireteam Messages</Label>
-                      <Controller name="notifications.fireteam" control={control} render={({ field }) => <Switch id="notif-fireteam" checked={field.value} onCheckedChange={field.onChange} />} />
+                 {[
+                   { name: 'notifications.fireteam', label: 'Fireteam Messages' },
+                   { name: 'notifications.quests', label: 'Quest Updates' },
+                   { name: 'notifications.traits', label: 'Trait Unlocks' },
+                   { name: 'notifications.challenges', label: 'Faction Challenges' },
+                   { name: 'notifications.momentum', label: 'Momentum Flame Warnings' },
+                 ].map((item) => (
+                   <div key={item.name} className="flex items-center justify-between">
+                      <Label htmlFor={item.name}>{item.label}</Label>
+                      <Controller name={item.name as any} control={control} render={({ field }) => <Switch id={item.name} checked={field.value} onCheckedChange={field.onChange} />} />
                   </div>
-                   <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-quests">Quest Updates</Label>
-                      <Controller name="notifications.quests" control={control} render={({ field }) => <Switch id="notif-quests" checked={field.value} onCheckedChange={field.onChange} />} />
-                  </div>
-                   <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-traits">Trait Unlocks</Label>
-                      <Controller name="notifications.traits" control={control} render={({ field }) => <Switch id="notif-traits" checked={field.value} onCheckedChange={field.onChange} />} />
-                  </div>
-                   <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-challenges">Faction Challenges</Label>
-                      <Controller name="notifications.challenges" control={control} render={({ field }) => <Switch id="notif-challenges" checked={field.value} onCheckedChange={field.onChange} />} />
-                  </div>
-                   <div className="flex items-center justify-between">
-                      <Label htmlFor="notif-momentum">Momentum Flame Warnings</Label>
-                      <Controller name="notifications.momentum" control={control} render={({ field }) => <Switch id="notif-momentum" checked={field.value} onCheckedChange={field.onChange} />} />
-                  </div>
+                 ))}
               </CardContent>
           </Card>
 
-          {/* Privacy & Appearance */}
            <div className="grid md:grid-cols-2 gap-6">
               <Card>
                   <CardHeader>
-                      <CardTitle className="flex items-center gap-2"><Eye /> Privacy</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-lg"><Eye className="w-5 h-5" /> Privacy</CardTitle>
                   </CardHeader>
                   <CardContent>
                       <Controller name="privacy.profileVisibility" control={control} render={({ field }) => (
                           <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-2">
-                              <Label>Profile Visibility</Label>
                               <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="Public" id="p-public" />
                                   <Label htmlFor="p-public">Public</Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="Team Only" id="p-team" />
-                                  <Label htmlFor="p-team">Fireteam & Guild Members Only</Label>
+                                  <Label htmlFor="p-team">Team Only</Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="Private" id="p-private" />
@@ -287,84 +261,60 @@ export default function SettingsPage() {
               </Card>
               <Card>
                   <CardHeader>
-                      <CardTitle className="flex items-center gap-2"><Palette/> Appearance & Accessibility</CardTitle>
+                      <CardTitle className="flex items-center gap-2 text-lg"><Palette className="w-5 h-5" /> Appearance</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                      <Controller name="appearance.theme" control={control} render={({ field }) => (
-                          <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="space-y-2">
-                              <Label>Theme</Label>
+                          <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex gap-4">
                                <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="dark" id="t-dark" />
-                                  <Label htmlFor="t-dark">Dark Mode</Label>
+                                  <Label htmlFor="t-dark">Dark</Label>
                               </div>
                                <div className="flex items-center space-x-2">
                                   <RadioGroupItem value="light" id="t-light" />
-                                  <Label htmlFor="t-light">Light Mode</Label>
+                                  <Label htmlFor="t-light">Light</Label>
                               </div>
                           </RadioGroup>
                       )} />
-                      <div className="flex items-center justify-between">
-                          <Label htmlFor="acc-contrast">High Contrast Mode</Label>
-                          <Controller name="accessibility.highContrast" control={control} render={({ field }) => <Switch id="acc-contrast" checked={field.value} onCheckedChange={field.onChange} />} />
-                      </div>
-                       <div className="flex items-center justify-between">
-                          <Label htmlFor="acc-font">Dyslexia-Friendly Font</Label>
-                          <Controller name="accessibility.dyslexiaFont" control={control} render={({ field }) => <Switch id="acc-font" checked={field.value} onCheckedChange={field.onChange} />} />
+                      <div className="space-y-3 pt-2">
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="acc-contrast">High Contrast</Label>
+                            <Controller name="accessibility.highContrast" control={control} render={({ field }) => <Switch id="acc-contrast" checked={field.value} onCheckedChange={field.onChange} />} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="acc-font">Dyslexia Font</Label>
+                            <Controller name="accessibility.dyslexiaFont" control={control} render={({ field }) => <Switch id="acc-font" checked={field.value} onCheckedChange={field.onChange} />} />
+                        </div>
                       </div>
                   </CardContent>
               </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Clock /> Quiet Hours</CardTitle>
-                <CardDescription>Set a "do not disturb" window to silence all push notifications.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <Label htmlFor="quiet-enabled">Enable Quiet Hours</Label>
-                    <Controller name="quietHours.enabled" control={control} render={({ field }) => <Switch id="quiet-enabled" checked={field.value} onCheckedChange={field.onChange} />} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <Label htmlFor="quiet-start">Start Time</Label>
-                        <Controller name="quietHours.start" control={control} render={({ field }) => <Input id="quiet-start" type="time" {...field} />} />
-                    </div>
-                    <div>
-                        <Label htmlFor="quiet-end">End Time</Label>
-                        <Controller name="quietHours.end" control={control} render={({ field }) => <Input id="quiet-end" type="time" {...field} />} />
-                    </div>
-                </div>
-            </CardContent>
-          </Card>
-          
-          <Button type="submit" size="lg" className="w-full">Save Settings</Button>
+          <Button type="submit" size="lg" className="w-full font-bold shadow-lg shadow-primary/20">Save All Settings</Button>
       </form>
 
-      {/* Account Management is outside the main form */}
       <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><ShieldQuestion /> Account</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-lg text-destructive"><ShieldQuestion className="w-5 h-5" /> Danger Zone</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
               {userData && userRef && <UsernameForm user={userData} userRef={userRef} />}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t">
-                <Button type="button" variant="outline" onClick={handlePasswordReset}>Change Password</Button>
-                <Button type="button" variant="outline"><Download className="mr-2"/>Export My Data</Button>
+              <div className="grid sm:grid-cols-2 gap-4 pt-4 border-t">
+                <Button type="button" variant="outline" onClick={handlePasswordReset}>Reset Password</Button>
                 <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <Button type="button" variant="destructive"><Trash2 className="mr-2"/>Reset Onboarding</Button>
+                        <Button type="button" variant="destructive"><Trash2 className="mr-2 h-4 w-4"/>Reset My Journey</Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your character, stats, and progress, allowing you to start the onboarding process over.
+                                This will permanently delete your character, stats, and progress.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Yes, Reset My Journey</AlertDialogAction>
+                            <AlertDialogAction onClick={handleResetOnboarding} className="bg-destructive hover:bg-destructive/90">Confirm Deletion</AlertDialogAction>
                         </AlertDialogFooter>
                     </AlertDialogContent>
                 </AlertDialog>
