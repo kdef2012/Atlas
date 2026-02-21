@@ -38,7 +38,6 @@ const GenerateQuestsInputSchema = z.object({
 export type GenerateQuestsInput = z.infer<typeof GenerateQuestsInputSchema>;
 
 // Define the output schema for the flow
-// Accepts a range to prevent validation errors if the AI deviates slightly from the requested count
 const GenerateQuestsOutputSchema = z.object({
   quests: z.array(QuestSchema).min(1).max(5).describe('An array of generated quests (usually 3).'),
 });
@@ -56,8 +55,7 @@ const generateQuestsPrompt = ai.definePrompt({
   name: 'generateQuestsPrompt',
   input: {schema: GenerateQuestsInputSchema},
   output: {schema: GenerateQuestsOutputSchema},
-  // ✅ FIXED: Explicitly use gemini-1.5-pro (matches genkit.ts config)
-  model: 'googleai/gemini-1.5-pro',
+  // Defaulting to the stable flash model defined in genkit.ts to prevent 404 errors
   prompt: `You are a creative Dungeon Master for a real-life RPG called ATLAS. Your job is to generate a list of three engaging and challenging quests for a user.
 
 The quests should be personalized based on the user's profile. They should encourage the user to step out of their comfort zone but be achievable within a day or two.
@@ -81,7 +79,7 @@ The quests should be personalized based on the user's profile. They should encou
 6.  The 'description' should be a clear, single-sentence call to action.
 7.  The 'category' must be one of the five valid skill categories.
 
-Now, generate a new set of three quests for the provided user profile.`,
+Now, generate a new set of three quests for the provided user profile. Respond with ONLY the JSON object.`,
 });
 
 // Define the Genkit flow
@@ -92,7 +90,6 @@ const generateQuestsFlow = ai.defineFlow(
     outputSchema: GenerateQuestsOutputSchema,
   },
   async input => {
-    // ✅ Uses gemini-1.5-pro as specified in the prompt
     const {output} = await generateQuestsPrompt(input);
     if (!output) throw new Error('The Oracle failed to reveal your destiny.');
     return output;
