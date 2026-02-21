@@ -99,7 +99,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    /* Prevent pull-to-refresh on mobile if desired, but good for PWAs */
+    /* Prevent pull-to-refresh on mobile which breaks app immersion */
     overscroll-behavior-y: none;
   }
 }
