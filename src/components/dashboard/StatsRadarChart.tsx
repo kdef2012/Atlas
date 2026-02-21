@@ -80,7 +80,6 @@ export function StatsRadarChart() {
 
             return (
                 <g transform={`translate(${x},${y})`}>
-                    {/* ✅ FIXED: Removed style prop, use foreignObject for better control */}
                     <foreignObject x={-12} y={-30} width={24} height={24}>
                         <div style={{ color }}>
                             <Icon className="h-6 w-6" />
