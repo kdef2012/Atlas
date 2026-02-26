@@ -9,7 +9,7 @@ import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Paperclip, HeartPulse, ShieldAlert } from "lucide-react";
+import { Loader2, Paperclip, HeartPulse, ShieldAlert, Camera, X, CheckCircle2, Image as ImageIcon } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
@@ -23,6 +23,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -47,15 +48,22 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const { user } = useUser();
   const firestore = useFirestore();
+  
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const getCameraPermission = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'user' } 
+        });
         setHasCameraPermission(true);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
@@ -67,6 +75,14 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     };
 
     getCameraPermission();
+    
+    // Cleanup stream on unmount
+    return () => {
+      if (videoRef.current?.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
   }, []);
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
@@ -105,6 +121,47 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     }, 1500);
   };
 
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    haptics.light();
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    
+    if (context) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/png');
+      setCapturedImage(dataUrl);
+      setSelectedFileName("captured_signal.png");
+      
+      // Clear file input if a photo was captured
+      form.setValue('proof', null);
+      
+      toast({
+        title: "Signal Captured",
+        description: "Visual proof locked into the buffer."
+      });
+    }
+  };
+
+  const clearCapturedImage = () => {
+    setCapturedImage(null);
+    setSelectedFileName(null);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      setSelectedFileName(files[0].name);
+      setCapturedImage(null); // Clear captured photo if a file is chosen
+    } else {
+      setSelectedFileName(null);
+    }
+  };
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     if (!user || !allSkills || !userRef || !userData || !publicLogsCollection) return;
 
@@ -117,7 +174,11 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       });
       
       let { skillId, isNewSkill, skillName, category, prerequisites, cost, isTrivial } = result;
-      const hasProof = (values.proof && values.proof.length > 0);
+      
+      // Check for visual proof (either from file input or captured photo)
+      const hasFileInput = (values.proof && values.proof.length > 0);
+      const hasCapturedPhoto = !!capturedImage;
+      const hasProof = hasFileInput || hasCapturedPhoto;
       
       if (isNewSkill && !isTrivial && !hasProof) {
           toast({
@@ -189,7 +250,12 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       }
       
       let proofUrl = '';
-      if (hasProof && values.proof) {
+      if (hasCapturedPhoto && capturedImage) {
+        // Convert dataURL to File for the upload function
+        const blob = await (await fetch(capturedImage)).blob();
+        const photoFile = new File([blob], "webcam_capture.png", { type: "image/png" });
+        proofUrl = await uploadProofOfWork(user.uid, photoFile);
+      } else if (hasFileInput && values.proof) {
         proofUrl = await uploadProofOfWork(user.uid, values.proof[0]);
       }
 
@@ -247,6 +313,8 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         )
       });
       form.reset();
+      setCapturedImage(null);
+      setSelectedFileName(null);
       onSuccess?.();
     } catch (error) {
       console.error(error);
@@ -272,47 +340,121 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-2">
-            <FormField
-            control={form.control}
-            name="proof"
-            render={({ field: { value, onChange, ...fieldProps } }) => (
-                <FormItem>
-                <FormControl>
-                    <div className="relative">
-                    <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      type="file" 
-                      className="pl-10 text-xs" 
-                      name={fieldProps.name}
-                      onBlur={fieldProps.onBlur}
-                      ref={fieldProps.ref}
-                      onChange={(e) => {
-                        onChange(e.target.files);
-                      }} 
-                    />
+
+        {/* Proof of Work Section */}
+        <div className="space-y-4">
+          <div className="relative overflow-hidden rounded-xl border-2 border-dashed border-primary/20 bg-black/40 aspect-video group">
+            {capturedImage ? (
+              <div className="relative w-full h-full animate-in fade-in zoom-in-95 duration-300">
+                <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" />
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  variant="destructive" 
+                  className="absolute top-2 right-2 rounded-full h-8 w-8 shadow-lg"
+                  onClick={clearCapturedImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+                <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-1">
+                  <CheckCircle2 className="h-3 w-3 text-green-400" /> Signal Locked
+                </div>
+              </div>
+            ) : (
+              <>
+                <video 
+                  ref={videoRef} 
+                  className={cn(
+                    "w-full h-full object-cover",
+                    hasCameraPermission === false && "hidden"
+                  )} 
+                  autoPlay 
+                  muted 
+                  playsInline 
+                />
+                
+                {hasCameraPermission === false && (
+                  <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                    <ShieldAlert className="h-10 w-10 text-muted-foreground opacity-20 mb-2" />
+                    <p className="text-xs text-muted-foreground leading-tight">
+                      Camera access is blocked or unavailable.<br/>Use manual file attachment instead.
+                    </p>
+                  </div>
+                )}
+
+                {hasCameraPermission && (
+                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full border border-white/10">
+                      <Camera className="h-8 w-8 text-white animate-pulse" />
                     </div>
-                </FormControl>
-                <FormMessage />
-                </FormItem>
+                  </div>
+                )}
+              </>
             )}
-            />
-            <Button type="button" variant="outline" onClick={handleSyncDevice} disabled={isSyncing}>
-                {isSyncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <HeartPulse className="mr-2 h-4 w-4 text-red-500" />}
-                Sync Device
+            <canvas ref={canvasRef} className="hidden" />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <Button 
+              type="button" 
+              variant={capturedImage ? "secondary" : "default"}
+              className="font-bold"
+              onClick={capturePhoto}
+              disabled={!hasCameraPermission || !!capturedImage}
+            >
+              <Camera className="mr-2 h-4 w-4" />
+              Capture Signal
             </Button>
+
+            <div className="relative">
+              <Paperclip className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input 
+                type="file" 
+                className="pl-10 text-xs cursor-pointer opacity-0 absolute inset-0 z-10 h-full w-full" 
+                accept="image/*,video/*"
+                onChange={(e) => {
+                  handleFileChange(e);
+                  form.setValue('proof', e.target.files);
+                }}
+              />
+              <Button type="button" variant="outline" className="w-full font-bold">
+                <ImageIcon className="mr-2 h-4 w-4" />
+                Attach File
+              </Button>
+            </div>
+          </div>
+
+          {selectedFileName && (
+            <div className="flex items-center justify-between bg-primary/5 border border-primary/10 px-3 py-2 rounded-lg animate-in slide-in-from-left-2 duration-300">
+              <div className="flex items-center gap-2 overflow-hidden">
+                <div className="p-1 rounded bg-primary/10">
+                  <Paperclip className="h-3 w-3 text-primary" />
+                </div>
+                <span className="text-[10px] font-bold text-primary truncate max-w-[150px] uppercase tracking-tighter">
+                  {selectedFileName}
+                </span>
+              </div>
+              {!capturedImage && (
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    setSelectedFileName(null);
+                    form.setValue('proof', null);
+                  }}
+                  className="text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="space-y-4">
-            <video ref={videoRef} className="w-full aspect-video rounded-md bg-black/20 border-2 border-dashed border-primary/10" autoPlay muted playsInline />
-            {hasCameraPermission === false && (
-                <Alert variant="destructive">
-                    <AlertTitle>Sensor Signal Blocked</AlertTitle>
-                    <AlertDescription>
-                        Camera access is required for real-time verification. Enable permissions in your settings.
-                    </AlertDescription>
-                </Alert>
-            )}
+        <div className="grid grid-cols-1 gap-2 pt-2 border-t border-primary/10">
+            <Button type="button" variant="ghost" onClick={handleSyncDevice} disabled={isSyncing} className="text-xs h-8 text-muted-foreground">
+                {isSyncing ? <Loader2 className="mr-2 h-3 w-3 animate-spin" /> : <HeartPulse className="mr-2 h-3 w-3 text-red-500" />}
+                Quick-Sync Heart Pulse
+            </Button>
         </div>
 
         <div className="p-3 bg-secondary/30 rounded-lg border border-primary/10 flex items-start gap-2">
@@ -321,9 +463,10 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                 Pioneering a new skill requires visual proof. Trivial daily tasks are recorded but do not grant discovery rewards.
             </p>
         </div>
-        <Button type="submit" disabled={isLoading || !user} className="w-full h-12 font-bold shadow-lg shadow-primary/20">
+
+        <Button type="submit" disabled={isLoading || !user} className="w-full h-12 font-bold shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90">
           {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Transmit Achievement
+          {isLoading ? "Transmitting..." : "Transmit Achievement"}
         </Button>
       </form>
     </Form>
