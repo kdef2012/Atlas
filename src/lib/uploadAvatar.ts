@@ -44,7 +44,7 @@ export async function uploadAvatarToStorage(
     
     // Explicitly setting metadata helps Storage Rules validate the upload
     const metadata = {
-      contentType: blob.type,
+      contentType: blob.type || 'image/png',
       customMetadata: {
         'owner': userId,
         'uploadedAt': new Date().toISOString()
@@ -60,7 +60,7 @@ export async function uploadAvatarToStorage(
     console.error('[Storage] Critical upload failure:', error);
     
     if (error.code === 'storage/unauthorized') {
-      throw new Error(`Access Denied: Your account (${userId}) does not have permission to write to this storage path. Please ensure your Storage Security Rules are deployed correctly.`);
+      throw new Error(`Access Denied: Your account (${userId}) does not have permission to write to this storage path. Check Security Rules.`);
     }
     
     throw new Error(`Avatar storage failed: ${error.message || 'Unknown cloud error'}`);
