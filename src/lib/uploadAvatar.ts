@@ -32,6 +32,10 @@ export async function uploadAvatarToStorage(
     throw new Error('Invalid image data provided for upload.');
   }
 
+  if (!userId) {
+    throw new Error('User ID is required for character synthesis storage.');
+  }
+
   try {
     const { storage } = initializeFirebase();
     const timestamp = Date.now();
@@ -39,7 +43,7 @@ export async function uploadAvatarToStorage(
     const storagePath = `avatars/${userId}/${timestamp}_${fileName}`;
     const storageRef = ref(storage, storagePath);
 
-    console.log(`[Storage] Initiating upload for user ${userId} to: ${storagePath}`);
+    console.log(`[Storage] Initiating character render upload for user ${userId} to: ${storagePath}`);
     const blob = dataURItoBlob(dataUri);
     
     // Explicitly setting metadata helps Storage Rules validate the upload
@@ -47,23 +51,24 @@ export async function uploadAvatarToStorage(
       contentType: blob.type || 'image/png',
       customMetadata: {
         'owner': userId,
-        'uploadedAt': new Date().toISOString()
+        'uploadedAt': new Date().toISOString(),
+        'type': 'character_synthesis'
       }
     };
 
     const snapshot = await uploadBytes(storageRef, blob, metadata);
     const downloadURL = await getDownloadURL(snapshot.ref);
     
-    console.log(`[Storage] Upload successful. Public URL: ${downloadURL}`);
+    console.log(`[Storage] Character synthesis complete. Public URL: ${downloadURL}`);
     return downloadURL;
   } catch (error: any) {
-    console.error('[Storage] Critical upload failure:', error);
+    console.error('[Storage] Critical character synthesis failure:', error);
     
     if (error.code === 'storage/unauthorized') {
-      throw new Error(`Access Denied: Your account (${userId}) does not have permission to write to this storage path. Check Security Rules.`);
+      throw new Error(`Access Denied: Your signal was rejected by the character forge. Path: avatars/${userId}/...`);
     }
     
-    throw new Error(`Avatar storage failed: ${error.message || 'Unknown cloud error'}`);
+    throw new Error(`Character synthesis storage failed: ${error.message || 'Unknown cloud error' });
   }
 }
 

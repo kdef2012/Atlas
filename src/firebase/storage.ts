@@ -12,33 +12,47 @@ import { initializeFirebase } from './index';
  * @returns A promise that resolves with the public download URL of the uploaded file.
  */
 export async function uploadProofOfWork(userId: string, file: File): Promise<string> {
+  if (!userId) {
+    throw new Error('ATLAS Signal Error: User ID required for discovery proof.');
+  }
+
   // Ensure Firebase is initialized and get the storage instance.
   const { storage } = initializeFirebase();
 
-  // Create a storage reference. Files are stored in a path like:
-  // /users/{userId}/proofs/{fileName}-{timestamp}
-  // We sanitize the filename to prevent path issues or rule violations
+  // Create a storage reference. 
+  // IMPORTANT: Path must match storage.rules exactly: /users/{userId}/proofs/{fileName}
   const timestamp = Date.now();
   const cleanFileName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
-  const filePath = `users/${userId}/proofs/${cleanFileName}-${timestamp}`;
+  const filePath = `users/${userId}/proofs/${timestamp}_${cleanFileName}`;
   const storageRef = ref(storage, filePath);
 
   try {
     // Add metadata to ensure correct categorization
     const metadata = {
       contentType: file.type || 'image/png',
+      customMetadata: {
+        'owner': userId,
+        'type': 'proof_of_work'
+      }
     };
+
+    console.log(`[Storage] Transmitting proof for user ${userId} to path: ${filePath}`);
 
     // 'uploadBytes' resolves with the upload snapshot.
     const snapshot = await uploadBytes(storageRef, file, metadata);
-    console.log('ATLAS Signal: Proof of Work uploaded successfully', snapshot.metadata.fullPath);
-
+    
     // Get the public URL for the file.
     const downloadURL = await getDownloadURL(snapshot.ref);
+    console.log('ATLAS Signal Locked: Proof of Work verified and stored.');
+    
     return downloadURL;
-  } catch (error) {
-    console.error("ATLAS Signal Failure: Upload failed:", error);
-    // Re-throw the error to be handled by the calling function.
+  } catch (error: any) {
+    console.error("ATLAS Signal Failure: Upload protocol failed:", error);
+    
+    if (error.code === 'storage/unauthorized') {
+      throw new Error(`Access Denied: The Nebula Core rejected your signal. Ensure you are logged in and authorized to write to path: ${filePath}`);
+    }
+    
     throw error;
   }
 }
