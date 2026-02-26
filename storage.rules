@@ -5,7 +5,6 @@ service firebase.storage {
   match /b/{bucket}/o {
     
     // Avatars: Publicly viewable by all citizens, but only editable by the owner.
-    // Explicitly check for UID match on the userId segment.
     match /avatars/{userId}/{allPaths=**} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
@@ -13,16 +12,14 @@ service firebase.storage {
 
     // User Proofs: 
     // Proofs are viewable by others for verification logic, but only writable by the owner.
-    // Matching the specific sub-path structure used in the app.
-    match /users/{userId}/proofs/{allPaths=**} {
+    match /users/{userId}/proofs/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;
     }
     
-    // Catch-all for other user data
+    // Private User Files: Owner read/write catch-all
     match /users/{userId}/{allPaths=**} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

@@ -17,7 +17,12 @@ export async function uploadProofOfWork(userId: string, file: File): Promise<str
   }
 
   // Ensure Firebase is initialized and get the storage instance.
-  const { storage } = initializeFirebase();
+  const { storage, auth } = initializeFirebase();
+
+  // Double check auth state before proceeding to avoid storage/unauthorized
+  if (!auth.currentUser || auth.currentUser.uid !== userId) {
+    throw new Error('ATLAS Signal Error: Authentication mismatch. Please re-authenticate.');
+  }
 
   // Create a storage reference. 
   // IMPORTANT: Path must match storage.rules exactly: /users/{userId}/proofs/{fileName}
