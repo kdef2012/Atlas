@@ -1,9 +1,17 @@
 /**
  * ATLAS Service Worker
- * Prioritizes network for live application updates while satisfying PWA install requirements.
+ * Technical requirement for PWA installation on Android/Samsung devices.
+ * Hardened to ignore workstation-specific authentication redirects.
  */
 
-const CACHE_NAME = 'atlas-signal-v1';
+const CACHE_NAME = 'atlas-cache-v1';
+
+// We skip caching workstation-specific internal paths and cross-origin auth redirects
+const IGNORED_HOSTS = [
+  'cloudworkstations.dev',
+  'google.com',
+  'firebase.com'
+];
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -14,28 +22,23 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
+  const url = new URL(event.request.url);
 
-  // 1. Skip non-GET requests (Server Actions, Auth, etc.)
-  if (request.method !== 'GET') return;
-
-  // 2. Skip workstation-internal paths and cross-origin requests
-  // This prevents CORS/redirection errors in the developer environment
+  // CRITICAL: Ignore all cross-origin requests and internal workstation redirects.
+  // Intercepting these causes CORS and network failures during manifest loading.
   if (
+    url.origin !== self.location.origin || 
     url.pathname.includes('_workstation') || 
     url.pathname.includes('forwardAuthCookie') ||
-    url.origin !== self.location.origin
+    url.pathname.includes('manifest')
   ) {
     return;
   }
 
-  // 3. Network-First Strategy
-  // Ensures you always get the latest code I write, but keeps the app "installable"
+  // Basic "Cache-First" strategy for local assets to satisfy PWA requirements
   event.respondWith(
-    fetch(request)
-      .catch(() => {
-        return caches.match(request);
-      })
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
   );
 });

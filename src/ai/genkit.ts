@@ -5,6 +5,6 @@ export const ai = genkit({
   plugins: [
     googleAI({apiKey: process.env.GEMINI_API_KEY}),
   ],
-  // Use the high-stability model identifier to prevent 404 errors
-  model: 'googleai/gemini-1.5-flash',
+  // Synchronized to the modern 2.5 architecture to prevent 404 errors in specific project regions
+  model: 'googleai/gemini-2.5-flash',
 });
