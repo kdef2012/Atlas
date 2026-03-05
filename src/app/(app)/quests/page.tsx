@@ -9,7 +9,7 @@ import { useUser, useCollection, useFirestore, useMemoFirebase, addDocumentNonBl
 import { collection, doc } from "firebase/firestore";
 import type { Quest } from "@/lib/quest";
 import { Button } from "@/components/ui/button";
-import { Loader2, Mountain, Bot, Zap } from "lucide-react";
+import { Loader2, Mountain, Bot, Zap, ShieldAlert, History } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { generateQuests } from '@/ai/flows/generate-quests';
 import type { User, Archetype } from '@/lib/types';
@@ -39,7 +39,7 @@ function QuestList() {
         try {
             const aiResult = await generateQuests({
                 archetype: archetype,
-                level: user.level,
+                level: user.level || 1,
                 stats: {
                     physical: user.physicalStat,
                     mental: user.mentalStat,
@@ -49,11 +49,11 @@ function QuestList() {
                 }
             });
 
-            // Add the new quests to Firestore without blocking
             aiResult.quests.forEach(quest => {
                 const newQuest: Omit<Quest, 'id'> = {
                     ...quest,
                     isCompleted: false,
+                    isVerified: false,
                     userId: user.id,
                 };
                 addDocumentNonBlocking(questsCollectionRef, newQuest);
@@ -76,24 +76,6 @@ function QuestList() {
         }
     }
 
-    const questGenerationButtons = (
-        <div className="flex flex-col sm:flex-row gap-2">
-            <Button onClick={() => handleGenerateQuests('Titan')} disabled={!!isGenerating || !user} variant="outline" className="border-red-500/50 hover:bg-red-500/10 hover:text-red-400">
-                {isGenerating === 'Titan' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mountain className="mr-2 h-4 w-4 text-red-500" />}
-                Generate Titan Quests
-            </Button>
-            <Button onClick={() => handleGenerateQuests('Sage')} disabled={!!isGenerating || !user} variant="outline" className="border-blue-500/50 hover:bg-blue-500/10 hover:text-blue-400">
-                {isGenerating === 'Sage' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4 text-blue-500" />}
-                Generate Sage Quests
-            </Button>
-            <Button onClick={() => handleGenerateQuests('Maverick')} disabled={!!isGenerating || !user} variant="outline" className="border-yellow-500/50 hover:bg-yellow-500/10 hover:text-yellow-400">
-                {isGenerating === 'Maverick' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Zap className="mr-2 h-4 w-4 text-yellow-500" />}
-                Generate Maverick Quests
-            </Button>
-        </div>
-    )
-
-
     if (isLoading) {
         return (
             <div className="space-y-4">
@@ -108,37 +90,59 @@ function QuestList() {
         return (
             <div className="text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
                 <p className="mb-4 font-headline uppercase tracking-widest opacity-50">Signal Missing: Quest Log Empty</p>
-                <div className="flex justify-center">
-                    {questGenerationButtons}
+                <div className="flex flex-wrap justify-center gap-2">
+                    <Button onClick={() => handleGenerateQuests('Titan')} disabled={!!isGenerating} variant="outline" size="sm">Titan</Button>
+                    <Button onClick={() => handleGenerateQuests('Sage')} disabled={!!isGenerating} variant="outline" size="sm">Sage</Button>
+                    <Button onClick={() => handleGenerateQuests('Maverick')} disabled={!!isGenerating} variant="outline" size="sm">Maverick</Button>
                 </div>
             </div>
         )
     }
 
     const activeQuests = quests.filter(q => !q.isCompleted);
-    const completedQuests = quests.filter(q => q.isCompleted);
+    const pendingQuests = quests.filter(q => q.isCompleted && !q.isVerified);
+    const completedQuests = quests.filter(q => q.isCompleted && q.isVerified);
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-10">
             <div>
                 <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                    <h2 className="font-headline text-2xl">Active Quests</h2>
-                     {activeQuests.length < 3 && (
-                        <div className="flex justify-center">
-                             {questGenerationButtons}
+                    <h2 className="font-headline text-2xl">Active Objectives</h2>
+                    {activeQuests.length < 3 && (
+                        <div className="flex gap-2">
+                            <Button onClick={() => handleGenerateQuests(user?.archetype || 'Titan')} disabled={!!isGenerating} size="sm">
+                                {isGenerating ? <Loader2 className="animate-spin h-4 w-4" /> : <Zap className="h-4 w-4 mr-1" />}
+                                Synchronize Quests
+                            </Button>
                         </div>
-                     )}
+                    )}
                 </div>
                 <div className="space-y-4">
                     {activeQuests.length > 0 ? (
                         activeQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
                     ) : (
-                        <p className="text-muted-foreground text-center italic py-8 border rounded-lg bg-secondary/10">No active quests in current frequency. Synchronize new objectives above.</p>
+                        <p className="text-muted-foreground text-center italic py-8 border rounded-lg bg-secondary/10">No active objectives.</p>
                     )}
                 </div>
             </div>
-             <div>
-                <h2 className="font-headline text-2xl mb-2 opacity-50">Completed Chronology</h2>
+
+            {pendingQuests.length > 0 && (
+                <div>
+                    <h2 className="font-headline text-2xl mb-4 flex items-center gap-2 text-yellow-500">
+                        <ShieldAlert className="h-6 w-6" />
+                        Awaiting Verification
+                    </h2>
+                    <div className="space-y-4">
+                        {pendingQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)}
+                    </div>
+                </div>
+            )}
+
+            <div>
+                <h2 className="font-headline text-2xl mb-4 opacity-50 flex items-center gap-2">
+                    <History className="h-6 w-6" />
+                    Completed Chronology
+                </h2>
                 <div className="space-y-4 opacity-60">
                     {completedQuests.length > 0 ? (
                         completedQuests.map(quest => <QuestCard key={quest.id} quest={quest} />)
@@ -151,13 +155,12 @@ function QuestList() {
     )
 }
 
-
 export default function QuestsPage() {
     return (
         <Card className="border-primary/20 bg-card/50 backdrop-blur-md">
             <CardHeader>
                 <CardTitle className="font-headline text-3xl">Quest Log</CardTitle>
-                <CardDescription>Your personal roadmap to mastery. Complete objectives to earn XP and expand your potential.</CardDescription>
+                <CardDescription>Your personal roadmap to mastery. Complete objectives and provide proof to earn your place in the Chronology.</CardDescription>
             </CardHeader>
             <CardContent>
                 <QuestList />

@@ -7,5 +7,7 @@ export interface Quest {
   description: string;
   category: SkillCategory | 'Intro';
   isCompleted: boolean;
+  isVerified?: boolean; 
+  verificationPhotoUrl?: string;
   userId: string;
 }
