@@ -1,10 +1,11 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useUser, useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
+import { useUser, useDoc, useCollection, useMemoFirebase, useFirestore } from '@/firebase';
 import { collection, doc, query, orderBy, limit, where } from 'firebase/firestore';
 import type { User, Skill, Fireteam, SkillCategory } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
