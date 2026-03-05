@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -9,7 +8,7 @@ import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, HeartPulse, ShieldAlert, Camera, X, CheckCircle2, Image as ImageIcon, Sparkles, Paperclip } from "lucide-react";
+import { Loader2, HeartPulse, ShieldAlert, Camera, X, CheckCircle2, Image as ImageIcon, Sparkles, Paperclip, Power } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
@@ -48,7 +47,8 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
-  const [isCameraStarting, setIsCameraStarting] = useState(true);
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(false);
   
   const { toast } = useToast();
   const { user } = useUser();
@@ -57,34 +57,38 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        setIsCameraStarting(true);
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-          video: { facingMode: 'user' } 
-        });
-        setHasCameraPermission(true);
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.warn('Camera access declined:', error);
-        setHasCameraPermission(false);
-      } finally {
-        setIsCameraStarting(false);
+  const startCamera = async () => {
+    setIsInitializing(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'user' } 
+      });
+      setHasCameraPermission(true);
+      setIsCameraActive(true);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
       }
-    };
+    } catch (error) {
+      console.warn('Camera access declined:', error);
+      setHasCameraPermission(false);
+      toast({
+        variant: 'destructive',
+        title: 'Camera Access Denied',
+        description: 'Please enable camera permissions in your browser settings to use this feature.'
+      });
+    } finally {
+      setIsInitializing(false);
+    }
+  };
 
-    getCameraPermission();
-    
-    return () => {
-      if (videoRef.current?.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
+  const stopCamera = () => {
+    if (videoRef.current?.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach(track => track.stop());
+      videoRef.current.srcObject = null;
+    }
+    setIsCameraActive(false);
+  };
 
   const userRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [firestore, user]);
   const { data: userData } = useDoc<User>(userRef);
@@ -145,6 +149,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         title: "Signal Captured",
         description: "Visual proof locked into the buffer."
       });
+      stopCamera();
     }
   };
 
@@ -158,6 +163,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     if (files && files.length > 0) {
       setSelectedFileName(files[0].name);
       setCapturedImage(null);
+      stopCamera();
     } else {
       setSelectedFileName(null);
     }
@@ -304,6 +310,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       form.reset();
       setCapturedImage(null);
       setSelectedFileName(null);
+      stopCamera();
       onSuccess?.();
     } catch (error: any) {
       console.error(error);
@@ -353,38 +360,43 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
                   <CheckCircle2 className="h-3 w-3" /> Signal Locked
                 </div>
               </div>
+            ) : isCameraActive ? (
+              <div className="relative w-full h-full">
+                <video 
+                  ref={videoRef} 
+                  className="w-full h-full object-cover"
+                  autoPlay 
+                  muted 
+                  playsInline 
+                />
+                <Button 
+                  type="button" 
+                  size="icon" 
+                  variant="ghost" 
+                  className="absolute top-2 right-2 text-white hover:bg-white/10"
+                  onClick={stopCamera}
+                >
+                  <Power className="h-4 w-4" />
+                </Button>
+              </div>
             ) : (
-              <>
-                {isCameraStarting ? (
-                  <div className="flex flex-col items-center justify-center h-full gap-2">
-                    <Loader2 className="h-6 w-6 animate-spin text-primary opacity-50" />
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Initializing Sensors...</p>
-                  </div>
-                ) : hasCameraPermission === false ? (
-                  <div className="flex flex-col items-center justify-center h-full p-6 text-center">
-                    <ShieldAlert className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold leading-tight">
-                      Camera Offline<br/>Use Manual File Attachment
-                    </p>
-                  </div>
-                ) : (
-                  <video 
-                    ref={videoRef} 
-                    className="w-full h-full object-cover"
-                    autoPlay 
-                    muted 
-                    playsInline 
-                  />
-                )}
-
-                {hasCameraPermission && !isCameraStarting && (
-                  <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                    <div className="bg-black/40 backdrop-blur-sm p-4 rounded-full border border-white/10">
-                      <Camera className="h-8 w-8 text-white animate-pulse" />
-                    </div>
-                  </div>
-                )}
-              </>
+              <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                <Camera className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+                <p className="text-[10px] text-muted-foreground uppercase font-bold leading-tight">
+                  Camera Sensor Offline<br/>Initialize to provide proof
+                </p>
+                <Button 
+                  type="button" 
+                  variant="secondary" 
+                  size="sm" 
+                  className="mt-4 text-[10px] h-7 font-black uppercase tracking-widest"
+                  onClick={startCamera}
+                  disabled={isInitializing}
+                >
+                  {isInitializing ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Power className="w-3 h-3 mr-1" />}
+                  Initialize Camera
+                </Button>
+              </div>
             )}
             <canvas ref={canvasRef} className="hidden" />
           </div>
@@ -395,7 +407,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
               variant={capturedImage ? "secondary" : "default"}
               className="font-bold h-11"
               onClick={capturePhoto}
-              disabled={!hasCameraPermission || !!capturedImage || isLoading}
+              disabled={!isCameraActive || !!capturedImage || isLoading}
             >
               <Camera className="mr-2 h-4 w-4" />
               Capture Signal

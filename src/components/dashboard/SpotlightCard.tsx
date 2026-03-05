@@ -1,20 +1,23 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useUser, useDoc, useCollection, useFirestore, useMemoFirebase } from '@/firebase';
-import { collection, doc, query, orderBy, limit } from 'firebase/firestore';
-import type { User, Skill, Fireteam, Log, SkillCategory } from '@/lib/types';
-import { Skeleton } from '../ui/skeleton';
-import { Target, Users, Zap, BrainCircuit, Activity } from 'lucide-react';
+import { collection, doc, query, orderBy, limit, where } from 'firebase/firestore';
+import type { User, Skill, Fireteam, SkillCategory } from '@/lib/types';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Target, Users, Zap, BrainCircuit, Activity, CheckCircle2, XCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { haptics } from '@/lib/haptics';
 
 type SpotlightItem = {
     type: 'focus' | 'fireteam' | 'trending' | 'puzzle' | 'echo';
     title: string;
     description: string;
     icon: React.ReactNode;
+    answer?: string;
 };
 
 // Simplified PublicLog for the echo feature
@@ -60,6 +63,8 @@ export function SpotlightCard() {
     const { user, fireteamMembers, trendingSkill, recentLog, isLoading } = useSpotlightData();
     const [spotlightItems, setSpotlightItems] = useState<SpotlightItem[]>([]);
     const [currentItemIndex, setCurrentItemIndex] = useState(0);
+    const [puzzleAnswer, setPuzzleAnswer] = useState('');
+    const [puzzleStatus, setPuzzleStatus] = useState<'idle' | 'correct' | 'wrong'>('idle');
 
     useEffect(() => {
         const items: SpotlightItem[] = [];
@@ -122,20 +127,40 @@ export function SpotlightCard() {
             type: 'puzzle',
             title: "Mental Agility Puzzle",
             description: "I have cities, but no houses; forests, but no trees; and water, but no fish. What am I?",
-            icon: <BrainCircuit className="w-6 h-6 text-blue-400" />
+            icon: <BrainCircuit className="w-6 h-6 text-blue-400" />,
+            answer: 'map'
         });
         
         setSpotlightItems(items);
     }, [user, fireteamMembers, trendingSkill, recentLog]);
 
     useEffect(() => {
-        if (spotlightItems.length > 0) {
+        if (spotlightItems.length > 0 && puzzleStatus === 'idle') {
             const interval = setInterval(() => {
                 setCurrentItemIndex((prevIndex) => (prevIndex + 1) % spotlightItems.length);
             }, 7000); // Rotate every 7 seconds
             return () => clearInterval(interval);
         }
-    }, [spotlightItems]);
+    }, [spotlightItems, puzzleStatus]);
+
+    const handleCheckAnswer = () => {
+        const currentItem = spotlightItems[currentItemIndex];
+        if (currentItem.type === 'puzzle' && currentItem.answer) {
+            if (puzzleAnswer.toLowerCase().trim().includes(currentItem.answer)) {
+                haptics.success();
+                setPuzzleStatus('correct');
+                setTimeout(() => {
+                    setPuzzleStatus('idle');
+                    setPuzzleAnswer('');
+                    setCurrentItemIndex((prev) => (prev + 1) % spotlightItems.length);
+                }, 2000);
+            } else {
+                haptics.error();
+                setPuzzleStatus('wrong');
+                setTimeout(() => setPuzzleStatus('idle'), 2000);
+            }
+        }
+    };
     
     if (isLoading) {
         return <Skeleton className="h-28 w-full" />;
@@ -144,7 +169,7 @@ export function SpotlightCard() {
     const currentItem = spotlightItems[currentItemIndex];
 
     return (
-        <Card>
+        <Card className="relative overflow-hidden">
             <CardContent className="p-4">
                 <AnimatePresence mode="wait">
                     {currentItem && (
@@ -154,19 +179,50 @@ export function SpotlightCard() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.5 }}
-                            className="flex items-center gap-4"
+                            className="flex flex-col sm:flex-row items-center gap-4"
                         >
-                            <div className="p-3 bg-secondary rounded-lg">
+                            <div className="p-3 bg-secondary rounded-lg shrink-0">
                                 {currentItem.icon}
                             </div>
-                            <div className="flex-1">
-                                <h3 className="font-bold">{currentItem.title}</h3>
-                                <p className="text-sm text-muted-foreground">{currentItem.description}</p>
+                            <div className="flex-1 text-center sm:text-left">
+                                <h3 className="font-bold text-sm uppercase tracking-widest text-muted-foreground">{currentItem.title}</h3>
+                                <p className="text-sm leading-tight mt-1">{currentItem.description}</p>
+                                
+                                {currentItem.type === 'puzzle' && (
+                                    <div className="mt-3 flex items-center gap-2">
+                                        <Input 
+                                            placeholder="Type your answer..." 
+                                            value={puzzleAnswer}
+                                            onChange={(e) => setPuzzleAnswer(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && handleCheckAnswer()}
+                                            className="h-8 text-xs bg-background/50"
+                                            disabled={puzzleStatus !== 'idle'}
+                                        />
+                                        <Button 
+                                            size="sm" 
+                                            className="h-8 text-[10px] font-black uppercase tracking-tighter"
+                                            onClick={handleCheckAnswer}
+                                            disabled={puzzleStatus !== 'idle'}
+                                        >
+                                            {puzzleStatus === 'correct' ? <CheckCircle2 className="w-4 h-4 text-green-400" /> : 
+                                             puzzleStatus === 'wrong' ? <XCircle className="w-4 h-4 text-red-400" /> : 
+                                             'Verify'}
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </motion.div>
                     )}
                 </AnimatePresence>
             </CardContent>
+            {/* Progress bar for the rotation */}
+            <motion.div 
+                key={`progress-${currentItemIndex}`}
+                initial={{ width: '0%' }}
+                animate={{ width: '100%' }}
+                transition={{ duration: 7, ease: 'linear' }}
+                className="absolute bottom-0 left-0 h-0.5 bg-primary/20"
+            />
         </Card>
     );
 }
