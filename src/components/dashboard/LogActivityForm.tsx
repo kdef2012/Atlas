@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -133,7 +132,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     if (!videoRef.current || !canvasRef.current || !cameraStream) return;
     
     const video = videoRef.current;
-    // Check if video metadata is loaded and streaming
     if (video.videoWidth === 0) {
       toast({ description: "Initializing sensors... please try again in a moment." });
       return;
@@ -253,6 +251,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         }
       }
       
+      // Upload proof of work (photo or file)
       let proofUrl = '';
       if (hasCapturedPhoto && capturedImage) {
         const blob = await (await fetch(capturedImage)).blob();
@@ -262,27 +261,45 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         proofUrl = await uploadProofOfWork(user.uid, values.proof[0]);
       }
 
+      // Write the log to the user's personal subcollection
+      // XP is held in escrow — only credited after community verification
       const newLogRef = doc(collection(firestore, `users/${user.uid}/logs`));
       batch.set(newLogRef, {
         id: newLogRef.id,
         userId: user.uid,
         skillId: skillId,
+        skillName: skillName,
+        category: category,
         timestamp: timestamp,
         xp: xpGained,
         verificationPhotoUrl: proofUrl,
         isVerified: !hasProof,
+        verifiedBy: null,
+        verifiedAt: null,
       });
 
+      // Broadcast to public feed for community verification
       addDocumentNonBlocking(publicLogsCollection, {
+        logId: newLogRef.id,
+        userId: user.uid,
+        userName: userData.userName || 'Unknown',
+        skillId: skillId,
         skillName,
         category,
+        xp: xpGained,
+        verificationPhotoUrl: proofUrl,
+        isVerified: !hasProof,
+        verifiedBy: null,
+        verifiedAt: null,
         userRegion: userData.region || 'Unknown Region',
         timestamp: timestamp,
       });
 
+      // Track the skill on the user's profile (XP held pending verification if proof was provided)
       userStatUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
       if (!hasProof) userStatUpdate.xp = increment(xpGained);
 
+      // Territory challenge contribution
       if (userData.fireteamId && allTerritories) {
           const activeChallenge = allTerritories.find(t => t.faction === category && t.endsAt > timestamp);
           if (activeChallenge) {
@@ -290,9 +307,9 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
               batch.update(territoryRef, { [`scores.${userData.fireteamId}`]: increment(xpGained) });
           }
       }
-      
-      const skillRef = doc(firestore, 'skills', skillId);
-      batch.update(skillRef, { xp: increment(xpGained) });
+
+      // NOTE: Skill-level XP (skills/{skillId}.xp) is NOT updated here.
+      // It is credited upon community verification to prevent self-inflation.
       batch.update(userRef, userStatUpdate);
       
       await batch.commit();
@@ -310,7 +327,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
             </div>
             <span>
               {isNewSkill ? `Pioneered '${skillName}'!` : `Logged '${skillName}'.`}
-              {hasProof ? " Awaiting verification." : ` (+${xpGained} XP)`}
+              {hasProof ? " Awaiting community verification." : ` (+${xpGained} XP)`}
             </span>
           </div>
         )
