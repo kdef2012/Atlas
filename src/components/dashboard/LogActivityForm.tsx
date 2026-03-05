@@ -9,7 +9,7 @@ import { findOrCreateSkill } from "@/ai/flows/find-or-create-skill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Paperclip, HeartPulse, ShieldAlert, Camera, X, CheckCircle2, Image as ImageIcon, Sparkles } from "lucide-react";
+import { Loader2, HeartPulse, ShieldAlert, Camera, X, CheckCircle2, Image as ImageIcon, Sparkles, Paperclip } from "lucide-react";
 import type { Skill, SkillCategory, Territory, Fireteam, User } from "@/lib/types";
 import { CATEGORY_COLORS, CATEGORY_ICONS } from "@/lib/types";
 import { useUser, useFirestore, useMemoFirebase, uploadProofOfWork, useCollection, useDoc, addDocumentNonBlocking } from "@/firebase";
@@ -22,8 +22,6 @@ import {
   FormItem,
   FormMessage,
 } from "@/components/ui/form";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { cn } from "@/lib/utils";
 
 const formSchema = z.object({
   skill: z.string().min(3, "Please describe your activity."),
@@ -71,7 +69,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
           videoRef.current.srcObject = stream;
         }
       } catch (error) {
-        console.warn('Camera access declined or unavailable:', error);
+        console.warn('Camera access declined:', error);
         setHasCameraPermission(false);
       } finally {
         setIsCameraStarting(false);
@@ -128,12 +126,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     if (!videoRef.current || !canvasRef.current) return;
     
     const video = videoRef.current;
-    
-    // Wait for video dimensions to be ready
-    if (video.videoWidth === 0) {
-      toast({ description: "Waiting for camera to focus..." });
-      return;
-    }
+    if (video.videoWidth === 0) return;
 
     haptics.light();
     const canvas = canvasRef.current;
@@ -146,7 +139,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
       const dataUrl = canvas.toDataURL('image/png');
       setCapturedImage(dataUrl);
       setSelectedFileName("webcam_capture.png");
-      
       form.setValue('proof', null);
       
       toast({
