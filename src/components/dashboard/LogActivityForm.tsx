@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -44,11 +45,11 @@ interface LogActivityFormProps {
 export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
   
   const { toast } = useToast();
   const { user } = useUser();
@@ -57,20 +58,23 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
+  // Reliable stream assignment to prevent "grey box"
+  useEffect(() => {
+    if (isCameraActive && cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [isCameraActive, cameraStream]);
+
   const startCamera = async () => {
     setIsInitializing(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { facingMode: 'user' } 
       });
-      setHasCameraPermission(true);
+      setCameraStream(stream);
       setIsCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       console.warn('Camera access declined:', error);
-      setHasCameraPermission(false);
       toast({
         variant: 'destructive',
         title: 'Camera Access Denied',
@@ -82,10 +86,9 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     }
     setIsCameraActive(false);
   };
@@ -127,10 +130,14 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !cameraStream) return;
     
     const video = videoRef.current;
-    if (video.videoWidth === 0) return;
+    // Check if video metadata is loaded and streaming
+    if (video.videoWidth === 0) {
+      toast({ description: "Initializing sensors... please try again in a moment." });
+      return;
+    }
 
     haptics.light();
     const canvas = canvasRef.current;
@@ -257,6 +264,7 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
 
       const newLogRef = doc(collection(firestore, `users/${user.uid}/logs`));
       batch.set(newLogRef, {
+        id: newLogRef.id,
         userId: user.uid,
         skillId: skillId,
         timestamp: timestamp,

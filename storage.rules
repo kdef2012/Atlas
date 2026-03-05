@@ -11,7 +11,7 @@ service firebase.storage {
     }
 
     // User Proofs: 
-    // STRICT AUTHORIZATION: Explicitly match the path and ensure UID matches.
+    // Hyper-specific matching to resolve storage/unauthorized definitively.
     match /users/{userId}/proofs/{fileName} {
       allow read: if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == userId;

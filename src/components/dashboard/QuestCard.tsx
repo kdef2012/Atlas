@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,9 +36,17 @@ export function QuestCard({ quest }: QuestCardProps) {
   const [isInitializing, setIsInitializing] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // Reliable stream assignment to prevent "grey box"
+  useEffect(() => {
+    if (isCameraActive && cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
+    }
+  }, [isCameraActive, cameraStream]);
 
   const Icon = (quest.category !== 'Intro' && CATEGORY_ICONS[quest.category as SkillCategory]) 
     ? CATEGORY_ICONS[quest.category as SkillCategory] 
@@ -52,10 +60,8 @@ export function QuestCard({ quest }: QuestCardProps) {
     setIsInitializing(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      setCameraStream(stream);
       setIsCameraActive(true);
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -68,16 +74,21 @@ export function QuestCard({ quest }: QuestCardProps) {
   };
 
   const stopCamera = () => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
     }
     setIsCameraActive(false);
   };
 
   const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current || !cameraStream) return;
+    
+    if (videoRef.current.videoWidth === 0) {
+      toast({ description: "Initializing sensors..." });
+      return;
+    }
+
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
     if (context) {
@@ -187,7 +198,13 @@ export function QuestCard({ quest }: QuestCardProps) {
                     {capturedImage ? (
                       <img src={capturedImage} alt="Proof" className="w-full h-full object-cover" />
                     ) : isCameraActive ? (
-                      <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover" />
+                      <video 
+                        ref={videoRef} 
+                        autoPlay 
+                        muted 
+                        playsInline 
+                        className="w-full h-full object-cover" 
+                      />
                     ) : (
                       <div className="text-center p-6">
                         <Camera className="h-8 w-8 mx-auto text-muted-foreground opacity-20 mb-2" />
