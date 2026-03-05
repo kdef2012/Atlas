@@ -57,7 +57,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Reliable stream assignment to prevent "grey box"
   useEffect(() => {
     if (isCameraActive && cameraStream && videoRef.current) {
       videoRef.current.srcObject = cameraStream;
@@ -180,12 +179,31 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
     haptics.light();
     setIsLoading(true);
     try {
-      const result = await findOrCreateSkill({ 
-        activity: values.skill,
-        existingSkills: allSkills,
-      });
+      // CACHE LAYER: Local resolution to skip AI if the skill name is a known quantity
+      const normalizedInput = values.skill.toLowerCase().trim();
+      const localMatch = allSkills.find(s => s.name.toLowerCase() === normalizedInput);
       
-      let { skillId, isNewSkill, skillName, category, prerequisites, cost, isTrivial } = result;
+      let resolution;
+      if (localMatch) {
+        console.log(`[Cache] Local resolution for: ${localMatch.name}`);
+        resolution = {
+          skillId: localMatch.id,
+          isNewSkill: false,
+          skillName: localMatch.name,
+          category: localMatch.category,
+          prerequisites: localMatch.prerequisites,
+          cost: localMatch.cost,
+          isTrivial: false // Assume non-trivial if it's already in the DB
+        };
+      } else {
+        // Fallback to AI for new/ambiguous signals
+        resolution = await findOrCreateSkill({ 
+          activity: values.skill,
+          existingSkills: allSkills,
+        });
+      }
+      
+      let { skillId, isNewSkill, skillName, category, prerequisites, cost, isTrivial } = resolution;
       
       const hasFileInput = (values.proof && values.proof.length > 0);
       const hasCapturedPhoto = !!capturedImage;
@@ -251,7 +269,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         }
       }
       
-      // Upload proof of work (photo or file)
       let proofUrl = '';
       if (hasCapturedPhoto && capturedImage) {
         const blob = await (await fetch(capturedImage)).blob();
@@ -261,8 +278,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         proofUrl = await uploadProofOfWork(user.uid, values.proof[0]);
       }
 
-      // Write the log to the user's personal subcollection
-      // XP is held in escrow — only credited after community verification
       const newLogRef = doc(collection(firestore, `users/${user.uid}/logs`));
       batch.set(newLogRef, {
         id: newLogRef.id,
@@ -278,7 +293,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         verifiedAt: null,
       });
 
-      // Broadcast to public feed for community verification
       addDocumentNonBlocking(publicLogsCollection, {
         logId: newLogRef.id,
         userId: user.uid,
@@ -295,11 +309,9 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
         timestamp: timestamp,
       });
 
-      // Track the skill on the user's profile (XP held pending verification if proof was provided)
       userStatUpdate[`userSkills.${skillId}.xp`] = increment(xpGained);
       if (!hasProof) userStatUpdate.xp = increment(xpGained);
 
-      // Territory challenge contribution
       if (userData.fireteamId && allTerritories) {
           const activeChallenge = allTerritories.find(t => t.faction === category && t.endsAt > timestamp);
           if (activeChallenge) {
@@ -308,8 +320,6 @@ export function LogActivityForm({ onSuccess }: LogActivityFormProps) {
           }
       }
 
-      // NOTE: Skill-level XP (skills/{skillId}.xp) is NOT updated here.
-      // It is credited upon community verification to prevent self-inflation.
       batch.update(userRef, userStatUpdate);
       
       await batch.commit();

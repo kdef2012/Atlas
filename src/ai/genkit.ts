@@ -5,6 +5,6 @@ export const ai = genkit({
   plugins: [
     googleAI({apiKey: process.env.GEMINI_API_KEY}),
   ],
-  // Synchronized to the modern 2.5 architecture to prevent 404 errors in specific project regions
-  model: 'googleai/gemini-2.5-flash',
+  // Synchronized to the stable 1.5 architecture to prevent 404 errors and reduce rate-limit interference
+  model: 'googleai/gemini-1.5-flash',
 });
