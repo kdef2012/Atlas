@@ -3,17 +3,19 @@
 
 /**
  * @fileOverview Defines a server action to generate a new 3D avatar image by applying cosmetics.
- * Uses gpt-image-1.5 for high-quality image-to-image editing.
+ * Uses GPT-4o-mini to analyze the base character and DALL-E 3 to synthesize the new image.
  */
-import { ai } from '@/ai/genkit';
+import OpenAI from 'openai';
 
-// Define the input type for the function
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
+
 export interface GenerateAvatarImageInput {
   baseAvatarDataUri: string;
   cosmeticVisualDescriptions: string[];
 }
 
-// Define the output type for the function
 export interface GenerateAvatarImageOutput {
   generatedAvatarDataUri: string;
 }
@@ -27,7 +29,6 @@ export async function generateAvatarImage(
 
   let imageDataUri = input.baseAvatarDataUri;
 
-  // If the input is a URL, fetch it and convert it to a data URI
   if (!imageDataUri.startsWith('data:image')) {
     try {
       const response = await fetch(imageDataUri);
@@ -43,42 +44,56 @@ export async function generateAvatarImage(
     }
   }
 
-
-  // If no cosmetics, we can just return the base image.
   if (!input.cosmeticVisualDescriptions || input.cosmeticVisualDescriptions.length === 0) {
     return { generatedAvatarDataUri: imageDataUri };
   }
 
+  // 1. Analyze the original character using GPT-4 Vision
+  const descriptionResponse = await openai.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      {
+        role: "user",
+        content: [
+          { type: "text", text: "Describe this 3D video game character in extreme detail, including their gender, build, skin tone, hair style, facial hair, eye color, and exact base clothing. Output ONLY the visual description." },
+          { type: "image_url", image_url: { url: imageDataUri } }
+        ]
+      }
+    ]
+  });
+
+  const baseDescription = descriptionResponse.choices[0].message.content;
+
+  // 2. Synthesize new image with cosmetics using DALL-E 3
   const cosmeticsList = input.cosmeticVisualDescriptions
     .map((desc, i) => `${i + 1}. ${desc}`)
     .join('\n');
 
-  const prompt = `Edit this 3D avatar image by applying the following cosmetic items while preserving the original style, lighting, and quality:
+  const finalPrompt = `A professional 3D character portrait. 
+BASE CHARACTER EXACT DETAILS to recreate: ${baseDescription}.
 
+CRITICAL NEW ADDITIONS: You MUST add the following cosmetic items to the character:
 ${cosmeticsList}
 
-CRITICAL REQUIREMENTS:
-- Maintain the exact same 3D render quality and lighting as the original
-- The original image has a transparent background; ensure the output also has a fully transparent background.
-- Preserve the character's pose, expression, and base clothing.
-- Only add/modify the specified cosmetic items.
-- Ensure cosmetics look naturally integrated with the 3D avatar style.
-- Output ONLY the edited image with no text, watermarks, or explanations.`;
+REQUIREMENTS:
+- Background: Solid flat neutral medium-gray (#808080) studio background.
+- Style: AAA game character quality matching Overwatch or Fortnite aesthetic. 
+- Composition: Character is facing forward with a confident neutral expression, medium shot framing from waist up, centered in frame.
+- High-fidelity stylized 3D render with smooth surfaces, clean edges, and polished materials.`;
 
-  const response = await ai.generate({
-    model: 'googleai/imagen-3.0-generate-001',
-    prompt: [
-      { media: { url: imageDataUri } },
-      { text: prompt }
-    ],
-    output: { format: 'media' }
+  const imageResponse = await openai.images.generate({
+    model: "dall-e-3",
+    prompt: finalPrompt,
+    n: 1,
+    size: "1024x1024",
+    response_format: "b64_json",
   });
 
-  const generatedAvatarDataUri = response.media?.url;
-
-  if (!generatedAvatarDataUri) {
+  const base64 = imageResponse.data?.[0]?.b64_json;
+  if (!base64) {
     throw new Error('Image generation failed to return a valid image.');
   }
 
-  return { generatedAvatarDataUri };
+  return { generatedAvatarDataUri: `data:image/png;base64,${base64}` };
 }
+

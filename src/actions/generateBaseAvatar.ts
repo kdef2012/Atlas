@@ -1,11 +1,15 @@
 'use server';
 
 /**
- * @fileOverview Server action to generate high-fidelity 2D base avatars using gpt-image-1.5.
+ * @fileOverview Server action to generate high-fidelity 2D base avatars using DALL-E 3.
  * Creates consistent, AAA game-quality character portraits with uniform styling.
  */
 
-import { ai } from '@/ai/genkit';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
 
 export interface GenerateBaseAvatarInput {
   gender: string;
@@ -25,26 +29,13 @@ export interface GenerateBaseAvatarOutput {
   imageDataUri: string;
 }
 
-/**
- * Generate a base avatar character portrait using GPT-Image-1.5
- * 
- * Creates a consistent 3D-style character portrait with:
- * - AAA game aesthetic (Overwatch/Fortnite style)
- * - Uniform plain white t-shirt
- * - Professional studio lighting
- * - Clean, centered composition
- * 
- * @param input - Character customization parameters
- * @returns Data URI of the generated avatar image
- */
 export async function generateBaseAvatar(
   input: GenerateBaseAvatarInput
 ): Promise<GenerateBaseAvatarOutput> {
-  // Construct detailed prompt for visual consistency
   const glassesDesc = input.glasses === 'None' ? '' : `Wearing ${input.glasses}.`;
   const facialHairDesc = input.facialHair === 'Clean Shaven' ? 'Clean shaven face.' : `Facial hair style: ${input.facialHair}.`;
   
-  const prompt = `A professional 3D character portrait of a ${input.gender} portrayed as a ${input.ageRange} with ${input.complexionName} skin (hex: ${input.complexionHex}). 
+  const prompt = `A professional 3D character portrait of a ${input.gender} portrayed as a ${input.ageRange} with ${input.complexionName} skin. 
 Hair style: ${input.hairStyle} in a ${input.hairColor} color. 
 Eyes: Striking ${input.eyeColor} eyes.
 ${facialHairDesc}
@@ -59,29 +50,24 @@ Background: Solid flat neutral medium-gray (#808080) studio background, no gradi
 Render quality: Sharp details, clean anti-aliased edges, professional game asset quality.`;
 
   try {
-    const response = await ai.generate({
-      model: 'googleai/imagen-3.0-generate-001',
-      prompt,
-      output: { format: 'media' }
+    const response = await openai.images.generate({
+      model: "dall-e-3",
+      prompt: prompt,
+      n: 1,
+      size: "1024x1024",
+      response_format: "b64_json",
     });
 
-    const imageDataUri = response.media?.url;
-    
-    if (!imageDataUri) {
-      throw new Error('Genkit Imagen 3 failed to return a valid media output.');
+    const base64 = response.data?.[0]?.b64_json;
+    if (!base64) {
+      throw new Error('OpenAI failed to return a valid base64 image.');
     }
 
+    const imageDataUri = `data:image/png;base64,${base64}`;
     return { imageDataUri };
   } catch (error: unknown) {
     console.error('Base avatar generation failed:', error);
-    
-    // Provide helpful error message to user
-    const errorMessage = error instanceof Error 
-      ? error.message 
-      : 'Unknown error occurred during image generation';
-    
-    throw new Error(
-      `Failed to generate base avatar: ${errorMessage}. Please try again or contact support if the issue persists.`
-    );
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred during image generation';
+    throw new Error(`Failed to generate base avatar: ${errorMessage}. Please try again or contact support if the issue persists.`);
   }
 }
