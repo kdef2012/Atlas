@@ -66,15 +66,12 @@ CRITICAL REQUIREMENTS:
 - Output ONLY the edited image with no text, watermarks, or explanations.`;
 
   const response = await ai.generate({
-    model: 'googleai/imagen3',
+    model: 'googleai/imagen-3.0-generate-001',
     prompt: [
       { media: { url: imageDataUri } },
       { text: prompt }
     ],
-    output: { format: 'media' },
-    config: {
-      aspectRatio: '1:1',
-    }
+    output: { format: 'media' }
   });
 
   const generatedAvatarDataUri = response.media?.url;

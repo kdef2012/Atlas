@@ -60,12 +60,9 @@ Render quality: Sharp details, clean anti-aliased edges, professional game asset
 
   try {
     const response = await ai.generate({
-      model: 'googleai/imagen3',
+      model: 'googleai/imagen-3.0-generate-001',
       prompt,
-      output: { format: 'media' },
-      config: {
-        aspectRatio: '1:1',
-      }
+      output: { format: 'media' }
     });
 
     const imageDataUri = response.media?.url;
