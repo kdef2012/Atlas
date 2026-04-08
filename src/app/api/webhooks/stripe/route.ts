@@ -10,7 +10,7 @@ import { doc, updateDoc, increment, collection, addDoc } from 'firebase/firestor
  * Securely processes completed checkout sessions to update user status and inventory.
  */
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_dummy_key_for_build', {
   apiVersion: '2025-01-27.acacia',
 });
 
