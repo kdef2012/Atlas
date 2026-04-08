@@ -4,7 +4,7 @@
  * @fileOverview Defines a function to remove the background from an image, making it transparent.
  * Uses gpt-image-1.5 for high-quality background removal.
  */
-import { editImageWithGPTImage } from '@/ai/openai';
+import { ai } from '@/ai/genkit';
 
 // Define the input type for the function
 export interface RemoveBackgroundInput {
@@ -28,11 +28,19 @@ CRITICAL REQUIREMENTS:
 - Do not alter the avatar's appearance, colors, or style in any way
 - Output ONLY the avatar on a transparent background`;
 
-  const transparentImageDataUri = await editImageWithGPTImage({
-    imageDataUri: input.imageDataUri,
-    prompt,
-    quality: 'high',
+  const response = await ai.generate({
+    model: 'googleai/imagen3',
+    prompt: [
+      { media: { url: input.imageDataUri } },
+      { text: prompt }
+    ],
+    output: { format: 'media' },
+    config: {
+      aspectRatio: '1:1',
+    }
   });
+
+  const transparentImageDataUri = response.media?.url;
 
   if (!transparentImageDataUri) {
     throw new Error('Background removal failed to return a valid image.');

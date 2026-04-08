@@ -1,5 +1,10 @@
 
 import type {NextConfig} from 'next';
+import dns from 'node:dns';
+
+// Fix Node v18+ IPv6 resolution timeouts for Google API fetches
+dns.setDefaultResultOrder('ipv4first');
+
 require('dotenv').config({ path: './.env' });
 
 const nextConfig: NextConfig = {

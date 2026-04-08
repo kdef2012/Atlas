@@ -5,7 +5,7 @@
  * Creates consistent, AAA game-quality character portraits with uniform styling.
  */
 
-import { generateImageWithGPTImage } from '@/ai/openai';
+import { ai } from '@/ai/genkit';
 
 export interface GenerateBaseAvatarInput {
   gender: string;
@@ -59,11 +59,20 @@ Background: Solid flat neutral medium-gray (#808080) studio background, no gradi
 Render quality: Sharp details, clean anti-aliased edges, professional game asset quality.`;
 
   try {
-    const imageDataUri = await generateImageWithGPTImage({
+    const response = await ai.generate({
+      model: 'googleai/imagen3',
       prompt,
-      quality: 'medium', // Valid quality value for gpt-image-1.5
-      size: '1024x1024',
+      output: { format: 'media' },
+      config: {
+        aspectRatio: '1:1',
+      }
     });
+
+    const imageDataUri = response.media?.url;
+    
+    if (!imageDataUri) {
+      throw new Error('Genkit Imagen 3 failed to return a valid media output.');
+    }
 
     return { imageDataUri };
   } catch (error: unknown) {

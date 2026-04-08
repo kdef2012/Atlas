@@ -6,7 +6,7 @@
  * Creates branded, social-media-ready graphics for skill Pioneers.
  */
 
-import { editImageWithGPTImage } from '@/ai/openai';
+import { ai } from '@/ai/genkit';
 
 export interface AchievementCardInput {
   avatarUrl: string;
@@ -58,12 +58,21 @@ export async function generateAchievementCard(
   - Output ONLY the finished card graphic with NO extra text, labels, or watermarks outside the card frame.`;
 
   try {
-    const cardDataUri = await editImageWithGPTImage({
-      imageDataUri: imageDataUri,
-      prompt,
-      quality: 'high',
-      size: '1024x1024',
+    const response = await ai.generate({
+      model: 'googleai/imagen3',
+      prompt: [
+        { media: { url: imageDataUri } },
+        { text: prompt }
+      ],
+      output: { format: 'media' },
+      config: {
+        aspectRatio: '1:1',
+      }
     });
+
+    const cardDataUri = response.media?.url;
+    
+    if (!cardDataUri) throw new Error('Imagen 3 failed to return media output.');
 
     return { cardDataUri };
   } catch (error) {

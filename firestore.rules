@@ -93,7 +93,7 @@ service cloud.firestore {
     match /fireteams/{fireteamId} {
       allow get, list: if isSignedIn();
       allow create: if isSignedIn();
-      allow update: if isFireteamMember(fireteamId) || isAdmin();
+      allow update: if isSignedIn();
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
@@ -105,8 +105,8 @@ service cloud.firestore {
     // GUILDS COLLECTION
     match /guilds/{guildId} {
       allow get, list: if isSignedIn();
-      allow create: if isAdmin();
-      allow update: if isGuildMember(guildId) || isAdmin();
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
       allow delete: if isAdmin();
       
       match /messages/{messageId} {
@@ -140,7 +140,8 @@ service cloud.firestore {
     // PUBLIC & ADMIN-MANAGED COLLECTIONS
     match /territories/{territoryId} {
       allow get, list: if isSignedIn();
-      allow create, update, delete: if isAdmin();
+      allow create, delete: if isAdmin();
+      allow update: if isSignedIn();
     }
 
     match /traits/{traitId} {

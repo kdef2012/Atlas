@@ -68,7 +68,7 @@ export async function uploadAvatarToStorage(
       throw new Error(`Access Denied: Your signal was rejected by the character forge. Path: avatars/${userId}/...`);
     }
     
-    throw new Error(`Character synthesis storage failed: ${error.message || 'Unknown cloud error' });
+    throw new Error(`Character synthesis storage failed: ${error.message || 'Unknown cloud error'}`);
   }
 }
 

@@ -5,7 +5,7 @@
  * @fileOverview Defines a server action to generate a new 3D avatar image by applying cosmetics.
  * Uses gpt-image-1.5 for high-quality image-to-image editing.
  */
-import { editImageWithGPTImage } from '@/ai/openai';
+import { ai } from '@/ai/genkit';
 
 // Define the input type for the function
 export interface GenerateAvatarImageInput {
@@ -65,11 +65,19 @@ CRITICAL REQUIREMENTS:
 - Ensure cosmetics look naturally integrated with the 3D avatar style.
 - Output ONLY the edited image with no text, watermarks, or explanations.`;
 
-  const generatedAvatarDataUri = await editImageWithGPTImage({
-    imageDataUri: imageDataUri, // Use the potentially converted data URI
-    prompt,
-    quality: 'high', // Use high quality for the final result
+  const response = await ai.generate({
+    model: 'googleai/imagen3',
+    prompt: [
+      { media: { url: imageDataUri } },
+      { text: prompt }
+    ],
+    output: { format: 'media' },
+    config: {
+      aspectRatio: '1:1',
+    }
   });
+
+  const generatedAvatarDataUri = response.media?.url;
 
   if (!generatedAvatarDataUri) {
     throw new Error('Image generation failed to return a valid image.');

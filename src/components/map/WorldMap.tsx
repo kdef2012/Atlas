@@ -32,10 +32,8 @@ interface WorldMapProps {
 }
 
 export default function WorldMap({ regions, guilds, isLoading }: WorldMapProps) {
-    
-    if (isLoading) {
-        return <div className="h-full w-full bg-muted animate-pulse" />;
-    }
+    // We defer rendering until component logic executes, and use a wrapper div
+    // to prevent React from reusing the skeleton's DOM node for the leaflet map.
     
     // Convert a region name into a consistent, pseudo-random coordinate.
     const getPositionFromRegion = (region: string): [number, number] => {
@@ -133,12 +131,20 @@ export default function WorldMap({ regions, guilds, isLoading }: WorldMapProps) 
     });
 
     return (
-        <MapContainer center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }} className="rounded-b-lg">
-            <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-            />
-            {regions ? renderRegions() : renderGuilds()}
-        </MapContainer>
+        <div className="h-full w-full relative rounded-b-lg overflow-hidden">
+            {isLoading && (
+                <div key="loader" className="absolute inset-0 z-50 bg-muted animate-pulse" />
+            )}
+            
+            {!isLoading && (
+                <MapContainer key="leaflet-map" center={[20, 0]} zoom={2} style={{ height: '100%', width: '100%' }} className="rounded-b-lg">
+                    <TileLayer
+                        url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                    />
+                    {regions ? renderRegions() : renderGuilds()}
+                </MapContainer>
+            )}
+        </div>
     );
 }
