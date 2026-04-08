@@ -1,6 +1,6 @@
-import { Badge } from "@/components/ui/badge";
-
 'use client';
+
+import { Badge } from "@/components/ui/badge";
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";

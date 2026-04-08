@@ -1,5 +1,5 @@
-import { Badge } from "@/components/ui/badge";
 'use client';
+import { Badge } from "@/components/ui/badge";
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
 import { TwinskieAvatar } from '@/components/TwinskieAvatar';
