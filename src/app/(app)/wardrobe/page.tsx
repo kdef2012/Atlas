@@ -1,3 +1,4 @@
+import { Badge } from "@/components/ui/badge";
 'use client';
 
 import { useUser, useDoc, useMemoFirebase, useCollection, updateDocumentNonBlocking, setDocumentNonBlocking } from '@/firebase';
